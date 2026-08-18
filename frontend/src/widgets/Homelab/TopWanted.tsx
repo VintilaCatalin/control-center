@@ -10,7 +10,11 @@ interface TopWantedProps {
 }
 
 const STATUS_LABEL: Record<PopularItem['status'], string> = {
-  unknown: 'Wanted',
+  // "unknown" means Overseerr has no request record for this title at
+  // all - it's just a popular title nobody here has actually asked for,
+  // not something "Wanted". Genuinely-requested-but-unapproved titles are
+  // their own status ("pending"), never "unknown".
+  unknown: 'Not requested',
   pending: 'Pending',
   processing: 'Processing',
   partial: 'Partial',

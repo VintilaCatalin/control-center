@@ -10,8 +10,8 @@ import { FeedSection } from './FeedSection';
 import { LinkListSection } from './LinkListSection';
 import { ReadingList } from './ReadingList';
 import { SportSection } from './SportSection';
-import type { ReadingSection } from './topics';
-import { REGULAR_TOPICS, TOPIC_LABELS } from './topics';
+import type { ReadingSection, TopicDef } from './topics';
+import { REGULAR_TOPICS, topicLabel } from './topics';
 import { VideoCard } from './VideoCard';
 import { VideoGridSection } from './VideoGridSection';
 import { VisualSection } from './VisualSection';
@@ -23,6 +23,7 @@ interface ReadingFeedProps {
   section: ReadingSection;
   bookmarks: ReadingItem[];
   books: Book[];
+  topics: TopicDef[];
   onOpenItem: (item: ReadingItem) => void;
   onRemoveBookmark: (item: ReadingItem) => void;
   onSelectBook: (book: Book) => void;
@@ -182,11 +183,12 @@ interface ForYouBodyProps extends ActionHandlers {
   items: ReadingItem[];
   books: Book[];
   bookmarks: ReadingItem[];
+  topics: TopicDef[];
   onSelectBook: (book: Book) => void;
   onSelectSection: (section: ReadingSection) => void;
 }
 
-function ForYouBody({ items, books, bookmarks, onOpen, onToggleSave, onDismiss, onSelectBook, onSelectSection }: ForYouBodyProps) {
+function ForYouBody({ items, books, bookmarks, topics, onOpen, onToggleSave, onDismiss, onSelectBook, onSelectSection }: ForYouBodyProps) {
   const videos = items.filter((i) => i.kind === 'video');
   const candidates = useMemo(() => items.filter((i) => i.kind !== 'video' && i.thumb), [items]);
   const { featured, pinned, reload, togglePin } = useFeaturedPick(candidates);
@@ -203,10 +205,18 @@ function ForYouBody({ items, books, bookmarks, onOpen, onToggleSave, onDismiss, 
   const heroSideIds = new Set(heroSide.map((i) => i.id));
   const remaining = featured ? ordered.filter((i) => !heroSideIds.has(i.id)) : ordered;
 
-  const topicPanels: PanelDef[] = REGULAR_TOPICS.filter((topic) => remaining.some((i) => i.topic === topic)).map((topic, index) => {
+  // Known topics first (stable order), then any custom ones actually
+  // present in this batch - see ReadingSidebarNav's identical ordering,
+  // both driven by real content instead of the old fixed 9-topic list.
+  const presentTopicIds = Array.from(new Set(remaining.map((i) => i.topic)));
+  const orderedTopicIds = [
+    ...REGULAR_TOPICS.filter((t) => presentTopicIds.includes(t)),
+    ...presentTopicIds.filter((t) => t !== 'youtube' && !REGULAR_TOPICS.includes(t as (typeof REGULAR_TOPICS)[number])),
+  ];
+  const topicPanels: PanelDef[] = orderedTopicIds.map((topic, index) => {
     const topicItems = remaining.filter((i) => i.topic === topic).slice(0, 8);
     const variant = pickVariant(topic, topicItems, index);
-    const heading = TOPIC_LABELS[topic];
+    const heading = topicLabel(topic, topics);
     const content =
       variant === 'video' ? (
         <VideoGridSection heading={heading} items={topicItems} onOpen={onOpen} onToggleSave={onToggleSave} onDismiss={onDismiss} />
@@ -302,7 +312,7 @@ function YouTubeBody({ items, onOpen, onToggleSave, onDismiss }: { items: Readin
   );
 }
 
-export function ReadingFeed({ items, section, bookmarks, books, onOpenItem, onRemoveBookmark, onSelectBook, onSelectSection }: ReadingFeedProps) {
+export function ReadingFeed({ items, section, bookmarks, books, topics, onOpenItem, onRemoveBookmark, onSelectBook, onSelectSection }: ReadingFeedProps) {
   // Optimistic save-state overrides, cleared once the polled snapshot
   // itself agrees (or after a safety timeout) - same shape as PanelGrid's
   // own local-state-until-the-server-catches-up pattern. Dismissed ids
@@ -377,7 +387,7 @@ export function ReadingFeed({ items, section, bookmarks, books, onOpenItem, onRe
 
   if (section === 'foryou') {
     sectioned = resolved;
-    body = <ForYouBody items={resolved} books={books} bookmarks={bookmarks} onSelectBook={onSelectBook} onSelectSection={onSelectSection} {...handlers} />;
+    body = <ForYouBody items={resolved} books={books} bookmarks={bookmarks} topics={topics} onSelectBook={onSelectBook} onSelectSection={onSelectSection} {...handlers} />;
   } else if (section === 'youtube') {
     sectioned = resolved.filter((i) => i.kind === 'video');
     body = <YouTubeBody items={sectioned} {...handlers} />;
@@ -394,7 +404,7 @@ export function ReadingFeed({ items, section, bookmarks, books, onOpenItem, onRe
     // `sourceId`) works too, but this is what actually guarantees it:
     // a source picked in Tech has no reason to silently carry over and
     // empty out Design just because it happens to share no sources.
-    body = <ReadingList key={section} heading={TOPIC_LABELS[section as keyof typeof TOPIC_LABELS] ?? section} items={sectioned} {...handlers} />;
+    body = <ReadingList key={section} heading={topicLabel(section, topics)} items={sectioned} {...handlers} />;
   }
 
   if (sectioned.length === 0) {

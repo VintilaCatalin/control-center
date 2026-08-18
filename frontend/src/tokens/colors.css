@@ -65,11 +65,15 @@
      on the same --slate just concentrates its navy cast at small popup
      sizes). Layering extra --ink (near-black, far lower chroma than
      --slate) on top of the existing --glass value raises opacity without
-     reviving that same tint problem. */
-  --popup-bg: color-mix(in oklab, var(--ink) 45%, var(--glass));
+     reviving that same tint problem. Raised from 45% - even the "more
+     opaque than Card" version still read as too see-through over a busy
+     wallpaper/panel behind it, hard to read text against. --popup-blur is
+     its own stronger value now too (not just --blur), rather than pushing
+     Card's shared blur up as a side effect of a popup-only complaint. */
+  --popup-bg: color-mix(in oklab, var(--ink) 62%, var(--glass));
   --popup-border: var(--rim);
   --popup-shadow: var(--lift), var(--inner);
-  --popup-blur: var(--blur);
+  --popup-blur: blur(22px) saturate(160%);
   /* One scrim strength for every popup that has one (Sheet, Overlay) -
      dimmed enough to focus attention on the popup, light enough that
      the popup's own glass still picks up real colour from what's behind

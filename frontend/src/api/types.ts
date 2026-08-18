@@ -1,9 +1,16 @@
-// Matches server.py:collect_weather() (server.py:318-342) field for field.
+// Matches backend/collectors/weather.py's collect_weather() field for field.
 export interface WeatherDay {
   date: string;
   label: string;
   high: number;
   low: number;
+  icon: string;
+}
+
+export interface WeatherHour {
+  time: string;
+  label: string;
+  temp: number;
   icon: string;
 }
 
@@ -15,8 +22,10 @@ export interface WeatherData {
   wind: number;
   label: string;
   icon: string;
+  is_day: boolean;
   unit: 'F' | 'C';
   days: WeatherDay[];
+  hours: WeatherHour[];
 }
 
 // Matches server.py:_media_snapshot() (server.py:386-420) field for field.
@@ -368,7 +377,11 @@ export interface ReadingSource {
   type: 'rss' | 'youtube' | 'webpage';
   label: string;
   url: string;
-  topic: 'tech' | 'ai' | 'design' | 'world' | 'travel' | 'games' | 'interesting' | 'youtube' | 'sport';
+  // A user-editable id now (backend/collectors/reading.py's
+  // reading_add_topic()), not a fixed enum - "interesting" is the one
+  // guaranteed-to-exist value (every invalid/removed topic falls back to
+  // it), everything else is whatever's in ReadingData.topics.
+  topic: string;
   enabled: boolean;
 }
 
@@ -441,7 +454,10 @@ export interface BookSearchResult {
 export interface ReadingData {
   items: ReadingItem[];
   sources: ReadingSource[];
-  topics: string[];
+  // {id, label} pairs now, not a fixed string enum - the live,
+  // user-editable topic vocabulary (see backend/collectors/reading.py's
+  // reading_add_topic()/reading_remove_topic()).
+  topics: { id: string; label: string }[];
   books: Book[];
   // Raindrop-style "paste a link" bookmarks - normalized to the exact
   // same shape as a feed item (server.py:_normalize_bookmark()), always

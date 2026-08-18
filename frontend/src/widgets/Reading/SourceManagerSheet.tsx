@@ -1,25 +1,28 @@
 import { useEffect, useState } from 'react';
-import { addSource, deleteSource, editSource, fetchFeedPresets, importSubscriptions } from '../../api/actions/reading';
+import { addSource, addTopic, deleteSource, editSource, fetchFeedPresets, importSubscriptions, removeTopic } from '../../api/actions/reading';
 import type { ReadingSource } from '../../api/types';
 import { Sheet } from '../../primitives/Sheet/Sheet';
-import { TOPIC_LABELS, TOPIC_ORDER } from './topics';
+import { type TopicDef, topicLabel } from './topics';
 import styles from './SourceManagerSheet.module.css';
 
 interface SourceManagerSheetProps {
   open: boolean;
   onClose: () => void;
   sources: ReadingSource[];
+  topics: TopicDef[];
 }
 
-type Tab = 'sources' | 'add' | 'import';
+type Tab = 'sources' | 'add' | 'topics' | 'import';
 
 // Everything needed to shape what feeds into Reading, in one place: the
 // current source list (enable/retag/remove), a manual-add form plus a
-// one-click browser over the curated FEED_PRESETS, and a YouTube
+// one-click browser over the curated FEED_PRESETS, topic management
+// (create/remove - topics used to be a fixed 9-value enum, now a plain
+// user-editable list, see backend/collectors/reading.py), and a YouTube
 // subscriptions import. The feed/sidebar themselves never need to know
-// this exists - sources changing just means different content on the
-// next poll.
-export function SourceManagerSheet({ open, onClose, sources }: SourceManagerSheetProps) {
+// this exists - sources/topics changing just means different content on
+// the next poll.
+export function SourceManagerSheet({ open, onClose, sources, topics }: SourceManagerSheetProps) {
   const [tab, setTab] = useState<Tab>('sources');
 
   useEffect(() => {
@@ -35,26 +38,30 @@ export function SourceManagerSheet({ open, onClose, sources }: SourceManagerShee
         <button type="button" className={[styles.tab, tab === 'add' ? styles.tabActive : ''].join(' ')} onClick={() => setTab('add')}>
           Add source
         </button>
+        <button type="button" className={[styles.tab, tab === 'topics' ? styles.tabActive : ''].join(' ')} onClick={() => setTab('topics')}>
+          Topics
+        </button>
         <button type="button" className={[styles.tab, tab === 'import' ? styles.tabActive : ''].join(' ')} onClick={() => setTab('import')}>
           Import YouTube
         </button>
       </div>
 
-      {tab === 'sources' && <SourceList sources={sources} />}
-      {tab === 'add' && <AddSourceForm />}
+      {tab === 'sources' && <SourceList sources={sources} topics={topics} />}
+      {tab === 'add' && <AddSourceForm topics={topics} />}
+      {tab === 'topics' && <TopicManager topics={topics} sources={sources} />}
       {tab === 'import' && <ImportSubscriptions />}
     </Sheet>
   );
 }
 
-function SourceList({ sources }: { sources: ReadingSource[] }) {
+function SourceList({ sources, topics }: { sources: ReadingSource[]; topics: TopicDef[] }) {
   if (sources.length === 0) {
     return <p className={styles.hint}>No sources yet - add one from the "Add source" tab.</p>;
   }
   return (
     <div className={styles.list}>
       {sources.map((source) => (
-        <SourceRow key={source.id} source={source} />
+        <SourceRow key={source.id} source={source} topics={topics} />
       ))}
     </div>
   );
@@ -62,7 +69,68 @@ function SourceList({ sources }: { sources: ReadingSource[] }) {
 
 const KIND_LABEL: Record<ReadingSource['type'], string> = { rss: 'Feed', youtube: 'YouTube', webpage: 'Webpage' };
 
-function SourceRow({ source }: { source: ReadingSource }) {
+// Shared by SourceRow and AddSourceForm - a topic <select> built from the
+// live topic list, plus a "+ New topic..." option that reveals an inline
+// create form right there instead of sending the user to a separate
+// place to make one first.
+function TopicPicker({ topics, value, onChange }: { topics: TopicDef[]; value: string; onChange: (id: string) => void }) {
+  const [adding, setAdding] = useState(false);
+  const [label, setLabel] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  async function handleCreate() {
+    const trimmed = label.trim();
+    if (!trimmed) return;
+    setBusy(true);
+    const res = await addTopic(trimmed).catch(() => ({ ok: false as const, error: undefined as string | undefined }));
+    setBusy(false);
+    if (res.ok && 'id' in res && res.id) {
+      onChange(res.id);
+      setAdding(false);
+      setLabel('');
+    }
+  }
+
+  if (adding) {
+    return (
+      <div className={styles.topicNewRow}>
+        <input
+          type="text"
+          className={styles.input}
+          placeholder="New topic name"
+          value={label}
+          onChange={(e) => setLabel(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
+          autoFocus
+        />
+        <button type="button" className={styles.primaryBtn} onClick={handleCreate} disabled={busy || !label.trim()}>
+          {busy ? '…' : 'Create'}
+        </button>
+        <button type="button" className={styles.removeBtn} onClick={() => setAdding(false)}>
+          Cancel
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <select
+      className={styles.topicSelect}
+      value={value}
+      onChange={(e) => (e.target.value === '__new__' ? setAdding(true) : onChange(e.target.value))}
+    >
+      {!topics.some((t) => t.id === value) && <option value={value}>{topicLabel(value, topics)}</option>}
+      {topics.map((t) => (
+        <option key={t.id} value={t.id}>
+          {t.label}
+        </option>
+      ))}
+      <option value="__new__">+ New topic…</option>
+    </select>
+  );
+}
+
+function SourceRow({ source, topics }: { source: ReadingSource; topics: TopicDef[] }) {
   const [enabled, setEnabled] = useState(source.enabled);
   const [topic, setTopic] = useState(source.topic);
   const [type, setType] = useState(source.type);
@@ -74,7 +142,7 @@ function SourceRow({ source }: { source: ReadingSource }) {
     editSource(source.id, { enabled: next }).catch(() => {});
   }
 
-  function handleTopic(next: ReadingSource['topic']) {
+  function handleTopic(next: string) {
     setTopic(next);
     editSource(source.id, { topic: next }).catch(() => {});
   }
@@ -109,13 +177,7 @@ function SourceRow({ source }: { source: ReadingSource }) {
         </select>
       )}
       {type === 'youtube' && <span className={styles.hint}>{KIND_LABEL[type]}</span>}
-      <select className={styles.topicSelect} value={topic} onChange={(e) => handleTopic(e.target.value as ReadingSource['topic'])}>
-        {TOPIC_ORDER.map((t) => (
-          <option key={t} value={t}>
-            {TOPIC_LABELS[t]}
-          </option>
-        ))}
-      </select>
+      <TopicPicker topics={topics} value={topic} onChange={handleTopic} />
       <button type="button" className={styles.removeBtn} onClick={handleDelete}>
         Remove
       </button>
@@ -123,11 +185,11 @@ function SourceRow({ source }: { source: ReadingSource }) {
   );
 }
 
-function AddSourceForm() {
+function AddSourceForm({ topics }: { topics: TopicDef[] }) {
   const [label, setLabel] = useState('');
   const [url, setUrl] = useState('');
   const [kind, setKind] = useState<'feed' | 'webpage'>('feed');
-  const [topic, setTopic] = useState<ReadingSource['topic']>('interesting');
+  const [topic, setTopic] = useState('interesting');
   const [status, setStatus] = useState<string | null>(null);
   const [presets, setPresets] = useState<{ group: string; feeds: { label: string; url: string }[] }[]>([]);
 
@@ -188,13 +250,7 @@ function AddSourceForm() {
         />
       </div>
       <div className={styles.field}>
-        <select className={styles.topicSelect} value={topic} onChange={(e) => setTopic(e.target.value as ReadingSource['topic'])}>
-          {TOPIC_ORDER.map((t) => (
-            <option key={t} value={t}>
-              {TOPIC_LABELS[t]}
-            </option>
-          ))}
-        </select>
+        <TopicPicker topics={topics} value={topic} onChange={setTopic} />
       </div>
       <button type="button" className={styles.primaryBtn} onClick={handleAdd} disabled={!label.trim() || !url.trim()}>
         Add source
@@ -218,6 +274,87 @@ function AddSourceForm() {
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+// Create/remove the topic vocabulary itself. "interesting" is the one
+// entry with no Remove control - it's the fallback every invalid/removed
+// topic reassigns to (see reading_remove_topic()), so it must always
+// exist. Removing a topic in use reassigns its sources/bookmarks to
+// "interesting" automatically - shown here so it isn't a silent surprise.
+function TopicManager({ topics, sources }: { topics: TopicDef[]; sources: ReadingSource[] }) {
+  const [label, setLabel] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [status, setStatus] = useState<string | null>(null);
+  const [removingId, setRemovingId] = useState<string | null>(null);
+
+  function usageCount(id: string) {
+    return sources.filter((s) => s.topic === id).length;
+  }
+
+  async function handleCreate() {
+    const trimmed = label.trim();
+    if (!trimmed) return;
+    setBusy(true);
+    setStatus(null);
+    const res = await addTopic(trimmed).catch(() => ({ ok: false as const, error: 'Failed to add' }));
+    setBusy(false);
+    if (res.ok) {
+      setLabel('');
+    } else {
+      setStatus(('error' in res && res.error) || 'Failed to add');
+    }
+  }
+
+  async function handleRemove(id: string) {
+    setRemovingId(id);
+    setStatus(null);
+    const res = await removeTopic(id).catch(() => ({ ok: false as const, error: 'Failed to remove' }));
+    setRemovingId(null);
+    if (!res.ok) setStatus(res.error || 'Failed to remove');
+  }
+
+  return (
+    <div className={styles.addForm}>
+      <p className={styles.hint}>Topics tag your sources so Reading/Overview can group and filter by them. Create as many as you like.</p>
+      <div className={styles.field}>
+        <input
+          type="text"
+          className={styles.input}
+          placeholder="New topic name"
+          value={label}
+          onChange={(e) => setLabel(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
+        />
+      </div>
+      <button type="button" className={styles.primaryBtn} onClick={handleCreate} disabled={busy || !label.trim()}>
+        {busy ? 'Adding…' : 'Add topic'}
+      </button>
+      {status && <span className={styles.hint}>{status}</span>}
+
+      <div className={styles.list}>
+        {topics.map((t) => {
+          const count = usageCount(t.id);
+          return (
+            <div key={t.id} className={styles.row}>
+              <div className={styles.rowText}>
+                <span className={styles.rowLabel}>{t.label}</span>
+                <span className={styles.rowUrl}>
+                  {count === 0 ? 'Not used by any source' : `${count} source${count === 1 ? '' : 's'}`}
+                </span>
+              </div>
+              {t.id === 'interesting' ? (
+                <span className={styles.hint}>Default</span>
+              ) : (
+                <button type="button" className={styles.removeBtn} onClick={() => handleRemove(t.id)} disabled={removingId === t.id}>
+                  {removingId === t.id ? '…' : 'Remove'}
+                </button>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

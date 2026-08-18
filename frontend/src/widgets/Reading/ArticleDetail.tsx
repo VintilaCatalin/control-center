@@ -84,6 +84,29 @@ export function ArticleDetail({ item, onClose }: ArticleDetailProps) {
       exit={{ opacity: 0, y: 12 }}
       transition={{ duration: duration.base, ease }}
     >
+      {/* Siblings of .scroll, not children of .hero - .hero only ever
+          occupies the top of the scrolling column, so anything positioned
+          relative to it scrolls away with the article. These stay fixed
+          to the overlay itself (which fills the viewport) so they're
+          reachable the whole time you're reading, not just at the top. */}
+      <button type="button" className={styles.backBtn} onClick={onClose} aria-label="Back to Reading">
+        <BackIcon />
+        <span>Back to Reading</span>
+      </button>
+      <div className={styles.heroActions}>
+        <a
+          className={styles.openBrowserBtn}
+          href={item.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Open in browser"
+          aria-label="Open in browser"
+        >
+          <ExternalLinkIcon />
+        </a>
+        <SaveButton saved={saved} onToggle={handleToggleSave} inline />
+      </div>
+
       <div className={styles.scroll}>
         <div className={[styles.hero, item.thumb ? styles.heroWithImage : styles.heroBar].join(' ')}>
           {item.thumb && (
@@ -92,24 +115,6 @@ export function ArticleDetail({ item, onClose }: ArticleDetailProps) {
               <div className={styles.heroShade} />
             </>
           )}
-
-          <button type="button" className={styles.backBtn} onClick={onClose} aria-label="Back to Reading">
-            <BackIcon />
-            <span>Back to Reading</span>
-          </button>
-          <div className={styles.heroActions}>
-            <a
-              className={styles.openBrowserBtn}
-              href={item.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              title="Open in browser"
-              aria-label="Open in browser"
-            >
-              <ExternalLinkIcon />
-            </a>
-            <SaveButton saved={saved} onToggle={handleToggleSave} inline />
-          </div>
         </div>
 
         <div className={[styles.column, item.thumb ? styles.columnOverImage : styles.columnFlat].join(' ')}>

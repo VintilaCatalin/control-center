@@ -1,6 +1,11 @@
 // Shared between ReadingSidebarNav (nav labels), ReadingFeed (block
 // headings on For You) and every block component - one place for the
-// section/topic vocabulary so they never drift.
+// section/topic vocabulary so they never drift. Topics themselves are
+// user-editable now (see reading_add_topic()/reading_remove_topic() in
+// backend/collectors/reading.py) - the `(string & {})` member keeps
+// autocomplete for the original 9 while still accepting any topic id a
+// user creates (a plain `| string` would collapse the whole union and
+// lose that autocomplete entirely).
 export type ReadingSection =
   | 'foryou'
   | 'tech'
@@ -14,7 +19,8 @@ export type ReadingSection =
   | 'sport'
   | 'saved'
   | 'bookmarks'
-  | 'books';
+  | 'books'
+  | (string & {});
 
 export const TOPIC_LABELS: Record<Exclude<ReadingSection, 'foryou' | 'saved' | 'bookmarks' | 'books'>, string> = {
   tech: 'Tech',
@@ -54,3 +60,31 @@ export const TOPIC_COLORS: Record<keyof typeof TOPIC_LABELS, string> = {
 // excludes "youtube" from that loop and handles video content as its own
 // thing (kind === 'video'), not a topic.
 export const REGULAR_TOPICS = TOPIC_ORDER.filter((t) => t !== 'youtube');
+
+export interface TopicDef {
+  id: string;
+  label: string;
+}
+
+// Falls back to the live topic list (snapshot.reading.topics, real
+// user-created topics included) for any id outside the original 9, then
+// to the raw id itself if even that comes up empty - never a blank label.
+export function topicLabel(id: string, liveTopics?: TopicDef[]): string {
+  if (id in TOPIC_LABELS) return TOPIC_LABELS[id as keyof typeof TOPIC_LABELS];
+  return liveTopics?.find((t) => t.id === id)?.label ?? id;
+}
+
+// A deterministic hue from the topic id itself - custom topics get a
+// real, stable colour without needing their own palette entry (see
+// TOPIC_COLORS' own comment on why hue is the one axis Reading uses to
+// tell topics apart at a glance).
+function hashHue(id: string): number {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) % 360;
+  return h < 0 ? h + 360 : h;
+}
+
+export function topicColor(id: string): string {
+  if (id in TOPIC_COLORS) return TOPIC_COLORS[id as keyof typeof TOPIC_COLORS];
+  return `hsl(${hashHue(id)} 70% 60%)`;
+}

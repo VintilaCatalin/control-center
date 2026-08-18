@@ -469,6 +469,12 @@ def _blank_store():
             # every poll and would otherwise lose that state on the next fetch.
             "reading_sources": [], "reading_saved": [], "reading_read": [],
             "reading_hidden": [], "books": [], "reading_bookmarks": [],
+            # User-editable topic vocabulary (id+label pairs) - seeded from
+            # DEFAULT_READING_TOPICS below on first load, then a plain list
+            # like reading_sources, not a fixed enum. See
+            # reading_add_topic()/reading_remove_topic() in
+            # backend/collectors/reading.py.
+            "reading_topics": [],
             "reading_prefs": {"topic_order": [], "topic_hidden": []},
             # Set once the first-run onboarding flow finishes (or is
             # explicitly skipped) - see backend/routes/settings.py's
@@ -481,19 +487,35 @@ def _blank_store():
             "onboarding_complete": True}
 
 def load_store():
-    """Never raise. A corrupt store should cost you your tile order, not your panel."""
+    """Never raise. A corrupt store should cost you your tile order, not your panel.
+
+    Missing/corrupt/non-dict on disk all fall through to the same
+    `found = {}` path below rather than returning early - a genuinely
+    fresh install (no file yet) must still run every migration/seeding
+    block further down (reading_sources, reading_topics, ...), the exact
+    same way an existing install with a real-but-incomplete store does.
+    Returning early here used to skip that seeding entirely for a brand
+    new install, and since nothing persists it until some *other* edit
+    happens to write the full store shape first (with those fields
+    already present as empty lists), the seeding would then never run
+    again either - a fresh install could permanently end up with zero
+    default reading sources/topics. `onboarding_complete` still needs the
+    three-way distinction (missing entirely / exists but unreadable /
+    a real dict), so that's resolved explicitly instead of leaning on
+    which exception branch fired.
+    """
     store = _blank_store()
+    file_existed = STORE_FILE.exists()
     try:
         found = json.loads(STORE_FILE.read_text(encoding="utf-8"))
+        if not isinstance(found, dict):
+            found = {}
     except Exception:
-        # Missing entirely -> genuinely fresh install, show onboarding.
-        # Exists but unreadable/corrupt -> an existing install hit a real
-        # bug elsewhere; that's not "onboarding wasn't done", don't compound
-        # the problem by also dropping them into onboarding.
-        store["onboarding_complete"] = STORE_FILE.exists()
-        return store
-    if not isinstance(found, dict):
-        return store
+        found = {}
+    if not file_existed:
+        store["onboarding_complete"] = False       # genuinely fresh install
+    elif not found:
+        store["onboarding_complete"] = True        # exists but unreadable/corrupt/not-a-dict
     for key in store:
         if key in found and isinstance(found[key], type(store[key])):
             store[key] = found[key]
@@ -538,6 +560,14 @@ def load_store():
         if not seeded:
             seeded = [dict(s) for s in DEFAULT_READING_SOURCES]
         store["reading_sources"] = seeded
+
+    # Migration: topics used to be a fixed 9-value enum baked into the
+    # code (READING_TOPICS); "reading_topics" missing from the file on
+    # disk means this store predates the user-editable version - seed it
+    # with exactly that same original set so every source's existing
+    # `topic` value still resolves to something real.
+    if "reading_topics" not in found:
+        store["reading_topics"] = [dict(t) for t in DEFAULT_READING_TOPICS]
     return store
 
 def save_store(store):
@@ -724,6 +754,18 @@ def effective_layout(store, view):
 YT_RE = re.compile(r"(youtube\.com|youtu\.be)", re.I)
 
 YT_CHANNEL_FEED = "https://www.youtube.com/feeds/videos.xml?channel_id="
+
+# Seeded into reading_topics on first run (see load_store()'s migration) -
+# the original fixed vocabulary, now just the starting set rather than a
+# hard ceiling. "interesting" is the one entry that can never be removed
+# (see reading_remove_topic()) - every source/bookmark falls back to it.
+DEFAULT_READING_TOPICS = [
+    {"id": "tech", "label": "Tech"}, {"id": "ai", "label": "AI"},
+    {"id": "design", "label": "Design"}, {"id": "world", "label": "World"},
+    {"id": "travel", "label": "Travel"}, {"id": "games", "label": "Games"},
+    {"id": "interesting", "label": "Interesting"}, {"id": "youtube", "label": "YouTube"},
+    {"id": "sport", "label": "Sport"},
+]
 
 # Seeded into reading_sources on first run (see load_store()'s migration).
 # Deliberately a small, curated starting set spanning tech/ai/design/world

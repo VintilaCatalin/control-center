@@ -48,10 +48,10 @@
 
 .backBtn {
   composes: callout from '../../tokens/typography.module.css';
-  position: absolute;
+  position: fixed;
   top: var(--space-4);
   left: var(--space-4);
-  z-index: 2;
+  z-index: 45;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -75,10 +75,10 @@
    SaveButton uses `inline` here (no self-positioning) since this wrapper
    owns the placement instead. */
 .heroActions {
-  position: absolute;
+  position: fixed;
   top: var(--space-4);
   right: var(--space-4);
-  z-index: 2;
+  z-index: 45;
   display: flex;
   align-items: center;
   gap: 8px;

@@ -1,16 +1,14 @@
 .root {
   display: flex;
-  align-items: flex-end;
-  gap: var(--space-5);
+  flex-direction: column;
+  gap: var(--space-4);
   font-family: var(--body);
-  min-height: 76px;
 }
 
 .now {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  text-align: right;
+  align-items: flex-start;
 }
 
 .temp {
@@ -38,9 +36,46 @@
   color: var(--mist);
 }
 
+/* ---- hourly strip ---- */
+
+.hoursRow {
+  display: flex;
+  gap: var(--space-1);
+  padding: var(--space-2) 0;
+  margin: 0 calc(var(--space-1) * -1);
+  overflow-x: auto;
+  border-top: 1px solid var(--rim);
+  border-bottom: 1px solid var(--rim);
+}
+
+.hour {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  width: 40px;
+  padding: var(--space-1);
+  color: var(--mist);
+}
+
+.hourLabel {
+  font-size: var(--fs-caption);
+  text-transform: lowercase;
+}
+
+.hourTemp {
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--paper);
+}
+
+/* ---- 5-day outlook ---- */
+
 .days {
   display: flex;
-  gap: var(--space-2);
+  justify-content: space-between;
+  gap: var(--space-1);
 }
 
 .day {

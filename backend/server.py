@@ -181,6 +181,7 @@ def make_handler(snapshot):
                 snapshot.refresh("tasks")
                 return self._send(json.dumps(result))
             if (route.path.startswith("/api/reading/source/") or route.path.startswith("/api/reading/bookmark/")
+                    or route.path.startswith("/api/reading/topics/")
                     or route.path == "/api/reading/import-subscriptions"):
                 body = self._body()
                 result = routes_reading.dispatch_source(route.path, body)

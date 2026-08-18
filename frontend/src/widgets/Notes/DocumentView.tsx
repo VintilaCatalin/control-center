@@ -29,9 +29,18 @@ export function DocumentView({ note, text, loading, saving, onTextChange, onTogg
   const editorRef = useRef<HTMLTextAreaElement>(null);
   const [draft, setDraft] = useState(text);
 
+  // Split deliberately: switching to a different note should reset both
+  // the draft and the view mode, but a `text` prop change alone (the
+  // debounced save echoing back through the parent, or the note's real
+  // content arriving asynchronously just after `note.rel` changes - see
+  // NotesShell's fetchNote) must never flip Edit back to Read on its own.
+  // Read/Edit only ever changes from the pencil/book button below.
+  useEffect(() => {
+    setMode('read');
+  }, [note.rel]);
+
   useEffect(() => {
     setDraft(text);
-    setMode('read');
   }, [note.rel, text]);
 
   useEffect(() => () => clearTimeout(saveTimer.current), []);

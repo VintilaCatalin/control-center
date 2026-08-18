@@ -80,7 +80,7 @@
   position: fixed;
   z-index: 60;
   overflow: hidden;
-  width: 340px;
+  width: 380px;
   padding: var(--space-4);
   border-radius: 16px;
   background: var(--popup-bg);

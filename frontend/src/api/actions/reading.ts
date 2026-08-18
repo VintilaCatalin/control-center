@@ -54,6 +54,17 @@ export function fetchFeedPresets(): Promise<{ presets: { group: string; feeds: {
   return fetchJSON('/api/feed-presets');
 }
 
+// Topic management - see backend/collectors/reading.py's
+// reading_add_topic()/reading_remove_topic(). "interesting" can't be
+// removed (it's the fallback every invalid/removed topic reassigns to).
+export function addTopic(label: string): Promise<{ ok: boolean; id?: string; error?: string }> {
+  return postAction('/api/reading/topics/add', { label });
+}
+
+export function removeTopic(id: string): Promise<{ ok: boolean; error?: string }> {
+  return postAction('/api/reading/topics/remove', { id });
+}
+
 // Raindrop-style bookmarks - see server.py's add_bookmark()/delete_bookmark().
 export function addBookmark(url: string, topic?: ReadingSource['topic']): Promise<{ ok: boolean; id?: string; error?: string }> {
   return postAction('/api/reading/bookmark/add', { url, topic });

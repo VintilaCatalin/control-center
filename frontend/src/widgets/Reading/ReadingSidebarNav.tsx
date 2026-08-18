@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import type { Book, ReadingItem, ReadingSource } from '../../api/types';
 import { GearIcon, ReadingIcon } from '../../shell/icons';
 import { BookIcon, BookmarkIcon, LinkIcon, PlayGlyphIcon, PlusIcon, TagIcon } from './icons';
-import { REGULAR_TOPICS, TOPIC_LABELS, type ReadingSection } from './topics';
+import { REGULAR_TOPICS, type ReadingSection, type TopicDef, topicLabel } from './topics';
 import styles from './ReadingSidebarNav.module.css';
 
 export type { ReadingSection };
@@ -12,6 +12,7 @@ interface ReadingSidebarNavProps {
   items: ReadingItem[];
   books: Book[];
   bookmarks: ReadingItem[];
+  topics: TopicDef[];
   active: ReadingSection;
   onSelect: (key: ReadingSection) => void;
   onManageSources: () => void;
@@ -29,6 +30,7 @@ export function ReadingSidebarNav({
   items,
   books,
   bookmarks,
+  topics,
   active,
   onSelect,
   onManageSources,
@@ -39,6 +41,16 @@ export function ReadingSidebarNav({
     () => new Set(sources.filter((s) => s.enabled).map((s) => s.topic)),
     [sources],
   );
+  // The original 9 first (stable, familiar order), then any custom
+  // topics the user's created - both filtered to "actually has an
+  // enabled source", same as before, just no longer capped at the fixed
+  // set (see topics.ts's ReadingSection comment on why this is possible
+  // without special-casing every consumer).
+  const orderedTopics = useMemo(() => {
+    const known = REGULAR_TOPICS.filter((t) => presentTopics.has(t));
+    const extra = topics.map((t) => t.id).filter((id) => id !== 'youtube' && presentTopics.has(id) && !REGULAR_TOPICS.includes(id as (typeof REGULAR_TOPICS)[number]));
+    return [...known, ...extra];
+  }, [presentTopics, topics]);
   const counts = useMemo(() => {
     const byTopic = new Map<string, number>();
     let videoCount = 0;
@@ -74,18 +86,18 @@ export function ReadingSidebarNav({
       </button>
 
       <div className={styles.groupLabel}>Topics</div>
-      {REGULAR_TOPICS.filter((t) => presentTopics.has(t)).map((topic) => (
+      {orderedTopics.map((topic) => (
         <button
           key={topic}
           type="button"
           className={[styles.item, active === topic ? styles.itemActive : ''].filter(Boolean).join(' ')}
           onClick={() => onSelect(topic)}
-          title={collapsed ? TOPIC_LABELS[topic] : undefined}
+          title={collapsed ? topicLabel(topic, topics) : undefined}
         >
           <span className={styles.icon}>
             <TagIcon />
           </span>
-          <span className={styles.label}>{TOPIC_LABELS[topic]}</span>
+          <span className={styles.label}>{topicLabel(topic, topics)}</span>
           <span className={styles.count}>{counts.byTopic.get(topic) ?? 0}</span>
         </button>
       ))}

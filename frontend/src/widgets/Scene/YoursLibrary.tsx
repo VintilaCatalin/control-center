@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { applyLocalWallpaper, favoriteWallpaper, fixDesktopWallpapers, matchLightsToWallpaper, wallImageUrl } from '../../api/actions/scene';
 import { useSnapshotData } from '../../api/SnapshotProvider';
 import { FolderSetup } from '../../primitives/FolderSetup/FolderSetup';
@@ -29,13 +29,27 @@ export function YoursLibraryHeaderActions() {
   const [fixOpen, setFixOpen] = useState(false);
   const [fixBusy, setFixBusy] = useState(false);
   const [fixResult, setFixResult] = useState<string | null>(null);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  useEffect(() => () => clearTimeout(closeTimer.current), []);
 
   async function handleFixDesktops() {
     setFixBusy(true);
     setFixResult(null);
     try {
       const r = await fixDesktopWallpapers();
-      setFixResult(r.ok ? 'Explorer is restarting - your taskbar will flash briefly.' : r.error ?? "Couldn't run the fix.");
+      if (r.ok) {
+        setFixResult('Explorer is restarting - your taskbar will flash briefly.');
+        // A real fix, not just an error message shown until dismissed -
+        // close itself once the user's had a moment to read it, same as
+        // Explorer restarting is itself a self-resolving event.
+        closeTimer.current = setTimeout(() => {
+          setFixOpen(false);
+          setFixResult(null);
+        }, 2200);
+      } else {
+        setFixResult(r.error ?? "Couldn't run the fix.");
+      }
     } catch {
       setFixResult("Couldn't reach the panel backend.");
     } finally {
@@ -60,6 +74,7 @@ export function YoursLibraryHeaderActions() {
       <Sheet
         open={fixOpen}
         onClose={() => {
+          clearTimeout(closeTimer.current);
           setFixOpen(false);
           setFixResult(null);
         }}
@@ -67,7 +82,7 @@ export function YoursLibraryHeaderActions() {
         subtitle="For the rare case where Windows shows different wallpapers across virtual desktops. This restarts Explorer - your taskbar and desktop icons will disappear for a second."
         actions={
           <>
-            <button type="button" className={styles.sheetBtn} onClick={() => setFixOpen(false)} disabled={fixBusy}>
+            <button type="button" className={styles.sheetBtn} onClick={() => { clearTimeout(closeTimer.current); setFixOpen(false); }} disabled={fixBusy}>
               Cancel
             </button>
             <button type="button" className={`${styles.sheetBtn} ${styles.sheetBtnDanger}`} onClick={handleFixDesktops} disabled={fixBusy}>

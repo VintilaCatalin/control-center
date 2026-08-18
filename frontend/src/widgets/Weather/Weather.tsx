@@ -32,6 +32,9 @@ export function Weather() {
     return <WeatherMessage tone="quiet">Fetching weather…</WeatherMessage>;
   }
 
+  const days = w.days.slice(1, 6);
+  const hours = w.hours ?? [];
+
   return (
     <AnimatePresence mode="wait">
       <motion.div
@@ -41,28 +44,43 @@ export function Weather() {
         animate={fade.animate}
         transition={{ duration: duration.slow, ease }}
       >
-        <div className={styles.days}>
-          {w.days.slice(1, 4).map((d) => (
-            <div key={d.date} className={styles.day}>
-              <span className={styles.dayLabel}>{d.label}</span>
-              <WeatherIcon icon={d.icon} size={18} />
-              <span className={styles.dayHigh}>{d.high}°</span>
-              <span className={styles.dayLow}>{d.low}°</span>
-            </div>
-          ))}
-        </div>
         <div className={styles.now}>
           <div className={styles.temp}>
             {w.temp}
             <sup>°{w.unit}</sup>
           </div>
           <div className={styles.meta}>
-            <WeatherIcon icon={w.icon} size={14} />
+            <WeatherIcon icon={w.icon} isDay={w.is_day} size={14} />
             <span>
               {w.label} · feels {w.feels}° · {w.place}
             </span>
           </div>
         </div>
+
+        {hours.length > 0 && (
+          <div className={styles.hoursRow}>
+            {hours.map((h) => (
+              <div key={h.time} className={styles.hour}>
+                <span className={styles.hourLabel}>{h.label}</span>
+                <WeatherIcon icon={h.icon} isDay={w.is_day} size={16} />
+                <span className={styles.hourTemp}>{h.temp}°</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {days.length > 0 && (
+          <div className={styles.days}>
+            {days.map((d) => (
+              <div key={d.date} className={styles.day}>
+                <span className={styles.dayLabel}>{d.label}</span>
+                <WeatherIcon icon={d.icon} size={18} />
+                <span className={styles.dayHigh}>{d.high}°</span>
+                <span className={styles.dayLow}>{d.low}°</span>
+              </div>
+            ))}
+          </div>
+        )}
       </motion.div>
     </AnimatePresence>
   );
@@ -71,18 +89,18 @@ export function Weather() {
 function WeatherSkeleton() {
   return (
     <div className={styles.root} aria-busy="true" aria-label="Loading weather">
+      <div className={styles.now}>
+        <span className={`${styles.skel} ${styles.skelTemp}`} />
+        <span className={`${styles.skel} ${styles.skelMeta}`} />
+      </div>
       <div className={styles.days}>
-        {[0, 1, 2].map((i) => (
+        {[0, 1, 2, 3, 4].map((i) => (
           <div key={i} className={styles.day}>
             <span className={`${styles.skel} ${styles.skelLabel}`} />
             <span className={`${styles.skel} ${styles.skelIcon}`} />
             <span className={`${styles.skel} ${styles.skelHigh}`} />
           </div>
         ))}
-      </div>
-      <div className={styles.now}>
-        <span className={`${styles.skel} ${styles.skelTemp}`} />
-        <span className={`${styles.skel} ${styles.skelMeta}`} />
       </div>
     </div>
   );

@@ -13,9 +13,9 @@ import requests
 
 from backend.collectors.reading import (
     FEED_PRESETS, _extract_article, add_book, add_bookmark, delete_book, delete_bookmark,
-    edit_book, reading_add_source, reading_delete_source, reading_edit_source,
-    reading_hide_item, reading_import_subscriptions, reading_set_read, reading_set_saved,
-    search_open_library,
+    edit_book, reading_add_source, reading_add_topic, reading_delete_source, reading_edit_source,
+    reading_hide_item, reading_import_subscriptions, reading_remove_topic, reading_set_read,
+    reading_set_saved, search_open_library,
 )
 
 
@@ -68,8 +68,8 @@ def handle_get(handler, path, route, snapshot):
 
 
 def dispatch_source(path, body):
-    """/api/reading/source/*, /api/reading/bookmark/*, and
-    /api/reading/import-subscriptions - one group in the original chain."""
+    """/api/reading/source/*, /api/reading/bookmark/*, /api/reading/topics/*,
+    and /api/reading/import-subscriptions - one group in the original chain."""
     if path == "/api/reading/source/add":
         return reading_add_source(body)
     if path == "/api/reading/source/edit":
@@ -82,6 +82,10 @@ def dispatch_source(path, body):
         return add_bookmark(body)
     if path == "/api/reading/bookmark/delete":
         return delete_bookmark(str(body.get("id") or ""))
+    if path == "/api/reading/topics/add":
+        return reading_add_topic(body.get("label"))
+    if path == "/api/reading/topics/remove":
+        return reading_remove_topic(str(body.get("id") or ""))
     return None
 
 

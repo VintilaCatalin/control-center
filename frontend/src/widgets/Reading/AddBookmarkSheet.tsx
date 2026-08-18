@@ -1,21 +1,21 @@
 import { useEffect, useState } from 'react';
 import { addBookmark } from '../../api/actions/reading';
-import type { ReadingSource } from '../../api/types';
 import { Sheet } from '../../primitives/Sheet/Sheet';
-import { TOPIC_LABELS, TOPIC_ORDER } from './topics';
+import type { TopicDef } from './topics';
 import styles from './AddBookmarkSheet.module.css';
 
 interface AddBookmarkSheetProps {
   open: boolean;
   onClose: () => void;
+  topics: TopicDef[];
 }
 
 // Raindrop.io's core move: paste a link, get a card back. The backend
 // fetches the page once and pulls title/image/description out of it
 // (server.py's add_bookmark()) - there's nothing else to fill in here.
-export function AddBookmarkSheet({ open, onClose }: AddBookmarkSheetProps) {
+export function AddBookmarkSheet({ open, onClose, topics }: AddBookmarkSheetProps) {
   const [url, setUrl] = useState('');
-  const [topic, setTopic] = useState<ReadingSource['topic']>('interesting');
+  const [topic, setTopic] = useState('interesting');
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -55,10 +55,10 @@ export function AddBookmarkSheet({ open, onClose }: AddBookmarkSheetProps) {
         />
       </div>
       <div className={styles.field}>
-        <select className={styles.topicSelect} value={topic} onChange={(e) => setTopic(e.target.value as ReadingSource['topic'])}>
-          {TOPIC_ORDER.map((t) => (
-            <option key={t} value={t}>
-              {TOPIC_LABELS[t]}
+        <select className={styles.topicSelect} value={topic} onChange={(e) => setTopic(e.target.value)}>
+          {topics.map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.label}
             </option>
           ))}
         </select>

@@ -60,6 +60,7 @@ export function Reading({ initialSection, onInitialSectionApplied }: ReadingProp
             items={data.items}
             books={data.books}
             bookmarks={data.bookmarks}
+            topics={data.topics}
             active={activeKey}
             onSelect={setActiveKey}
             onManageSources={() => setSourceManagerOpen(true)}
@@ -68,7 +69,7 @@ export function Reading({ initialSection, onInitialSectionApplied }: ReadingProp
           />
         ) : null,
       // eslint-disable-next-line react-hooks/exhaustive-deps
-      [data?.sources, data?.items, data?.books, data?.bookmarks, activeKey, collapsed],
+      [data?.sources, data?.items, data?.books, data?.bookmarks, data?.topics, activeKey, collapsed],
     ),
   );
 
@@ -94,6 +95,7 @@ export function Reading({ initialSection, onInitialSectionApplied }: ReadingProp
             items={data.items}
             bookmarks={data.bookmarks}
             books={data.books}
+            topics={data.topics}
             section={activeKey}
             onOpenItem={setDetailItem}
             onRemoveBookmark={handleRemoveBookmark}
@@ -114,8 +116,8 @@ export function Reading({ initialSection, onInitialSectionApplied }: ReadingProp
       </AnimatePresence>
 
       <AddBookSheet open={addBookOpen} onClose={() => setAddBookOpen(false)} />
-      <AddBookmarkSheet open={addBookmarkOpen} onClose={() => setAddBookmarkOpen(false)} />
-      <SourceManagerSheet open={sourceManagerOpen} onClose={() => setSourceManagerOpen(false)} sources={data.sources} />
+      <AddBookmarkSheet open={addBookmarkOpen} onClose={() => setAddBookmarkOpen(false)} topics={data.topics} />
+      <SourceManagerSheet open={sourceManagerOpen} onClose={() => setSourceManagerOpen(false)} sources={data.sources} topics={data.topics} />
     </div>
   );
 }

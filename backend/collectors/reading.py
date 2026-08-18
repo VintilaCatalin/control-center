@@ -12,7 +12,7 @@ from datetime import datetime, timedelta, timezone
 from urllib.parse import urlparse, parse_qs, urljoin
 import requests
 
-from backend.core import ARTICLE_DIR, CONFIG_DIR, YT_CHANNEL_FEED, YT_RE, edit_store, load_store
+from backend.core import ARTICLE_DIR, CONFIG_DIR, YT_CHANNEL_FEED, YT_RE, _slug, edit_store, load_store
 
 
 def _strip_html(text, limit=180):
@@ -431,7 +431,12 @@ def collect_feeds(cfg, _shared):
             feeds.append({"label": label, "url": url, "items": [], "error": str(e)[:120]})
     return {"feeds": feeds}
 
-READING_TOPICS = ["tech", "ai", "design", "world", "travel", "games", "interesting", "youtube", "sport"]
+def _reading_topic_ids(store=None):
+    """The live, user-editable topic vocabulary (store["reading_topics"]) -
+    not a fixed enum any more, see reading_add_topic()/reading_remove_topic().
+    Pass `store` when already inside an edit_store() mutate() to avoid a
+    second disk read; omit it to load fresh (e.g. before opening one)."""
+    return {t["id"] for t in (store or load_store())["reading_topics"]}
 
 _HN_BLURB_RE = re.compile(r"Article URL:\s*\S+|Comments URL:\s*\S+|Points:\s*\d+|#\s*Comments:\s*\d+", re.I)
 
@@ -597,7 +602,7 @@ def collect_reading(cfg, _shared):
     items.sort(key=lambda i: i["published"] or 0, reverse=True)
     bookmarks = sorted((_normalize_bookmark(b) for b in store["reading_bookmarks"]),
                        key=lambda i: i["published"] or 0, reverse=True)
-    return {"items": items, "sources": store["reading_sources"], "topics": READING_TOPICS,
+    return {"items": items, "sources": store["reading_sources"], "topics": store["reading_topics"],
             "books": store["books"], "bookmarks": bookmarks, "errors": errors, "fetched_at": time.time()}
 
 def _reading_set_membership(list_key, item_id, want):
@@ -620,8 +625,6 @@ def reading_set_read(item_id, read):
 def reading_hide_item(item_id):
     return _reading_set_membership("reading_hidden", item_id, True)
 
-READING_SOURCE_TOPICS = ("tech", "ai", "design", "world", "travel", "games", "interesting", "youtube", "sport")
-
 def reading_add_source(payload):
     label = str(payload.get("label") or "").strip()
     url = str(payload.get("url") or "").strip()
@@ -630,7 +633,7 @@ def reading_add_source(payload):
         source_type = payload["type"]
     else:
         source_type = "youtube" if YT_RE.search(url) else "rss"
-    topic = payload.get("topic") if payload.get("topic") in READING_SOURCE_TOPICS else "interesting"
+    topic = payload.get("topic") if payload.get("topic") in _reading_topic_ids() else "interesting"
     base_id = re.sub(r"[^a-z0-9]+", "-", label.lower()).strip("-") or hashlib.sha1(url.encode()).hexdigest()[:8]
     result = {"ok": True}
     def mutate(store):
@@ -656,7 +659,7 @@ def reading_edit_source(source_id, patch):
                 s["label"] = str(patch["label"]).strip()[:80]
             if patch.get("type") in ("rss", "youtube", "webpage"):
                 s["type"] = patch["type"]
-            if patch.get("topic") in READING_SOURCE_TOPICS:
+            if patch.get("topic") in _reading_topic_ids(store):
                 s["topic"] = patch["topic"]
             if "enabled" in patch:
                 s["enabled"] = bool(patch["enabled"])
@@ -669,6 +672,50 @@ def reading_delete_source(source_id):
         store["reading_sources"] = [s for s in store.get("reading_sources") or [] if s.get("id") != source_id]
     edit_store(mutate)
     return {"ok": True}
+
+def reading_add_topic(label):
+    """Topics used to be a fixed 9-value enum - now a plain list in the
+    store, same "list of {id,label} dicts, id derived from the label via
+    _slug()" shape sources/pages/shelves already use elsewhere in this
+    file/core.py."""
+    label = str(label or "").strip()[:40]
+    if not label: return {"ok": False, "error": "a name is required"}
+    result = {"ok": True}
+    def mutate(store):
+        nonlocal result
+        topics = store.setdefault("reading_topics", [])
+        if any(t.get("label", "").lower() == label.lower() for t in topics):
+            result = {"ok": False, "error": "that topic already exists"}
+            return
+        used = {t["id"] for t in topics}
+        tid = _slug(label)
+        while tid in used: tid += "-2"
+        topics.append({"id": tid, "label": label})
+        result = {"ok": True, "id": tid, "topics": topics}
+    edit_store(mutate)
+    return result
+
+def reading_remove_topic(topic_id):
+    """"interesting" is the fallback every invalid/removed topic
+    reassigns to (see reading_add_source/reading_edit_source/add_bookmark)
+    - it must always exist, so it's the one topic that can't be removed."""
+    topic_id = str(topic_id or "")
+    if topic_id == "interesting":
+        return {"ok": False, "error": "can't remove the default topic"}
+    result = {"ok": False, "error": "not found"}
+    def mutate(store):
+        nonlocal result
+        topics = store.get("reading_topics") or []
+        if not any(t.get("id") == topic_id for t in topics):
+            return
+        store["reading_topics"] = [t for t in topics if t.get("id") != topic_id]
+        for s in store.get("reading_sources") or []:
+            if s.get("topic") == topic_id: s["topic"] = "interesting"
+        for b in store.get("reading_bookmarks") or []:
+            if b.get("topic") == topic_id: b["topic"] = "interesting"
+        result = {"ok": True, "topics": store["reading_topics"]}
+    edit_store(mutate)
+    return result
 
 def reading_import_subscriptions(text):
     """Reuses parse_subscriptions() (the existing YouTube OPML/Takeout-CSV
@@ -813,7 +860,7 @@ def add_bookmark(payload):
     if not url.startswith(("http://", "https://")):
         return {"ok": False, "error": "that doesn't look like a URL"}
     bookmark_id = hashlib.sha1(url.encode()).hexdigest()[:16]
-    topic = payload.get("topic") if payload.get("topic") in READING_SOURCE_TOPICS else "interesting"
+    topic = payload.get("topic") if payload.get("topic") in _reading_topic_ids() else "interesting"
     domain = (urlparse(url).hostname or "").replace("www.", "")
     title, image, excerpt, sitename = url, None, "", domain
     try:
