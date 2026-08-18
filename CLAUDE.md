@@ -4,7 +4,7 @@
 
 ## Product Design Principle — DO NOT REBUILD THE OLD APP
 
-The old `panel/` application is a functional reference, not a product-design specification.
+The old `legacy/` application is a functional reference, not a product-design specification.
 
 A successful migration must NOT simply reproduce the old screens in React.
 
@@ -38,7 +38,7 @@ Do not add novelty for its own sake. Improvements must remain coherent with the 
 
 This is a single-user Windows Control Center.
 
-The old `panel/` application is the functional reference, NOT the visual target.
+The old `legacy/` application is the functional reference, NOT the visual target.
 
 Core principle:
 
@@ -56,7 +56,7 @@ There is no user/admin/permission system.
 
 Main frontend:
 
-`control-center/`
+`frontend/`
 
 Stack:
 
@@ -69,7 +69,7 @@ Stack:
 
 Existing backend:
 
-`panel/server.py`
+`backend/server.py`
 
 The React frontend communicates with the existing backend through `/api/*`.
 
@@ -77,19 +77,73 @@ Do not create a second backend.
 
 ---
 
+## Repository/runtime boundaries
+
+The mental model a new developer (or the release package) should have:
+
+**Control Center → backend + frontend + optional system helpers/integrations.**
+
+Not "panel.py / server.py / tray.py / scripts / Vite" - those are implementation
+details of the four things above, not the architecture itself.
+
+- **`backend/`** - the actual Control Center Python backend: `core.py`
+  (shared infra/settings schema), `collectors/` (one module per data
+  domain), `routes/` (one module per API surface), `server.py` (thin entry
+  point that wires the two together). This is the product's own code.
+- **`frontend/`** - the React/TypeScript/Vite UI. Also the product's own
+  code. `frontend/dist/` (built, not committed) is what `backend/server.py`
+  serves at `/`.
+- **`system/`** - Windows/system helper tooling Control Center calls into
+  (`lights.py`, `wallpicker.py`, `wallhaven.py`, `chroma_paint.py`,
+  `rgb_paint_win.py`, `spanwall.py`) or that's retained personal automation
+  living alongside it (`shortcuts.ahk`, `tray.py`). **Not the backend** -
+  these are separate processes the backend subprocess-invokes by relative
+  path, several of which also work standalone via hotkeys, independent of
+  whether Control Center is even running. Do not fold their logic into
+  `backend/`.
+- **`scripts/`** - development/build tooling only (`build_release.py`).
+  Not runtime application code. An end user never needs anything in this
+  folder - it's how a maintainer produces the release package, not part of
+  what ships in it.
+- **`control_center.py`** - the actual application entry point. Starts the
+  backend, ensures required background helpers are running (currently:
+  the Chroma keyboard daemon - see its own "Background helpers" section),
+  opens/focuses the UI window. This is the one thing a Windows Startup
+  shortcut should point at.
+- **`control_center_tray.py`** - an *optional* convenience utility, not
+  the application itself and not required for Control Center to run.
+  Audited against "is this still necessary now that control_center.py
+  manages its own startup/runtime": it isn't redundant - it's the only way
+  to get Open/Stop/Restart without a terminal, plus a visible tray icon -
+  but it's also not load-bearing. Keep it clearly optional: never make it
+  a dependency of the core launch path, never assume it's running.
+  `system/tray.py` is a *different*, separate, personal-only tray
+  (lighting controls) - the two must never be merged back together.
+
+Release packaging (`scripts/build_release.py`) only ever bundles
+`backend/`, `frontend/dist/`, `legacy/`, `system/`, `control_center.py`,
+`control_center_tray.py`, `requirements.txt`, and `README.md` - `scripts/`
+itself is never copied into the release folder.
+
+---
+
 ## Existing Engines
 
-These scripts already contain working, tested functionality:
+These scripts already contain working, tested functionality. `system/` holds
+Windows integration tooling that predates Control Center and isn't owned by
+it - the backend subprocess-invokes some of these, but their logic lives
+here, not in the backend package:
 
-- `lights.py`
-- `rgb_paint_win.py`
-- `chroma_paint.py`
-- `wallpicker.py`
-- `wallhaven.py`
-- `spanwall.py`
-- `shortcuts.ahk`
-- `tray.py`
-- `panel.py`
+- `system/lights.py`
+- `system/rgb_paint_win.py`
+- `system/chroma_paint.py`
+- `system/wallpicker.py`
+- `system/wallhaven.py`
+- `system/spanwall.py`
+- `system/shortcuts.ahk`
+- `system/tray.py` — personal lighting tray only, not part of the product (see `control_center_tray.py`)
+- `control_center.py` — the application entry point
+- `control_center_tray.py` — Control Center's own tray launcher, deliberately separate from `system/tray.py`
 
 Do not reimplement their internal logic in React.
 
@@ -192,7 +246,7 @@ Scene should continue to evolve visually rather than simply reproduce the old im
 
 ## Wallpaper Recovery
 
-`wallhaven.py` contains the existing `fix_desktops()` recovery mechanism for Windows virtual-desktop wallpaper problems.
+`system/wallhaven.py` contains the existing `fix_desktops()` recovery mechanism for Windows virtual-desktop wallpaper problems.
 
 Reuse it.
 

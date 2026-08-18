@@ -1,0 +1,118 @@
+.screen {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto;
+  padding: var(--space-6);
+}
+
+.loading {
+  composes: body from '../tokens/typography.module.css';
+  color: var(--text-tertiary);
+}
+
+.card {
+  width: 100%;
+  max-width: 640px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: var(--space-6);
+  border-radius: 20px;
+  background: rgba(var(--overlay-tint), 0.05);
+  border: 1px solid var(--rim);
+  box-shadow: var(--lift);
+}
+
+.steps {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.stepDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--rim);
+  transition: background var(--dur-fast) var(--ease);
+}
+
+.stepDotActive {
+  background: var(--accent);
+  box-shadow: 0 0 8px color-mix(in oklab, var(--accent) 60%, transparent);
+}
+
+.stepDotDone {
+  background: color-mix(in oklab, var(--accent) 50%, var(--rim));
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: center;
+}
+
+.title {
+  composes: title1 from '../tokens/typography.module.css';
+  color: var(--text-primary);
+  font-weight: 680;
+}
+
+.sub {
+  composes: callout from '../tokens/typography.module.css';
+  color: var(--text-secondary);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+.primary {
+  composes: callout from '../tokens/typography.module.css';
+  padding: 10px 20px;
+  border-radius: 999px;
+  border: none;
+  background: var(--accent);
+  color: #0a0c10;
+  font-weight: 650;
+  cursor: pointer;
+  transition:
+    filter var(--dur-fast) var(--ease),
+    opacity var(--dur-fast) var(--ease);
+}
+
+.primary:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.primary:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.ghost {
+  composes: callout from '../tokens/typography.module.css';
+  padding: 10px 20px;
+  border-radius: 999px;
+  border: 1px solid var(--rim);
+  background: none;
+  color: var(--text-secondary);
+  font-weight: 600;
+  cursor: pointer;
+  margin-right: auto;
+  transition:
+    color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease);
+}
+
+.ghost:hover:not(:disabled) {
+  color: var(--text-primary);
+  background: rgba(var(--overlay-tint), 0.06);
+}

@@ -4,3 +4,4 @@ __pycache__/
 *.pyd
 .panel-tmp
 *.log
+/release/

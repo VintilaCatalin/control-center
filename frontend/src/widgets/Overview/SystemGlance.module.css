@@ -1,0 +1,160 @@
+.glance {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  height: 100%;
+}
+
+.empty {
+  composes: footnote from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  font-style: italic;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  padding: var(--space-4);
+}
+
+.tabs {
+  flex: 0 0 auto;
+  display: flex;
+  gap: var(--space-1);
+  padding: 3px;
+  border-radius: 10px;
+  background: rgba(var(--overlay-tint), 0.04);
+}
+
+.tab {
+  composes: caption from '../../tokens/typography.module.css';
+  flex: 1;
+  height: 28px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: var(--text-tertiary);
+  font-weight: 650;
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease);
+}
+
+.tab:hover {
+  color: var(--text-secondary);
+}
+
+.tabActive {
+  color: var(--text-primary);
+  background: rgba(var(--overlay-tint), 0.08);
+}
+
+.body {
+  flex: 1;
+  min-height: 0;
+}
+
+.pcPanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  height: 100%;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.identity {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ip {
+  composes: headline from '../../tokens/typography.module.css';
+  color: var(--text-primary);
+  font-weight: 620;
+}
+
+.sshLabel {
+  composes: caption from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+}
+
+/* ---- Temperature cards (CPU/GPU) - temp is the headline, the chart is
+   context underneath, a single thin unfilled line (no heavy fill wash)
+   so it stays a quiet trend, not another loud graphic. ---- */
+
+.tempRow {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+.tempCard {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--space-3);
+  border-radius: 14px;
+  background: rgba(var(--overlay-tint), 0.04);
+  border: 1px solid var(--rim);
+  min-width: 0;
+}
+
+.tempHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.tempCardLabel {
+  composes: eyebrow from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+}
+
+.tempCardLoad {
+  composes: caption from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.tempHint {
+  composes: footnote from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  font-style: italic;
+}
+
+.tempReadout {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+}
+
+.tempValue {
+  composes: display from '../../tokens/typography.module.css';
+  font-size: 2.1rem;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.tempUnit {
+  composes: callout from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  font-weight: 600;
+}
+
+.tempChart {
+  flex: 1;
+  min-height: 0;
+  margin-top: 2px;
+}
