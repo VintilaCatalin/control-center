@@ -68,8 +68,13 @@
      lightness instead of just crushing toward grey the way an sRGB mix
      would. Black, not --ink, as the other end of the mix - --ink still
      has its own faint hue, which fights the accent's at this low a
-     lightness; true black lets the accent be the only colour present. */
-  --popup-bg: color-mix(in oklab, var(--accent) 26%, black);
+     lightness; true black lets the accent be the only colour present.
+     The oklch(from ...) step first knocks the accent's own chroma down
+     ~12% before it ever gets mixed toward black - a touch too saturated
+     per direct feedback. This targets chroma specifically (not the mix
+     ratio below, which would also shift lightness/darkness as a side
+     effect of trying to fix saturation alone). */
+  --popup-bg: color-mix(in oklab, oklch(from var(--accent) l calc(c * 0.88) h) 26%, black);
   --popup-border: var(--rim-lit);
   --popup-shadow: var(--lift), var(--inner);
   --popup-blur: blur(40px) saturate(160%);
