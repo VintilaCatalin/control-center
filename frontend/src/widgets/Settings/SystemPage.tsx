@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useSnapshotData } from '../../api/SnapshotProvider';
 import type { HardwareData, SettingsFieldSchema, SettingsResponse } from '../../api/types';
+import { CityField } from './CityField';
 import { ProfilePhotoField } from './ProfilePhotoField';
 import { SettingsField } from './SettingsField';
 import styles from './SettingsPages.module.css';
@@ -14,7 +15,7 @@ interface SystemPageProps {
   setLocal: (key: string, value: string) => void;
 }
 
-const PROFILE_KEYS = ['_profile_name', 'place', 'latitude', 'longitude', 'units', 'calendar_ics'];
+const PROFILE_KEYS = ['_profile_name', 'units', 'calendar_ics'];
 
 // Real polling cadences, straight from server.py's own INTERVALS dict -
 // not editable (that dict drives the collector scheduler itself, not a
@@ -86,6 +87,14 @@ export function SystemPage({ data, getValue, isSecret, origin, onChange, setLoca
               if (!field) return null;
               return <SettingsField key={key} field={field} value={getValue(key)} isSecret={isSecret(key)} origin={origin(key)} onChange={(v, o) => onChange(key, v, o)} />;
             })}
+            <CityField
+              place={getValue('place')}
+              onChange={(place, lat, lon) => {
+                onChange('place', place, { immediate: true });
+                onChange('latitude', lat, { immediate: true });
+                onChange('longitude', lon, { immediate: true });
+              }}
+            />
           </div>
         </div>
       </section>

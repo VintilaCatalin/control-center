@@ -11,6 +11,8 @@ import os
 import re
 from pathlib import Path
 
+import requests
+
 from backend.core import LEGACY_INDEX, REACT_DIST, _STATIC_MIME, COVER_DIR, pick_file
 
 
@@ -39,6 +41,30 @@ def handle_get(handler, path, route, snapshot):
         from urllib.parse import parse_qs
         kind = (parse_qs(route.query).get("kind") or ["exe"])[0]
         handler._send(json.dumps({"path": pick_file(kind)}))
+        return True
+    if path == "/api/geocode":
+        # City search for onboarding/Settings' location field - the same
+        # provider collect_weather() already calls (Open-Meteo), so no new
+        # API key or dependency, just its sibling geocoding endpoint. The
+        # frontend never asks anyone to type latitude/longitude by hand.
+        from urllib.parse import parse_qs
+        q = (parse_qs(route.query).get("q") or [""])[0].strip()
+        results = []
+        if q:
+            try:
+                r = requests.get("https://geocoding-api.open-meteo.com/v1/search",
+                                  params={"name": q, "count": 6, "language": "en", "format": "json"},
+                                  timeout=6)
+                r.raise_for_status()
+                for item in (r.json().get("results") or []):
+                    results.append({
+                        "name": item.get("name"), "admin1": item.get("admin1"),
+                        "country": item.get("country"),
+                        "latitude": item.get("latitude"), "longitude": item.get("longitude"),
+                    })
+            except Exception:
+                pass
+        handler._send(json.dumps({"results": results}))
         return True
     if path == "/api/cover":
         from urllib.parse import parse_qs

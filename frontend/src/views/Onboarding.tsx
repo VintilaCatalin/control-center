@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { completeOnboarding } from '../api/actions/settings';
 import { useSnapshotData } from '../api/SnapshotProvider';
 import type { SettingsFieldSchema } from '../api/types';
+import { CityField } from '../widgets/Settings/CityField';
 import { IntegrationCard } from '../widgets/Settings/IntegrationCard';
 import { INTEGRATIONS } from '../widgets/Settings/integrations';
 import { ProfilePhotoField } from '../widgets/Settings/ProfilePhotoField';
@@ -12,7 +13,7 @@ import styles from './Onboarding.module.css';
 
 type Step = 'profile' | 'folders' | 'integrations';
 
-const PROFILE_KEYS = ['_profile_name', 'place', 'latitude', 'longitude'];
+const PROFILE_KEYS = ['_profile_name'];
 // Local, not a network integration - Notes and Games both work with
 // nothing more than a folder, and both are genuinely optional (skipping
 // either just means that app's own "choose a folder" empty state greets
@@ -86,6 +87,14 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
                   if (!field) return null;
                   return <SettingsField key={key} field={field} value={getValue(key)} isSecret={isSecret(key)} origin={origin(key)} onChange={(v, o) => setValue(key, v, o)} />;
                 })}
+                <CityField
+                  place={getValue('place')}
+                  onChange={(place, lat, lon) => {
+                    setValue('place', place, { immediate: true });
+                    setValue('latitude', lat, { immediate: true });
+                    setValue('longitude', lon, { immediate: true });
+                  }}
+                />
               </div>
             </div>
 
