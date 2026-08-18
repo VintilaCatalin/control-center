@@ -55,10 +55,19 @@ export function fetchFeedPresets(): Promise<{ presets: { group: string; feeds: {
 }
 
 // Topic management - see backend/collectors/reading.py's
-// reading_add_topic()/reading_remove_topic(). "interesting" can't be
-// removed (it's the fallback every invalid/removed topic reassigns to).
-export function addTopic(label: string): Promise<{ ok: boolean; id?: string; error?: string }> {
-  return postAction('/api/reading/topics/add', { label });
+// reading_add_topic()/reading_remove_topic()/reading_set_topic_icon()/
+// reading_reorder_topics(). "interesting" can't be removed (it's the
+// fallback every invalid/removed topic reassigns to).
+export function addTopic(label: string, icon?: string): Promise<{ ok: boolean; id?: string; error?: string }> {
+  return postAction('/api/reading/topics/add', { label, icon });
+}
+
+export function setTopicIcon(id: string, icon: string): Promise<{ ok: boolean; error?: string }> {
+  return postAction('/api/reading/topics/icon', { id, icon });
+}
+
+export function reorderTopics(ids: string[]): Promise<{ ok: boolean; error?: string }> {
+  return postAction('/api/reading/topics/reorder', { ids });
 }
 
 export function removeTopic(id: string): Promise<{ ok: boolean; error?: string }> {

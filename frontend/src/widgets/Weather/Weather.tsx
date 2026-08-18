@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { useSnapshotData } from '../../api/SnapshotProvider';
 import { duration, ease } from '../../tokens/motion';
+import { DropletIcon, FeelsIcon, WindIcon } from './statIcons';
 import { WeatherIcon } from './WeatherIcon';
 import styles from './Weather.module.css';
 
@@ -9,30 +10,6 @@ const fade = {
   animate: { opacity: 1, y: 0 },
   exit: { opacity: 0, y: -6 },
 };
-
-function DropletIcon() {
-  return (
-    <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M12 3s6.5 7.1 6.5 11.5a6.5 6.5 0 0 1-13 0C5.5 10.1 12 3 12 3Z" />
-    </svg>
-  );
-}
-
-function WindIcon() {
-  return (
-    <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M3 8h11.5a2.75 2.75 0 1 0-2.6-3.7M3 12.5h14.5a2.75 2.75 0 1 1-2.6 3.7M3 17h9.5a2.25 2.25 0 1 1-2.1 3" />
-    </svg>
-  );
-}
-
-function FeelsIcon() {
-  return (
-    <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M12 14.76V4.5a2.5 2.5 0 0 0-5 0v10.26a4.5 4.5 0 1 0 5 0Z" strokeLinejoin="round" />
-    </svg>
-  );
-}
 
 export function Weather() {
   const { snapshot, loading, error } = useSnapshotData();
@@ -59,6 +36,14 @@ export function Weather() {
   const days = w.days.slice(1, 6);
   const hours = w.hours ?? [];
 
+  // A shared scale across the whole 5-day window, not per-day - so each
+  // day's bar height is actually comparable to its neighbours (a 3-degree
+  // range next to a 12-degree range should look narrow next to wide, not
+  // both stretched to fill their own box).
+  const trackMin = days.length ? Math.min(...days.map((d) => d.low)) : 0;
+  const trackMax = days.length ? Math.max(...days.map((d) => d.high)) : 1;
+  const span = Math.max(1, trackMax - trackMin);
+
   return (
     <AnimatePresence mode="wait">
       <motion.div
@@ -68,32 +53,33 @@ export function Weather() {
         animate={fade.animate}
         transition={{ duration: duration.slow, ease }}
       >
-        <div className={styles.now}>
-          <span className={styles.place}>{w.place}</span>
-          <div className={styles.tempRow}>
+        <div className={styles.hero}>
+          <div className={styles.heroIcon}>
+            <WeatherIcon icon={w.icon} isDay={w.is_day} size={52} />
+          </div>
+          <div className={styles.heroText}>
+            <span className={styles.place}>{w.place}</span>
             <div className={styles.temp}>
               {w.temp}
               <sup>°{w.unit}</sup>
             </div>
-            <div className={styles.condition}>
-              <WeatherIcon icon={w.icon} isDay={w.is_day} size={26} />
-              <span className={styles.conditionLabel}>{w.label}</span>
-            </div>
+            <span className={styles.conditionLabel}>{w.label}</span>
           </div>
-          <div className={styles.stats}>
-            <span className={styles.stat}>
-              <FeelsIcon />
-              Feels {w.feels}°
-            </span>
-            <span className={styles.stat}>
-              <DropletIcon />
-              {w.humidity}%
-            </span>
-            <span className={styles.stat}>
-              <WindIcon />
-              {w.wind} km/h
-            </span>
-          </div>
+        </div>
+
+        <div className={styles.stats}>
+          <span className={styles.stat}>
+            <FeelsIcon />
+            Feels {w.feels}°
+          </span>
+          <span className={styles.stat}>
+            <DropletIcon />
+            {w.humidity}%
+          </span>
+          <span className={styles.stat}>
+            <WindIcon />
+            {w.wind} km/h
+          </span>
         </div>
 
         {hours.length > 0 && (
@@ -110,14 +96,21 @@ export function Weather() {
 
         {days.length > 0 && (
           <div className={styles.days}>
-            {days.map((d) => (
-              <div key={d.date} className={styles.day}>
-                <span className={styles.dayLabel}>{d.label}</span>
-                <WeatherIcon icon={d.icon} size={18} />
-                <span className={styles.dayHigh}>{d.high}°</span>
-                <span className={styles.dayLow}>{d.low}°</span>
-              </div>
-            ))}
+            {days.map((d) => {
+              const top = ((trackMax - d.high) / span) * 100;
+              const height = Math.max(10, ((d.high - d.low) / span) * 100);
+              return (
+                <div key={d.date} className={styles.day}>
+                  <span className={styles.dayLabel}>{d.label}</span>
+                  <WeatherIcon icon={d.icon} size={17} />
+                  <span className={styles.dayHigh}>{d.high}°</span>
+                  <div className={styles.rangeTrack}>
+                    <div className={styles.rangeBar} style={{ top: `${top}%`, height: `${height}%` }} />
+                  </div>
+                  <span className={styles.dayLow}>{d.low}°</span>
+                </div>
+              );
+            })}
           </div>
         )}
       </motion.div>
@@ -128,9 +121,9 @@ export function Weather() {
 function WeatherSkeleton() {
   return (
     <div className={styles.root} aria-busy="true" aria-label="Loading weather">
-      <div className={styles.now}>
+      <div className={styles.hero}>
+        <span className={`${styles.skel} ${styles.skelIcon}`} style={{ width: 76, height: 76, borderRadius: 22 }} />
         <span className={`${styles.skel} ${styles.skelTemp}`} />
-        <span className={`${styles.skel} ${styles.skelMeta}`} />
       </div>
       <div className={styles.days}>
         {[0, 1, 2, 3, 4].map((i) => (

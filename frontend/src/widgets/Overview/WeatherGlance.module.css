@@ -3,8 +3,8 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: var(--space-3);
-  padding: var(--space-3);
+  gap: var(--space-4);
+  padding: var(--space-4);
 }
 
 .empty {
@@ -12,61 +12,81 @@
   color: var(--text-tertiary);
 }
 
-.now {
+.hero {
   display: flex;
   align-items: center;
   gap: var(--space-3);
+}
+
+.heroIcon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
   color: var(--accent);
+  background: radial-gradient(circle at 30% 25%, color-mix(in oklab, var(--accent) 22%, transparent), transparent 70%), rgba(var(--overlay-tint), 0.05);
+  border: 1px solid var(--rim);
 }
 
 .nowText {
   display: flex;
   flex-direction: column;
+  min-width: 0;
+}
+
+.place {
+  composes: eyebrow from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  letter-spacing: 0.09em;
 }
 
 .temp {
   font-family: var(--display);
   font-stretch: 87.5%;
-  font-size: clamp(2.2rem, 3.5vw, 2.9rem);
-  line-height: 1;
+  font-weight: 580;
+  font-size: clamp(2.4rem, 3.6vw, 3.1rem);
+  line-height: 1.05;
   color: var(--text-primary);
 }
 
 .temp sup {
-  font-size: var(--fs-title);
+  font-size: var(--fs-headline);
   font-weight: 500;
   color: var(--text-tertiary);
   vertical-align: super;
 }
 
 .condition {
-  composes: subhead from '../../tokens/typography.module.css';
+  composes: callout from '../../tokens/typography.module.css';
   color: var(--text-secondary);
-  font-weight: 600;
-  margin-top: 2px;
+  font-weight: 560;
 }
 
-.context {
+.stats {
   composes: caption from '../../tokens/typography.module.css';
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-4);
   color: var(--text-tertiary);
 }
 
-.dot {
-  opacity: 0.5;
+.stat {
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
-.place {
-  composes: footnote from '../../tokens/typography.module.css';
-  color: var(--text-tertiary);
-  margin-top: -6px;
+.stat svg {
+  flex-shrink: 0;
+  opacity: 0.8;
 }
 
 .forecast {
   display: flex;
-  gap: var(--space-2);
+  justify-content: space-between;
+  gap: var(--space-1);
   padding-top: var(--space-3);
   border-top: 1px solid var(--rim);
 }
@@ -76,7 +96,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 7px;
   padding: var(--space-2) 4px;
   border-radius: var(--r-tile);
   color: var(--text-tertiary);
@@ -90,8 +110,9 @@
 
 .dayLabel {
   composes: caption from '../../tokens/typography.module.css';
+  font-weight: 650;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
 }
 
 .dayHigh {
@@ -103,4 +124,23 @@
 .dayLow {
   composes: caption from '../../tokens/typography.module.css';
   opacity: 0.6;
+}
+
+/* One shared scale across the whole 5-day window (see WeatherGlance.tsx's
+   trackMin/trackMax) - a narrow range reads as a short bar, a wide swing
+   reads as a tall one, at a glance, instead of two bare stacked numbers. */
+.rangeTrack {
+  position: relative;
+  width: 4px;
+  height: 40px;
+  border-radius: 999px;
+  background: rgba(var(--overlay-tint), 0.08);
+}
+
+.rangeBar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-radius: 999px;
+  background: linear-gradient(180deg, color-mix(in oklab, var(--warn) 70%, var(--accent)), var(--accent) 60%, color-mix(in oklab, #6fa8e0 70%, var(--accent)));
 }

@@ -57,23 +57,21 @@
      too diluted to read as a colour at all. Aliasing straight to Card's
      tokens removes that degree of freedom entirely, instead of tuning
      the percentage again and re-introducing some other drift. */
-  /* More opaque than Card's own --glass (32%) - dense modal content
-     (Quick Tasks, source management, settings-style forms) needs to read
-     clearly, not show whatever's behind it through. Deliberately NOT a
-     separate popup-only glass-strength percentage - the note above
-     already explains why that's the wrong axis to tune (a bigger number
-     on the same --slate just concentrates its navy cast at small popup
-     sizes). Layering extra --ink (near-black, far lower chroma than
-     --slate) on top of the existing --glass value raises opacity without
-     reviving that same tint problem. Raised from 45% - even the "more
-     opaque than Card" version still read as too see-through over a busy
-     wallpaper/panel behind it, hard to read text against. --popup-blur is
-     its own stronger value now too (not just --blur), rather than pushing
-     Card's shared blur up as a side effect of a popup-only complaint. */
-  --popup-bg: color-mix(in oklab, var(--ink) 62%, var(--glass));
-  --popup-border: var(--rim);
+  /* Fully solid now - not a color-mix/translucency tuning exercise any
+     more (45% -> 62% -> 86% ink, then 92% raise all still read as "losing
+     itself in the background" per direct feedback). Flat --raise
+     (#1b1f28), zero transparency: a modal is a distinct panel sitting
+     ABOVE the dimmed page, not a pane of glass over it, and "everything
+     opaque" was the explicit ask. --raise is also visibly lighter than
+     --ink, which is what --popup-scrim is built from (a near-black
+     rgba(4,6,9,...)) - a solid modal in one tone next to a translucent
+     dark scrim in a different, near-black tone can't blend into each
+     other the way two near-identical near-black translucent layers did.
+     --popup-border upgraded to the brighter --rim-lit for a real edge. */
+  --popup-bg: var(--raise);
+  --popup-border: var(--rim-lit);
   --popup-shadow: var(--lift), var(--inner);
-  --popup-blur: blur(22px) saturate(160%);
+  --popup-blur: blur(40px) saturate(160%);
   /* One scrim strength for every popup that has one (Sheet, Overlay) -
      0.8, not the ~0.5 this used to be: a modal reading against whatever
      busy panel/wallpaper is still faintly visible behind it was hard to

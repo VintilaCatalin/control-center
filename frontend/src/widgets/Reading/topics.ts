@@ -64,6 +64,7 @@ export const REGULAR_TOPICS = TOPIC_ORDER.filter((t) => t !== 'youtube');
 export interface TopicDef {
   id: string;
   label: string;
+  icon?: string;
 }
 
 // Falls back to the live topic list (snapshot.reading.topics, real

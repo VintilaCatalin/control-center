@@ -13,8 +13,8 @@
 .sheet {
   position: relative;
   overflow: auto;
-  width: min(860px, 84vw);
-  max-height: 82vh;
+  width: min(980px, 92vw);
+  max-height: 88vh;
   padding: var(--space-6);
   border-radius: 28px;
   background: var(--popup-bg);

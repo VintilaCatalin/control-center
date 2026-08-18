@@ -5,10 +5,29 @@
   font-family: var(--body);
 }
 
-.now {
+.hero {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.heroIcon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 76px;
+  height: 76px;
+  border-radius: 22px;
+  color: var(--accent);
+  background: radial-gradient(circle at 30% 25%, color-mix(in oklab, var(--accent) 22%, transparent), transparent 70%), rgba(var(--overlay-tint), 0.05);
+  border: 1px solid var(--rim);
+}
+
+.heroText {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  min-width: 0;
 }
 
 .place {
@@ -17,51 +36,33 @@
   letter-spacing: 0.09em;
 }
 
-.tempRow {
-  display: flex;
-  align-items: flex-end;
-  gap: var(--space-3);
-  margin-top: var(--space-1);
-}
-
 .temp {
   font-family: var(--display);
   font-stretch: 87.5%;
-  font-weight: 560;
-  font-size: calc(var(--fs-display) * 1.15);
-  line-height: 0.85;
+  font-weight: 580;
+  font-size: calc(var(--fs-display) * 1.3);
+  line-height: 1;
   color: var(--paper);
   text-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
 }
 
 .temp sup {
-  font-size: var(--fs-title);
+  font-size: var(--fs-headline);
   font-weight: 500;
   color: var(--mist);
   vertical-align: super;
 }
 
-.condition {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding-bottom: 4px;
-  color: var(--accent);
-}
-
 .conditionLabel {
-  composes: caption from '../../tokens/typography.module.css';
+  composes: callout from '../../tokens/typography.module.css';
   color: var(--text-secondary);
-  text-align: center;
-  white-space: nowrap;
+  font-weight: 560;
 }
 
 .stats {
   display: flex;
   align-items: center;
   gap: var(--space-4);
-  margin-top: var(--space-3);
 }
 
 .stat {
@@ -123,8 +124,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-1);
-  width: 44px;
+  gap: 7px;
+  width: 46px;
   padding: var(--space-2) var(--space-1);
   border-radius: var(--r-tile);
   color: var(--mist);
@@ -160,6 +161,26 @@
 .dayLow {
   font-size: var(--fs-caption);
   opacity: 0.55;
+}
+
+/* A per-day high/low sits on one shared scale across the whole 5-day
+   window (see Weather.tsx's trackMin/trackMax) - a narrow range reads as
+   a short bar, a wide swing reads as a tall one, at a glance, the same
+   idea most weather apps use instead of two bare numbers stacked. */
+.rangeTrack {
+  position: relative;
+  width: 4px;
+  height: 42px;
+  border-radius: 999px;
+  background: rgba(var(--overlay-tint), 0.08);
+}
+
+.rangeBar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-radius: 999px;
+  background: linear-gradient(180deg, color-mix(in oklab, var(--warn) 70%, var(--accent)), var(--accent) 60%, color-mix(in oklab, #6fa8e0 70%, var(--accent)));
 }
 
 /* ---- loading skeleton ---- */

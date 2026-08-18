@@ -673,13 +673,16 @@ def reading_delete_source(source_id):
     edit_store(mutate)
     return {"ok": True}
 
-def reading_add_topic(label):
+def reading_add_topic(label, icon=None):
     """Topics used to be a fixed 9-value enum - now a plain list in the
     store, same "list of {id,label} dicts, id derived from the label via
     _slug()" shape sources/pages/shelves already use elsewhere in this
-    file/core.py."""
+    file/core.py. `icon` is just a key into the frontend's own fixed icon
+    set (topicIcons.tsx) - the backend never validates which icons exist,
+    it only ever echoes back whatever string the frontend sent."""
     label = str(label or "").strip()[:40]
     if not label: return {"ok": False, "error": "a name is required"}
+    icon = str(icon or "tag").strip()[:24] or "tag"
     result = {"ok": True}
     def mutate(store):
         nonlocal result
@@ -690,8 +693,41 @@ def reading_add_topic(label):
         used = {t["id"] for t in topics}
         tid = _slug(label)
         while tid in used: tid += "-2"
-        topics.append({"id": tid, "label": label})
+        topics.append({"id": tid, "label": label, "icon": icon})
         result = {"ok": True, "id": tid, "topics": topics}
+    edit_store(mutate)
+    return result
+
+def reading_set_topic_icon(topic_id, icon):
+    topic_id = str(topic_id or "")
+    icon = str(icon or "").strip()[:24]
+    if not icon: return {"ok": False, "error": "no icon"}
+    result = {"ok": False, "error": "not found"}
+    def mutate(store):
+        nonlocal result
+        for t in store.get("reading_topics") or []:
+            if t.get("id") != topic_id: continue
+            t["icon"] = icon
+            result = {"ok": True, "topics": store["reading_topics"]}
+            return
+    edit_store(mutate)
+    return result
+
+def reading_reorder_topics(ids):
+    """Same "known ids in the given order, anything missing appended in
+    its existing relative order" shape /api/views already uses (server.py/
+    routes/settings.py) - a stale or partial id list can never lose a
+    topic, only fail to move ones it didn't mention."""
+    wanted = [str(i) for i in (ids or [])]
+    result = {"ok": False, "error": "bad request"}
+    def mutate(store):
+        nonlocal result
+        topics = store.get("reading_topics") or []
+        by_id = {t["id"]: t for t in topics}
+        ordered = [by_id[i] for i in wanted if i in by_id]
+        remaining = [t for t in topics if t["id"] not in set(wanted)]
+        store["reading_topics"] = ordered + remaining
+        result = {"ok": True, "topics": store["reading_topics"]}
     edit_store(mutate)
     return result
 

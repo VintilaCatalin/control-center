@@ -760,11 +760,11 @@ YT_CHANNEL_FEED = "https://www.youtube.com/feeds/videos.xml?channel_id="
 # hard ceiling. "interesting" is the one entry that can never be removed
 # (see reading_remove_topic()) - every source/bookmark falls back to it.
 DEFAULT_READING_TOPICS = [
-    {"id": "tech", "label": "Tech"}, {"id": "ai", "label": "AI"},
-    {"id": "design", "label": "Design"}, {"id": "world", "label": "World"},
-    {"id": "travel", "label": "Travel"}, {"id": "games", "label": "Games"},
-    {"id": "interesting", "label": "Interesting"}, {"id": "youtube", "label": "YouTube"},
-    {"id": "sport", "label": "Sport"},
+    {"id": "tech", "label": "Tech", "icon": "chip"}, {"id": "ai", "label": "AI", "icon": "sparkle"},
+    {"id": "design", "label": "Design", "icon": "palette"}, {"id": "world", "label": "World", "icon": "globe"},
+    {"id": "travel", "label": "Travel", "icon": "plane"}, {"id": "games", "label": "Games", "icon": "controller"},
+    {"id": "interesting", "label": "Interesting", "icon": "star"}, {"id": "youtube", "label": "YouTube", "icon": "play"},
+    {"id": "sport", "label": "Sport", "icon": "trophy"},
 ]
 
 # Seeded into reading_sources on first run (see load_store()'s migration).

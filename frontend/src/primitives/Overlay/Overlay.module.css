@@ -18,8 +18,8 @@
   z-index: 71;
   display: flex;
   justify-content: center;
-  align-items: flex-start;
-  padding: 12vh var(--space-5) var(--space-5);
+  align-items: center;
+  padding: var(--space-5);
   pointer-events: none;
 }
 
@@ -70,8 +70,8 @@
 }
 
 .cardCenter {
-  width: min(760px, 88vw);
-  max-height: 82vh;
+  width: min(880px, 92vw);
+  max-height: 88vh;
 }
 
 .cardDrawer {

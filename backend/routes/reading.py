@@ -14,8 +14,8 @@ import requests
 from backend.collectors.reading import (
     FEED_PRESETS, _extract_article, add_book, add_bookmark, delete_book, delete_bookmark,
     edit_book, reading_add_source, reading_add_topic, reading_delete_source, reading_edit_source,
-    reading_hide_item, reading_import_subscriptions, reading_remove_topic, reading_set_read,
-    reading_set_saved, search_open_library,
+    reading_hide_item, reading_import_subscriptions, reading_remove_topic, reading_reorder_topics,
+    reading_set_read, reading_set_saved, reading_set_topic_icon, search_open_library,
 )
 
 
@@ -83,9 +83,13 @@ def dispatch_source(path, body):
     if path == "/api/reading/bookmark/delete":
         return delete_bookmark(str(body.get("id") or ""))
     if path == "/api/reading/topics/add":
-        return reading_add_topic(body.get("label"))
+        return reading_add_topic(body.get("label"), body.get("icon"))
     if path == "/api/reading/topics/remove":
         return reading_remove_topic(str(body.get("id") or ""))
+    if path == "/api/reading/topics/icon":
+        return reading_set_topic_icon(str(body.get("id") or ""), body.get("icon"))
+    if path == "/api/reading/topics/reorder":
+        return reading_reorder_topics(body.get("ids"))
     return None
 
 

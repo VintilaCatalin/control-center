@@ -454,10 +454,12 @@ export interface BookSearchResult {
 export interface ReadingData {
   items: ReadingItem[];
   sources: ReadingSource[];
-  // {id, label} pairs now, not a fixed string enum - the live,
+  // {id, label, icon} triples now, not a fixed string enum - the live,
   // user-editable topic vocabulary (see backend/collectors/reading.py's
-  // reading_add_topic()/reading_remove_topic()).
-  topics: { id: string; label: string }[];
+  // reading_add_topic()/reading_remove_topic()/reading_set_topic_icon()).
+  // `icon` is a key into the frontend's own fixed set (topicIcons.tsx) -
+  // the backend just stores whatever string it's given.
+  topics: { id: string; label: string; icon?: string }[];
   books: Book[];
   // Raindrop-style "paste a link" bookmarks - normalized to the exact
   // same shape as a feed item (server.py:_normalize_bookmark()), always
