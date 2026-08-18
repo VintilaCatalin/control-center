@@ -1,0 +1,192 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.input {
+  composes: callout from '../../../tokens/typography.module.css';
+  width: 100%;
+  color: var(--text-primary);
+  background: rgba(var(--overlay-tint), 0.05);
+  border: 1px solid var(--rim);
+  border-radius: 10px;
+  padding: var(--space-2) var(--space-3);
+}
+
+.input:focus {
+  outline: none;
+  border-color: color-mix(in oklab, var(--accent) 70%, transparent);
+}
+
+.input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.hint {
+  composes: footnote from '../../../tokens/typography.module.css';
+  display: block;
+  color: var(--text-tertiary);
+  padding: var(--space-2) 0;
+}
+
+.errorRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  margin-top: var(--space-2);
+  border-radius: 10px;
+  background: color-mix(in oklab, var(--warn) 12%, transparent);
+}
+
+.errorText {
+  composes: footnote from '../../../tokens/typography.module.css';
+  color: var(--warn);
+}
+
+.retryBtn {
+  composes: caption from '../../../tokens/typography.module.css';
+  flex-shrink: 0;
+  border: none;
+  background: none;
+  color: var(--warn);
+  font-weight: 700;
+  cursor: pointer;
+  padding: 2px 6px;
+}
+
+.retryBtn:hover {
+  text-decoration: underline;
+}
+
+.results {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 280px;
+  overflow-y: auto;
+  margin-top: var(--space-2);
+}
+
+.resultRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: 6px;
+  border: none;
+  border-radius: 10px;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--dur-fast) var(--ease);
+}
+
+.resultRow:hover:not(:disabled) {
+  background: rgba(var(--overlay-tint), 0.06);
+}
+
+.resultRow:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.resultCover {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 52px;
+  border-radius: 5px;
+  overflow: hidden;
+  background: linear-gradient(160deg, var(--raise), var(--slate));
+  color: var(--text-tertiary);
+}
+
+.resultCover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.resultText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.resultTitle {
+  composes: callout from '../../../tokens/typography.module.css';
+  color: var(--text-primary);
+  font-weight: 560;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.resultAuthor {
+  composes: caption from '../../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.resultAdd {
+  composes: caption from '../../../tokens/typography.module.css';
+  flex-shrink: 0;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.manualToggleRow {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--rim);
+}
+
+.manualToggle {
+  composes: caption from '../../../tokens/typography.module.css';
+  border: none;
+  background: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  padding: 0;
+}
+
+.manualToggle:hover {
+  color: var(--text-primary);
+}
+
+.manualForm {
+  display: flex;
+  flex-direction: column;
+  margin-top: var(--space-3);
+}
+
+.manualAddBtn {
+  composes: caption from '../../../tokens/typography.module.css';
+  align-self: flex-start;
+  color: #0a0c10;
+  background: var(--accent);
+  border: none;
+  border-radius: 10px;
+  padding: var(--space-2) var(--space-4);
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter var(--dur-fast) var(--ease);
+}
+
+.manualAddBtn:hover:not(:disabled) {
+  filter: brightness(1.12);
+}
+
+.manualAddBtn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}

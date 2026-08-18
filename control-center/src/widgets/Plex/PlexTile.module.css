@@ -1,0 +1,125 @@
+/* ---- poster grid tile ----
+   .tile matches ArtTile's own box exactly (same radius, same overflow:
+   hidden) so every overlay layer below - shade, meta, progress, the
+   hover play glyph - is clipped to the poster's own bounds and can
+   never bleed past its corners, the bug this replaced. */
+
+.tile {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--r-tile);
+  cursor: pointer;
+  outline: none;
+}
+
+.tile:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* Always-on, not hover-only - metadata needs a legible plate under it
+   at rest, the same way any poster-art app (including Plex's own)
+   keeps the title readable without requiring a hover first. Near-opaque
+   at the very bottom (not just dark) - some posters bake their own
+   title treatment into the artwork itself near the bottom edge, and a
+   merely-dark gradient there isn't enough to keep bright pixels from
+   showing through behind our own caption. */
+.shade {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 56%;
+  background: linear-gradient(to top, rgba(2, 3, 5, 0.97) 0%, rgba(2, 3, 5, 0.86) 32%, rgba(2, 3, 5, 0.28) 70%, transparent);
+  pointer-events: none;
+}
+
+.playOverlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: rgba(var(--overlay-tint), 0.95);
+  background: rgba(2, 3, 5, 0.28);
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease);
+  pointer-events: none;
+}
+
+.tile:hover .playOverlay,
+.tile:focus-visible .playOverlay {
+  opacity: 1;
+}
+
+.playOverlay svg {
+  width: 30px;
+  height: 30px;
+  filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.5));
+}
+
+.watchedBadge {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #0a0c10;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+.progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  background: rgba(2, 3, 5, 0.4);
+  z-index: 2;
+  pointer-events: none;
+}
+
+.progressFill {
+  height: 100%;
+  background: var(--accent);
+}
+
+/* More breathing room than before (space-5 top, space-3 sides/bottom -
+   was space-4/space-2/9px) - title and metadata were cramped right up
+   against the poster's own edges. */
+.meta {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  padding: var(--space-5) var(--space-3) var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  pointer-events: none;
+}
+
+/* Clearly primary - bigger and bolder than .sub, not just a slightly
+   heavier weight at the same size. */
+.title {
+  composes: callout from '../../tokens/typography.module.css';
+  font-size: 0.98em;
+  font-weight: 660;
+  color: rgba(var(--overlay-tint), 0.98);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
+}
+
+/* Secondary - smaller and visibly dimmer than .title, never competing
+   with it for attention. */
+.sub {
+  composes: caption from '../../tokens/typography.module.css';
+  color: rgba(var(--overlay-tint), 0.62);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+

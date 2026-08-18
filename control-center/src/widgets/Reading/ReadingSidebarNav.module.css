@@ -1,0 +1,182 @@
+/* min-height: 100% (not just flex layout alone) is what lets .manageBtn's
+   margin-top: auto actually reach the bottom of the sidebar - a flex
+   column child doesn't stretch along its own main axis by default, only
+   the shell's .navScroll parent height is available to grow into. */
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 100%;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 2px var(--space-2) var(--space-4);
+}
+
+.brandGlyph {
+  display: grid;
+  place-items: center;
+  color: var(--accent);
+}
+
+.brandLabel {
+  composes: headline from '../../tokens/typography.module.css';
+  font-weight: 650;
+  color: var(--text-primary);
+  letter-spacing: 0.01em;
+}
+
+.groupLabel {
+  composes: eyebrow from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  padding: var(--space-4) var(--space-2) 6px;
+}
+
+/* Filled-chip active state, matching Plex's media-app switcher treatment
+   rather than Notes' quiet text-row list - Reading is discovery/media,
+   not documents. */
+.item {
+  composes: callout from '../../tokens/typography.module.css';
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  height: 40px;
+  padding: 0 var(--space-3);
+  border: none;
+  border-radius: 10px;
+  background: none;
+  color: var(--text-secondary);
+  font-weight: 560;
+  font-size: 0.95em;
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease);
+}
+
+.item:hover {
+  color: var(--text-primary);
+  background: rgba(var(--overlay-tint), 0.06);
+}
+
+.itemActive {
+  color: var(--text-primary);
+  background: color-mix(in oklab, var(--accent) 18%, transparent);
+}
+
+.icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 19px;
+  color: inherit;
+}
+
+.itemActive .icon {
+  color: var(--accent);
+}
+
+.label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+}
+
+.count {
+  composes: caption from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+/* Bookmarks gets an inline "+" next to it (paste-a-link is a frequent
+   enough action to deserve a one-click entry point right where the
+   destination lives), unlike Books' "Add book" which only makes sense
+   once you're already looking at the shelf. */
+.rowWithAction {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.rowWithAction .item {
+  flex: 1;
+}
+
+.rowAddBtn {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease);
+}
+
+.rowAddBtn:hover {
+  color: var(--text-primary);
+  background: rgba(var(--overlay-tint), 0.08);
+}
+
+/* Footer action, not another nav destination - quieter treatment (no
+   active/count state) and pinned to the bottom via margin-top:auto so it
+   reads as "settings for this app" rather than one more section. */
+.manageBtn {
+  composes: caption from '../../tokens/typography.module.css';
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  height: 36px;
+  padding: 0 var(--space-3);
+  margin-top: auto;
+  border: none;
+  border-radius: 10px;
+  background: none;
+  color: var(--text-tertiary);
+  font-weight: 540;
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease);
+}
+
+.manageBtn:hover {
+  color: var(--text-secondary);
+  background: rgba(var(--overlay-tint), 0.06);
+}
+
+/* Collapsed: icon-only section list, same treatment as the shell's own
+   root nav at 72px. */
+.nav[data-collapsed] .brand {
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.nav[data-collapsed] .brandLabel {
+  display: none;
+}
+
+.nav[data-collapsed] .item {
+  justify-content: center;
+  padding: 0;
+}
+
+.nav[data-collapsed] .label,
+.nav[data-collapsed] .count,
+.nav[data-collapsed] .groupLabel {
+  display: none;
+}

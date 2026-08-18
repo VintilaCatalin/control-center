@@ -81,7 +81,7 @@ def to_bgr(rgb):
 #  RENDERING
 # ──────────────────────────────────────────────
 
-def grid_from_image(cfg, path):
+def grid_from_image(cfg, path, sat_pct=100):
     """Sample the wallpaper across the key matrix, through the same
     saturation curve the case LEDs use so the keyboard matches them."""
     img = painter.load_source(cfg, path)
@@ -91,13 +91,13 @@ def grid_from_image(cfg, path):
         line = []
         for col in range(COLS):
             u = col / max(1, COLS - 1)
-            line.append(to_bgr(painter.shape(cfg, painter.sample(img, u, v))))
+            line.append(to_bgr(painter.shape(cfg, painter.sample(img, u, v), sat_pct)))
         grid.append(line)
     return grid
 
 
-def grid_flat(cfg, rgb):
-    value = to_bgr(painter.shape(cfg, rgb))
+def grid_flat(cfg, rgb, sat_pct=100):
+    value = to_bgr(painter.shape(cfg, rgb, sat_pct))
     return [[value] * COLS for _ in range(ROWS)]
 
 
@@ -112,16 +112,17 @@ def render(cfg, request):
 
     brightness = request.get("brightness", 100)
     cfg["paint_brightness"] = str(max(1, min(100, int(brightness))))
+    sat_pct = request.get("saturation", 100)
 
     if mode == "color":
         h = str(request.get("hex", "ffffff")).lstrip("#")
         rgb = tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
-        return grid_flat(cfg, rgb)
+        return grid_flat(cfg, rgb, sat_pct)
 
     path = request.get("path")
     if not path or not Path(path).is_file():
         return grid_off()
-    return grid_from_image(cfg, Path(path))
+    return grid_from_image(cfg, Path(path), sat_pct)
 
 
 # ──────────────────────────────────────────────
@@ -287,6 +288,7 @@ def main():
     ap.add_argument("--color", "--colour", dest="color", help="flat hex")
     ap.add_argument("--off", action="store_true")
     ap.add_argument("--brightness", type=int, default=100, metavar="PCT")
+    ap.add_argument("--saturation", type=float, default=100, metavar="PCT")
     ap.add_argument("--status", action="store_true")
     ap.add_argument("--once", action="store_true",
                     help="apply without a daemon, hold briefly, release")
@@ -304,16 +306,16 @@ def main():
         request = {"mode": "off"}
     elif args.color:
         request = {"mode": "color", "hex": args.color.lstrip("#"),
-                   "brightness": args.brightness}
+                   "brightness": args.brightness, "saturation": args.saturation}
     elif args.image:
         request = {"mode": "image", "path": str(Path(args.image).resolve()),
-                   "brightness": args.brightness}
+                   "brightness": args.brightness, "saturation": args.saturation}
     else:
         source = painter.current_wallpaper()
         if not source:
             sys.exit("no wallpaper found")
         request = {"mode": "image", "path": str(source),
-                   "brightness": args.brightness}
+                   "brightness": args.brightness, "saturation": args.saturation}
 
     if args.once:
         return run_once(cfg, request)

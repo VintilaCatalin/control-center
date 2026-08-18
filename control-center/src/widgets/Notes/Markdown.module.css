@@ -1,0 +1,297 @@
+/* Editorial reading typography - the actual point of this whole
+   redesign. Comfortable measure, real paragraph rhythm, headings that
+   read as section breaks rather than developer-doc markers. No card,
+   no border - the document is the surface. */
+/* 80ch, not 66ch - a stricter "ideal reading measure" cap looked
+   cramped once the editor sat right next to it at a much wider measure
+   (see DocumentView.module.css's .editor, which had its own cap
+   removed for exactly that complaint). Both now share this same
+   max-width so switching Read<->Edit never changes the column's width
+   out from under you. */
+.doc {
+  composes: body from "../../tokens/typography.module.css";
+  max-width: 80ch;
+  color: var(--text-secondary);
+}
+
+/* Larger spacing only between real section breaks (h1/h2) - h3/h4 sit
+   closer to what came before them, the same way a sub-heading in a real
+   document doesn't get as much air as a new chapter. */
+.h1,
+.h2,
+.h3,
+.h4 {
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  margin: var(--space-3) 0 var(--space-2);
+}
+
+.h1,
+.h2 {
+  margin-top: var(--space-6);
+}
+
+.h1:first-child,
+.h2:first-child,
+.h3:first-child,
+.h4:first-child {
+  margin-top: 0;
+}
+
+.h1 {
+  composes: title1 from "../../tokens/typography.module.css";
+}
+
+.h2 {
+  composes: title2 from "../../tokens/typography.module.css";
+}
+
+.h3 {
+  composes: headline from "../../tokens/typography.module.css";
+  font-weight: 650;
+}
+
+.h4 {
+  composes: subhead from "../../tokens/typography.module.css";
+  font-weight: 650;
+  color: var(--text-secondary);
+}
+
+.p {
+  margin: 0 0 var(--space-3);
+}
+
+.p:last-child {
+  margin-bottom: 0;
+}
+
+.link {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in oklab, var(--accent) 40%, transparent);
+  text-underline-offset: 2px;
+}
+
+.link:hover {
+  text-decoration-color: var(--accent);
+}
+
+/* Wikilinks read as a distinct, quieter accent than an outbound URL - an
+   internal jump, not "leaving the app". */
+.wikilink {
+  color: color-mix(in oklab, var(--accent) 70%, var(--text-primary));
+  text-decoration: none;
+  border-bottom: 1px solid color-mix(in oklab, var(--accent) 35%, transparent);
+  cursor: pointer;
+}
+
+.wikilink:hover {
+  border-bottom-color: var(--accent);
+}
+
+.quote {
+  margin: var(--space-5) 0;
+  padding-left: var(--space-4);
+  border-left: 2px solid color-mix(in oklab, var(--accent) 45%, var(--rim-lit));
+  color: var(--text-tertiary);
+  font-style: italic;
+}
+
+.quote .p {
+  color: inherit;
+}
+
+/* ---- code: sophisticated but restrained, not VS Code ---- */
+
+.pre {
+  composes: footnote from "../../tokens/typography.module.css";
+  position: relative;
+  margin: var(--space-5) 0;
+  padding: var(--space-4);
+  border-radius: 10px;
+  background: rgba(var(--overlay-tint), 0.035);
+  border: 1px solid var(--rim);
+  overflow-x: auto;
+}
+
+.code {
+  font-family: ui-monospace, "Cascadia Code", "SF Mono", Consolas, monospace;
+  color: var(--text-secondary);
+  white-space: pre;
+}
+
+.codeLang {
+  composes: caption from "../../tokens/typography.module.css";
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-3);
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.codespan {
+  font-family: ui-monospace, "Cascadia Code", "SF Mono", Consolas, monospace;
+  font-size: 0.9em;
+  padding: 1px 6px;
+  border-radius: 5px;
+  background: rgba(var(--overlay-tint), 0.06);
+  color: var(--text-primary);
+}
+
+/* A restrained two-tone scheme keyed to the app's own tokens - accent
+   for structure (keywords, tags, function names), one static warm
+   neutral for values (strings/numbers), tertiary for comments. Not a
+   rainbow: three-ish colours total, same discipline as the rest of the
+   app's palette. */
+.pre :global(.hljs-comment),
+.pre :global(.hljs-quote) {
+  color: var(--text-tertiary);
+  font-style: italic;
+}
+
+.pre :global(.hljs-keyword),
+.pre :global(.hljs-selector-tag),
+.pre :global(.hljs-tag),
+.pre :global(.hljs-operator) {
+  color: color-mix(in oklab, var(--accent) 75%, var(--text-primary));
+}
+
+.pre :global(.hljs-title),
+.pre :global(.hljs-title.function_),
+.pre :global(.hljs-title.class_),
+.pre :global(.hljs-name),
+.pre :global(.hljs-section) {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.pre :global(.hljs-string),
+.pre :global(.hljs-number),
+.pre :global(.hljs-literal),
+.pre :global(.hljs-symbol),
+.pre :global(.hljs-attr-value) {
+  color: #c2a878;
+}
+
+.pre :global(.hljs-attr),
+.pre :global(.hljs-attribute),
+.pre :global(.hljs-property),
+.pre :global(.hljs-variable),
+.pre :global(.hljs-params) {
+  color: var(--text-secondary);
+}
+
+.pre :global(.hljs-built_in),
+.pre :global(.hljs-type) {
+  color: color-mix(in oklab, var(--accent) 55%, var(--text-secondary));
+}
+
+.pre :global(.hljs-deletion) {
+  color: var(--warn);
+}
+
+/* ---- lists / tasks ---- */
+
+.list {
+  margin: 0 0 var(--space-4);
+  padding-left: var(--space-5);
+}
+
+.list li {
+  margin-bottom: var(--space-1);
+}
+
+.taskItem {
+  list-style: none;
+  margin-left: calc(var(--space-5) * -1);
+}
+
+.task {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  cursor: pointer;
+}
+
+/* A custom checkbox, not the bare browser control - same box/check
+   language the Tasks drawer uses (see TasksPanel.module.css's
+   .checkboxBox), so a task line reads the same whether it's in a
+   document or the drawer. The real input stays in the DOM (still
+   keyboard/label-toggleable) but visually hidden behind the styled box. */
+.taskInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.taskBox {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  border-radius: 5px;
+  border: 1.5px solid var(--rim-lit);
+  background: rgba(var(--overlay-tint), 0.04);
+  color: transparent;
+  transition:
+    background var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
+}
+
+.taskInput:checked + .taskBox {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #0a0c10;
+}
+
+.task:hover .taskBox {
+  border-color: color-mix(in oklab, var(--accent) 55%, var(--rim-lit));
+}
+
+.taskInput:focus-visible + .taskBox {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.taskDone {
+  color: var(--text-tertiary);
+  text-decoration: line-through;
+}
+
+.hr {
+  margin: var(--space-6) 0;
+  border: none;
+  border-top: 1px solid var(--rim);
+}
+
+.tableWrap {
+  margin: 0 0 var(--space-4);
+  overflow-x: auto;
+}
+
+.table {
+  border-collapse: collapse;
+  width: 100%;
+  composes: footnote from "../../tokens/typography.module.css";
+}
+
+.table th,
+.table td {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--rim);
+  text-align: left;
+}
+
+.table th {
+  color: var(--text-tertiary);
+  font-weight: 600;
+}
+
+.table td {
+  color: var(--text-secondary);
+}

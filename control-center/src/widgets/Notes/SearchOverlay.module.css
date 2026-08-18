@@ -1,0 +1,112 @@
+/* No boxed input here - the field sits directly in the overlay's own
+   header area (icon + text, borderless), with the overlay's existing
+   head/body divider doing the only separating work. Reads as one
+   integrated search field, not an input control floating inside a
+   popup. */
+.inputRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-tertiary);
+  margin-bottom: var(--space-2);
+}
+
+.input {
+  composes: title2 from '../../tokens/typography.module.css';
+  flex: 1;
+  min-width: 0;
+  color: var(--text-primary);
+  background: none;
+  border: none;
+}
+
+.input:focus {
+  outline: none;
+}
+
+.input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.groupLabel {
+  composes: eyebrow from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  padding: var(--space-2) var(--space-2) 6px;
+}
+
+.results {
+  display: flex;
+  flex-direction: column;
+}
+
+.empty {
+  composes: footnote from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  padding: var(--space-4);
+  text-align: center;
+}
+
+/* Same active-row language the sidebar uses (accent wash + accent-
+   coloured icon), so keyboard-navigating results feels like the same
+   control as clicking a note in the sidebar, not a different widget. */
+.result {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  height: 40px;
+  padding: 0 var(--space-2);
+  border: none;
+  background: none;
+  border-radius: 9px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.resultActive {
+  background: linear-gradient(to right, color-mix(in oklab, var(--accent) 14%, transparent), transparent 88%);
+}
+
+.resultIcon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+  transition: color var(--dur-fast) var(--ease);
+}
+
+.resultActive .resultIcon {
+  color: var(--accent);
+}
+
+.resultName {
+  composes: callout from '../../tokens/typography.module.css';
+  color: var(--text-primary);
+  font-weight: 550;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.resultActive .resultName {
+  font-weight: 620;
+}
+
+.resultPin {
+  flex-shrink: 0;
+  color: #f2c94c;
+  display: grid;
+  place-items: center;
+}
+
+/* A quiet tag, not plain trailing text - subtle grouping metadata
+   without competing with the title for attention. */
+.resultFolder {
+  composes: caption from '../../tokens/typography.module.css';
+  margin-left: auto;
+  flex-shrink: 0;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(var(--overlay-tint), 0.05);
+  color: var(--text-tertiary);
+}

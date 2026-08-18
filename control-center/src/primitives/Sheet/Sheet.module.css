@@ -1,0 +1,55 @@
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--popup-scrim);
+  backdrop-filter: var(--popup-scrim-blur);
+  -webkit-backdrop-filter: var(--popup-scrim-blur);
+}
+
+.sheet {
+  position: relative;
+  overflow: auto;
+  width: min(860px, 84vw);
+  max-height: 82vh;
+  padding: var(--space-6);
+  border-radius: 28px;
+  background: var(--popup-bg);
+  backdrop-filter: var(--popup-blur);
+  border: 1px solid var(--popup-border);
+  box-shadow: var(--popup-shadow);
+}
+
+/* The same top sheen every Card in the app has (primitives/Card) - see
+   Overlay.module.css's identical rule for why this is the piece that
+   actually reads as "glass". */
+.sheet::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 42%;
+  background: linear-gradient(rgba(var(--overlay-tint), 0.055), transparent);
+  pointer-events: none;
+}
+
+.title {
+  composes: title1 from '../../tokens/typography.module.css';
+  color: var(--text-primary);
+  margin-bottom: var(--space-1);
+}
+
+.subtitle {
+  composes: subhead from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  margin-bottom: var(--space-5);
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: flex-end;
+  margin-top: var(--space-5);
+}

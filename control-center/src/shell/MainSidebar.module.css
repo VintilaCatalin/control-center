@@ -1,0 +1,295 @@
+/* Its own surface, not a card nested inside a shared container: full
+   viewport height, flush to the left edge (no outer margin), no
+   rounded corners - a real application rail, not a floating panel. The
+   only separation from content is this element's own right-side border
+   (a controlled divider, not a shared box wrapping both). */
+.sidebar {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 clamp(252px, 18vw, 296px);
+  min-width: 0;
+  height: 100%;
+  padding: var(--space-4) var(--space-3);
+  background: var(--glass);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  border-right: 1px solid var(--rim);
+  transition: flex-basis var(--dur-base) var(--ease);
+}
+
+.sidebar::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 22%;
+  background: linear-gradient(rgba(var(--overlay-tint), 0.05), transparent);
+  pointer-events: none;
+}
+
+/* Root-list-only (see MainSidebar.tsx's effectiveCollapsed) - icon-only
+   rail, still fully usable via tooltips on every nav item. */
+.sidebar[data-collapsed] {
+  flex-basis: 72px;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+/* ---- root state: brand + flat app list ---- */
+
+.brand {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: var(--space-2) var(--space-2) var(--space-5);
+  flex-shrink: 0;
+}
+
+.brandGlyph {
+  display: grid;
+  place-items: center;
+  color: var(--accent);
+}
+
+.brandLabel {
+  composes: headline from "../tokens/typography.module.css";
+  font-weight: 650;
+  color: var(--text-primary);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.sidebar[data-collapsed] .brand {
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.sidebar[data-collapsed] .brandLabel {
+  display: none;
+}
+
+/* ---- secondary state: back + app identity ---- */
+
+.backBtn {
+  composes: caption from "../tokens/typography.module.css";
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  height: 32px;
+  padding: 0 var(--space-2);
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: var(--text-tertiary);
+  font-weight: 560;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease);
+}
+
+.backBtn:hover {
+  color: var(--text-primary);
+  background: rgba(var(--overlay-tint), 0.06);
+}
+
+.identity {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: var(--space-3) var(--space-2) var(--space-2);
+  flex-shrink: 0;
+}
+
+.identityIcon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  color: var(--accent);
+  background: color-mix(in oklab, var(--accent) 22%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--accent) 35%, transparent);
+}
+
+.identityTitle {
+  composes: headline from "../tokens/typography.module.css";
+  font-weight: 650;
+  color: var(--text-primary);
+}
+
+/* Collapsed: back button and identity row become icon-only, same
+   treatment as the root list's own nav items - width is the one thing
+   every collapsed state shares, regardless of which content is showing. */
+.sidebar[data-collapsed] .backBtn {
+  justify-content: center;
+  padding: 0;
+}
+
+.sidebar[data-collapsed] .backLabel {
+  display: none;
+}
+
+.sidebar[data-collapsed] .identity {
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.sidebar[data-collapsed] .identityTitle {
+  display: none;
+}
+
+/* ---- shared nav list styling (root items reuse this too) ---- */
+
+.navScroll {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  margin-right: calc(var(--space-3) * -1);
+  padding-right: var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sidebar[data-collapsed] .navScroll {
+  margin-right: 0;
+  padding-right: 0;
+  overflow: visible;
+}
+
+.navItem {
+  composes: callout from "../tokens/typography.module.css";
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  height: 46px;
+  padding: 0 var(--space-2);
+  border: none;
+  border-radius: 11px;
+  background: none;
+  color: var(--text-secondary);
+  font-weight: 560;
+  font-size: 0.96em;
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease);
+}
+
+.navItem:hover:not(:disabled) {
+  color: var(--text-primary);
+  background: rgba(var(--overlay-tint), 0.06);
+}
+
+/* A left accent rule, not just a tinted background - the same "which one
+   is current" cue a tab strip gives, so the active item reads at a glance
+   even in the collapsed icon-only rail where the background tint alone is
+   easy to miss next to its neighbours. */
+.navItemActive {
+  color: var(--text-primary);
+  background: color-mix(in oklab, var(--accent) 16%, transparent);
+}
+
+.navItemActive::before {
+  content: '';
+  position: absolute;
+  left: -1px;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--accent);
+  box-shadow: 0 0 8px color-mix(in oklab, var(--accent) 70%, transparent);
+}
+
+.navItem:disabled {
+  color: var(--text-tertiary);
+  cursor: default;
+}
+
+/* A chip, not a bare glyph - every nav item gets its own small icon tile
+   (the same rounded-square language Homelab's service tiles settled on),
+   which is most of what "icon presence" actually means: a glyph floating
+   in text-sized space reads as decoration, one sitting in its own tinted
+   container reads as a real navigation target. */
+.navIcon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  color: var(--text-tertiary);
+  background: rgba(var(--overlay-tint), 0.035);
+  transition:
+    color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease);
+}
+
+.navItem:hover:not(:disabled) .navIcon {
+  color: var(--text-primary);
+  background: rgba(var(--overlay-tint), 0.09);
+  transform: translateY(-1px);
+}
+
+.navItemActive .navIcon {
+  color: var(--accent);
+  background: color-mix(in oklab, var(--accent) 22%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--accent) 35%, transparent);
+}
+
+.navLabel {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+}
+
+.soonBadge {
+  composes: caption from "../tokens/typography.module.css";
+  flex-shrink: 0;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(var(--overlay-tint), 0.08);
+  color: var(--text-tertiary);
+}
+
+/* Icon-only, centred, still a real 40px-tall click target - the label
+   and "Soon" badge disappear but every row keeps its own `title`
+   tooltip (see MainSidebar.tsx) so the collapsed rail stays fully
+   navigable, not just decorative. */
+.sidebar[data-collapsed] .navItem {
+  justify-content: center;
+  padding: 0;
+}
+
+.sidebar[data-collapsed] .navLabel,
+.sidebar[data-collapsed] .soonBadge {
+  display: none;
+}
+
+/* ---- utilities footer (identical in both states) ---- */
+
+.utilities {
+  position: relative;
+  flex-shrink: 0;
+  padding-top: var(--space-2);
+  margin-top: var(--space-2);
+  border-top: 1px solid var(--rim);
+}

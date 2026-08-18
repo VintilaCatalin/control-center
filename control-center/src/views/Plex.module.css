@@ -1,0 +1,58 @@
+/* Plex's own application surface - "one intentional rounded application
+   surface... clear separation from the global Control Center
+   background" per the product brief: subtle border, controlled glass,
+   slight depth, own margin so it reads as a distinct media-app pane
+   sitting in the shell's content region, not an edge-to-edge page. The
+   shell's global MainSidebar (Plex branding/search/Home/libraries -
+   see PlexSidebarNav) stays a separate surface per the shell's own
+   sidebar/content-are-independent-surfaces rule; this is specifically
+   Plex's *content* pane owning its own frame. */
+.page {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  margin: var(--space-4);
+  border-radius: var(--r-card);
+  overflow: hidden;
+  background: var(--glass);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  box-shadow: var(--lift), var(--inner);
+  border: 1px solid var(--rim);
+}
+
+.page::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 22%;
+  background: linear-gradient(rgba(var(--overlay-tint), 0.05), transparent);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.content {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.state {
+  composes: callout from '../tokens/typography.module.css';
+  display: grid;
+  place-items: center;
+  color: var(--text-tertiary);
+  text-align: center;
+  padding: var(--space-6);
+  gap: var(--space-2);
+  min-height: 320px;
+}
+
+.stateTitle {
+  composes: title2 from '../tokens/typography.module.css';
+  color: var(--text-secondary);
+}

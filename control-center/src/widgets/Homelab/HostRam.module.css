@@ -1,0 +1,53 @@
+.panel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+}
+
+.pct {
+  composes: display from '../../tokens/typography.module.css';
+  font-size: 2rem;
+  font-weight: 680;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.pctSign {
+  composes: callout from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  margin-left: 1px;
+}
+
+.meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+
+.used {
+  composes: callout from '../../tokens/typography.module.css';
+  color: var(--text-secondary);
+  font-weight: 620;
+  font-variant-numeric: tabular-nums;
+}
+
+.total {
+  composes: caption from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.empty {
+  composes: caption from '../../tokens/typography.module.css';
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-tertiary);
+  text-align: center;
+  padding: var(--space-4);
+}

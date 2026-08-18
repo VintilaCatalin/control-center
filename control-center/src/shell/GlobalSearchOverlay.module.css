@@ -1,0 +1,108 @@
+.field {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  margin-bottom: var(--space-3);
+  border-radius: 10px;
+  background: rgba(var(--overlay-tint), 0.05);
+  border: 1px solid var(--rim);
+  color: var(--text-tertiary);
+}
+
+.field:focus-within {
+  border-color: color-mix(in oklab, var(--accent) 70%, transparent);
+}
+
+.input {
+  composes: callout from '../tokens/typography.module.css';
+  flex: 1;
+  border: none;
+  background: none;
+  color: var(--text-primary);
+}
+
+.input:focus {
+  outline: none;
+}
+
+.input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.hint {
+  composes: footnote from '../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  padding: var(--space-3) 0;
+}
+
+.results {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: none;
+  border-radius: 10px;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--dur-fast) var(--ease);
+}
+
+.row:hover {
+  background: rgba(var(--overlay-tint), 0.06);
+}
+
+.rowIcon {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: rgba(var(--overlay-tint), 0.06);
+  color: var(--text-secondary);
+}
+
+.rowText {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+}
+
+.rowTitle {
+  composes: callout from '../tokens/typography.module.css';
+  color: var(--text-primary);
+  font-weight: 560;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rowSubtitle {
+  composes: caption from '../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rowKind {
+  composes: eyebrow from '../tokens/typography.module.css';
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(var(--overlay-tint), 0.05);
+}

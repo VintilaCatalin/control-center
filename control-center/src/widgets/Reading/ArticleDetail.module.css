@@ -1,0 +1,344 @@
+/* Full-bleed takeover, same shape as PlexDetail - selecting a story
+   takes over the whole viewport rather than sharing a frame with the
+   feed behind it. */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: var(--ink);
+}
+
+.scroll {
+  height: 100%;
+  overflow-y: auto;
+}
+
+.hero {
+  position: relative;
+}
+
+/* No thumbnail: a slim bar just tall enough for the back/save controls -
+   no reserved empty hero band above the title. This is the common case
+   (most RSS items carry no image), so it's the one that matters most for
+   "premium editorial page", not "huge empty hero with text at the
+   bottom". */
+.heroBar {
+  height: 64px;
+}
+
+.heroWithImage {
+  min-height: 220px;
+  background: linear-gradient(160deg, var(--raise), var(--slate));
+}
+
+.heroImg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: clamp(220px, 36vh, 400px);
+  object-fit: cover;
+}
+
+.heroShade {
+  position: absolute;
+  inset: 0;
+  height: clamp(220px, 36vh, 400px);
+  background: linear-gradient(to top, var(--ink) 0%, rgba(7, 9, 13, 0.55) 45%, rgba(7, 9, 13, 0.15) 80%, transparent);
+}
+
+.backBtn {
+  composes: callout from '../../tokens/typography.module.css';
+  position: absolute;
+  top: var(--space-4);
+  left: var(--space-4);
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 var(--space-3) 0 var(--space-2);
+  border-radius: 999px;
+  border: none;
+  background: rgba(2, 3, 5, 0.5);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  font-weight: 560;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease);
+}
+
+.backBtn:hover {
+  background: rgba(2, 3, 5, 0.7);
+}
+
+/* Groups "open externally" beside the save toggle so both sit top-right -
+   SaveButton uses `inline` here (no self-positioning) since this wrapper
+   owns the placement instead. */
+.heroActions {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-4);
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.openBrowserBtn {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  background: rgba(2, 3, 5, 0.5);
+  backdrop-filter: blur(8px);
+  color: rgba(255, 255, 255, 0.85);
+  text-decoration: none;
+  transition:
+    color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease);
+}
+
+.openBrowserBtn:hover {
+  color: #fff;
+  background: rgba(2, 3, 5, 0.7);
+}
+
+/* ---- reading column ---- */
+
+.column {
+  position: relative;
+  z-index: 1;
+  max-width: 46rem;
+  margin: 0 auto;
+  padding: 0 var(--space-6) var(--space-6);
+}
+
+/* With a hero image: pull the column up to overlap the shade's fade-out,
+   the same "title sits over the bottom of the photo" composition
+   PlexDetail uses. Without one: no overlap at all, just a small settle
+   below the control bar - title, kicker and byline read as one tight
+   editorial block instead of floating under a lot of empty space. */
+.columnOverImage {
+  margin-top: -56px;
+}
+
+.columnFlat {
+  padding-top: var(--space-3);
+}
+
+.kicker {
+  composes: eyebrow from '../../tokens/typography.module.css';
+  color: var(--accent);
+}
+
+.title {
+  composes: title1 from '../../tokens/typography.module.css';
+  color: var(--text-primary);
+  font-weight: 680;
+  letter-spacing: -0.015em;
+  margin: 6px 0 var(--space-3);
+}
+
+.byline {
+  composes: subhead from '../../tokens/typography.module.css';
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--text-tertiary);
+  padding-bottom: var(--space-4);
+  margin-bottom: var(--space-4);
+  border-bottom: 1px solid var(--rim);
+}
+
+.source {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.dot {
+  color: var(--text-tertiary);
+}
+
+.readTime {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.summary {
+  composes: body from '../../tokens/typography.module.css';
+  color: var(--text-secondary);
+  line-height: 1.7;
+  margin: 0 0 var(--space-5);
+}
+
+.skeletons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fallback {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding-top: var(--space-2);
+}
+
+.fallbackNote {
+  composes: footnote from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  margin: 0;
+}
+
+.sourceLink {
+  composes: callout from '../../tokens/typography.module.css';
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 40px;
+  padding: 0 var(--space-4);
+  border-radius: 999px;
+  border: 1px solid var(--rim-lit);
+  background: rgba(var(--overlay-tint), 0.06);
+  color: var(--text-primary);
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    background var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease);
+}
+
+.sourceLink:hover {
+  background: rgba(var(--overlay-tint), 0.1);
+  border-color: var(--accent);
+}
+
+/* ---- extracted article body ----
+   Real editorial typography for whatever trafilatura hands back
+   (headings/paragraphs/lists/quotes/code/links/images) - comfortable
+   line-height, generous rhythm between blocks, nothing that reads as
+   "database record" the way Notes' DocumentView does. */
+.articleBody {
+  composes: body from '../../tokens/typography.module.css';
+  color: var(--text-secondary);
+  line-height: 1.75;
+}
+
+.articleBody :global(p) {
+  margin: 0 0 var(--space-4);
+}
+
+.articleBody :global(h1),
+.articleBody :global(h2),
+.articleBody :global(h3),
+.articleBody :global(h4) {
+  font-family: var(--font-display);
+  color: var(--text-primary);
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+  margin: var(--space-6) 0 var(--space-3);
+}
+
+.articleBody :global(h1) {
+  font-size: 1.6em;
+}
+.articleBody :global(h2) {
+  font-size: 1.35em;
+}
+.articleBody :global(h3) {
+  font-size: 1.15em;
+}
+.articleBody :global(h4) {
+  font-size: 1em;
+}
+
+.articleBody :global(ul),
+.articleBody :global(ol) {
+  margin: 0 0 var(--space-4);
+  padding-left: 1.4em;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.articleBody :global(li) {
+  padding-left: 4px;
+}
+
+.articleBody :global(blockquote) {
+  margin: var(--space-5) 0;
+  padding: var(--space-2) 0 var(--space-2) var(--space-4);
+  border-left: 3px solid var(--accent);
+  color: var(--text-primary);
+  font-style: italic;
+}
+
+.articleBody :global(pre) {
+  margin: var(--space-5) 0;
+  padding: var(--space-4);
+  border-radius: var(--r-tile);
+  background: color-mix(in oklab, var(--ink) 70%, var(--slate));
+  border: 1px solid var(--rim);
+  overflow-x: auto;
+}
+
+.articleBody :global(code) {
+  font-family: var(--mono);
+  font-size: 0.88em;
+  color: var(--text-primary);
+}
+
+.articleBody :global(p code) {
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: rgba(var(--overlay-tint), 0.08);
+}
+
+.articleBody :global(a) {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in oklab, var(--accent) 40%, transparent);
+  text-underline-offset: 2px;
+}
+
+.articleBody :global(a:hover) {
+  text-decoration-color: var(--accent);
+}
+
+.articleBody :global(img) {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: var(--space-5) auto;
+  border-radius: var(--r-tile);
+}
+
+.articleBody :global(figure) {
+  margin: var(--space-5) 0;
+}
+
+.articleBody :global(figcaption) {
+  font-family: var(--font-text);
+  font-size: var(--fs-footnote);
+  line-height: var(--lh-footnote);
+  letter-spacing: var(--ls-footnote);
+  font-weight: var(--fw-footnote);
+  color: var(--text-tertiary);
+  text-align: center;
+  margin-top: 8px;
+}
+
+.articleBody :global(hr) {
+  margin: var(--space-6) 0;
+  border: none;
+  border-top: 1px solid var(--rim);
+}
+
+.articleBody :global(strong) {
+  color: var(--text-primary);
+  font-weight: 650;
+}

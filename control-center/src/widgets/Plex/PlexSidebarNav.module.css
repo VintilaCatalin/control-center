@@ -1,0 +1,225 @@
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 2px var(--space-2) var(--space-4);
+}
+
+.brandGlyph {
+  display: grid;
+  place-items: center;
+  color: var(--accent);
+}
+
+.brandLabel {
+  composes: headline from '../../tokens/typography.module.css';
+  font-weight: 650;
+  color: var(--text-primary);
+  letter-spacing: 0.01em;
+}
+
+.search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 36px;
+  padding: 0 var(--space-3);
+  margin-bottom: var(--space-3);
+  border-radius: 999px;
+  border: 1px solid var(--rim);
+  background: rgba(var(--overlay-tint), 0.04);
+  color: var(--text-tertiary);
+  transition: border-color var(--dur-fast) var(--ease);
+}
+
+.search:focus-within {
+  border-color: color-mix(in oklab, var(--accent) 55%, var(--rim));
+  color: var(--text-secondary);
+}
+
+.searchInput {
+  composes: callout from '../../tokens/typography.module.css';
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: none;
+  color: var(--text-primary);
+  font-size: 0.92em;
+}
+
+.searchInput::placeholder {
+  color: var(--text-tertiary);
+}
+
+.searchInput:focus {
+  outline: none;
+}
+
+.groupLabel {
+  composes: eyebrow from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  padding: var(--space-4) var(--space-2) 6px;
+}
+
+/* A filled chip for the active state, not an underline or text-colour
+   change - closer to a media app's own library switcher than Notes'
+   quiet text-row treatment. */
+.item {
+  composes: callout from '../../tokens/typography.module.css';
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  height: 40px;
+  padding: 0 var(--space-3);
+  border: none;
+  border-radius: 10px;
+  background: none;
+  color: var(--text-secondary);
+  font-weight: 560;
+  font-size: 0.95em;
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease);
+}
+
+.item:hover {
+  color: var(--text-primary);
+  background: rgba(var(--overlay-tint), 0.06);
+}
+
+.itemActive {
+  color: var(--text-primary);
+  background: color-mix(in oklab, var(--accent) 18%, transparent);
+}
+
+.icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 19px;
+  color: inherit;
+}
+
+.itemActive .icon {
+  color: var(--accent);
+}
+
+.label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+}
+
+.count {
+  composes: caption from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+/* Collapsed: icon-only Home/library list, same treatment as the shell's
+   own root nav at 72px - search has no icon-only form so it's hidden
+   entirely rather than broken (see PlexSidebarNav.tsx). */
+.nav[data-collapsed] .brand {
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.nav[data-collapsed] .brandLabel {
+  display: none;
+}
+
+.nav[data-collapsed] .item {
+  justify-content: center;
+  padding: 0;
+}
+
+.nav[data-collapsed] .label,
+.nav[data-collapsed] .count,
+.nav[data-collapsed] .groupLabel {
+  display: none;
+}
+
+/* ---- search results ---- */
+
+.results {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.resultsEmpty {
+  composes: caption from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  padding: var(--space-3) var(--space-2);
+}
+
+.resultRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  height: 48px;
+  padding: 0 var(--space-2);
+  border: none;
+  border-radius: 10px;
+  background: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--dur-fast) var(--ease);
+}
+
+.resultRow:hover {
+  background: rgba(var(--overlay-tint), 0.06);
+}
+
+.resultThumb {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: linear-gradient(160deg, var(--raise), var(--slate));
+  color: var(--text-tertiary);
+}
+
+.resultThumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.resultText {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.resultTitle {
+  composes: callout from '../../tokens/typography.module.css';
+  font-size: 0.92em;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.resultSub {
+  composes: caption from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+}

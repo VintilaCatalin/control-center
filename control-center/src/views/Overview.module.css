@@ -1,0 +1,7 @@
+/* The shell's own .content region no longer carries an outer page
+   padding - restores Overview's own breathing room, same convention
+   every other PanelGrid-based view (Games, Homelab) already uses. */
+.overview {
+  width: 100%;
+  padding: var(--space-5) var(--space-6) var(--space-6);
+}

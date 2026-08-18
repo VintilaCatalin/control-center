@@ -1,0 +1,90 @@
+.timeline {
+  display: flex;
+  flex-direction: column;
+}
+
+.dayHeading {
+  composes: eyebrow from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  margin: var(--space-3) 0 6px;
+}
+
+.entry:first-child .dayHeading {
+  margin-top: 0;
+}
+
+.event {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: 5px 0;
+}
+
+.eventOngoing .time {
+  color: var(--accent);
+}
+
+.rail {
+  position: relative;
+  flex-shrink: 0;
+  width: 8px;
+  display: flex;
+  justify-content: center;
+  align-self: stretch;
+}
+
+.dot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  margin-top: 5px;
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 0 6px color-mix(in oklab, var(--accent) 60%, transparent);
+}
+
+.line {
+  position: absolute;
+  top: 15px;
+  bottom: -5px;
+  width: 1px;
+  background: var(--rim);
+}
+
+.time {
+  composes: caption from '../../tokens/typography.module.css';
+  flex-shrink: 0;
+  width: 56px;
+  color: var(--text-tertiary);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.title {
+  composes: caption from '../../tokens/typography.module.css';
+  color: var(--text-primary);
+  font-weight: 560;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.location {
+  composes: footnote from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.empty {
+  composes: footnote from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+}

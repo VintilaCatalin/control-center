@@ -1,0 +1,146 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fieldHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.label {
+  composes: footnote from '../../tokens/typography.module.css';
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.resetBtn {
+  composes: caption from '../../tokens/typography.module.css';
+  border: none;
+  background: none;
+  color: var(--accent);
+  cursor: pointer;
+  padding: 0;
+  opacity: 0.85;
+  transition: opacity var(--dur-fast) var(--ease);
+}
+
+.resetBtn:hover {
+  opacity: 1;
+}
+
+.input,
+.textarea {
+  composes: callout from '../../tokens/typography.module.css';
+  width: 100%;
+  padding: 9px var(--space-3);
+  border-radius: 10px;
+  border: 1px solid var(--rim);
+  background: rgba(var(--overlay-tint), 0.03);
+  color: var(--text-primary);
+  transition:
+    border-color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease);
+}
+
+.input:focus,
+.textarea:focus {
+  outline: none;
+  border-color: color-mix(in oklab, var(--accent) 55%, var(--rim));
+  background: rgba(var(--overlay-tint), 0.05);
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 80px;
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 0.85em;
+  line-height: 1.5;
+}
+
+.hint {
+  composes: caption from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  line-height: 1.4;
+}
+
+/* ---- bool: a real switch, not a checkbox ---- */
+
+.switch {
+  position: relative;
+  flex-shrink: 0;
+  align-self: flex-start;
+  width: 40px;
+  height: 24px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(var(--overlay-tint), 0.1);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease);
+}
+
+.switchOn {
+  background: var(--accent);
+}
+
+.switchKnob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: transform var(--dur-fast) var(--ease);
+}
+
+.switchOn .switchKnob {
+  transform: translateX(16px);
+}
+
+/* ---- secret: masked by default, explicit reveal/change ---- */
+
+.secretRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 9px var(--space-3);
+  border-radius: 10px;
+  border: 1px solid var(--rim);
+  background: rgba(var(--overlay-tint), 0.03);
+}
+
+.secretMask {
+  composes: callout from '../../tokens/typography.module.css';
+  flex: 1;
+  min-width: 0;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.secretBtn {
+  composes: caption from '../../tokens/typography.module.css';
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(var(--overlay-tint), 0.08);
+  color: var(--text-secondary);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease);
+}
+
+.secretBtn:hover {
+  color: var(--text-primary);
+  background: rgba(var(--overlay-tint), 0.14);
+}

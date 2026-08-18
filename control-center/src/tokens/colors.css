@@ -1,0 +1,106 @@
+/* Registering --accent's type lets the browser interpolate the colour
+   itself wherever an element already transitions a property that uses it
+   (border-color, background, ...), instead of the value jumping instantly
+   the moment the wallpaper changes. Purely declarative and additive - an
+   unsupporting browser just ignores the rule and keeps today's instant
+   swap, so this can't introduce a broken state either way. */
+@property --accent {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #8f97a8;
+}
+
+/* Ported verbatim from panel/index.html:13-65 - same palette, so the new
+   frontend reads as the same product, not a different app. */
+:root {
+  /* Without this, native form controls (select popups, scrollbars) ignore
+     every dark-theme custom property and render with the browser's own
+     light UI chrome - this is the actual fix for white-on-white selects,
+     not anything at the per-select CSS level. */
+  color-scheme: dark;
+
+  --ink: #07090d;
+  --slate: #14171e;
+  --raise: #1b1f28;
+  --mist: #8f97a8;
+  --paper: #f2f4f8;
+  --accent: #8f97a8;
+
+  /* Blur radius (below) is what was making every surface read as "foggy"
+     - opacity is a separate axis, and pushing both down together (see the
+     24/34%+16px this replaces) went far enough that low blur + low
+     opacity let whatever was behind a surface show through sharp AND
+     strong, which made the surface's own content harder to read, not
+     easier. Nudged opacity back up while leaving blur where it is: less
+     fog, but still solid enough to read text against. */
+  --glass-strength: 32%;
+  --glass-strength-up: 44%;
+  --glass: color-mix(in oklab, var(--slate) var(--glass-strength), transparent);
+  --glass-up: color-mix(in oklab, var(--slate) var(--glass-strength-up), transparent);
+
+  --overlay-tint: 255, 255, 255;
+  --rim: rgba(var(--overlay-tint), 0.085);
+  --rim-lit: rgba(var(--overlay-tint), 0.14);
+  --blur: blur(16px) saturate(150%);
+  --lift: 0 24px 70px rgba(0, 0, 0, 0.38);
+  --inner: inset 0 1px 0 var(--rim-lit), inset 0 -1px 0 rgba(0, 0, 0, 0.18);
+
+  /* The one floating-popup surface every transient overlay in the app
+     shares (Sheet, Menu, Overlay, WeatherPopover) - not a "close cousin"
+     of Card's own recipe, the literal same values: --glass for the
+     background, --rim for the border, --lift + --inner for the shadow.
+     Any popup-only percentage, even one nudged just a little darker/
+     more opaque than Card's, concentrates --slate's own faint blue-navy
+     cast (#14171e - it's a navy, not a neutral grey) into something
+     visibly blue once it's the dominant colour in a small floating
+     panel, where the same tint spread across a big translucent Card is
+     too diluted to read as a colour at all. Aliasing straight to Card's
+     tokens removes that degree of freedom entirely, instead of tuning
+     the percentage again and re-introducing some other drift. */
+  /* More opaque than Card's own --glass (32%) - dense modal content
+     (Quick Tasks, source management, settings-style forms) needs to read
+     clearly, not show whatever's behind it through. Deliberately NOT a
+     separate popup-only glass-strength percentage - the note above
+     already explains why that's the wrong axis to tune (a bigger number
+     on the same --slate just concentrates its navy cast at small popup
+     sizes). Layering extra --ink (near-black, far lower chroma than
+     --slate) on top of the existing --glass value raises opacity without
+     reviving that same tint problem. */
+  --popup-bg: color-mix(in oklab, var(--ink) 45%, var(--glass));
+  --popup-border: var(--rim);
+  --popup-shadow: var(--lift), var(--inner);
+  --popup-blur: var(--blur);
+  /* One scrim strength for every popup that has one (Sheet, Overlay) -
+     dimmed enough to focus attention on the popup, light enough that
+     the popup's own glass still picks up real colour from what's behind
+     it instead of blurring an almost-opaque black layer into flat grey. */
+  --popup-scrim: rgba(4, 6, 9, 0.5);
+  --popup-scrim-blur: blur(10px);
+
+  /* New: the old app had no semantic status color, every widget just went
+     quiet on failure. A muted, desaturated tone - not alarm-red - matches
+     "calm, not crowded" for a personal app failing quietly in the corner. */
+  --warn: #c97b6e;
+  /* Homelab's "this is healthy/online" signal - same desaturated family
+     as --warn (not a saturated traffic-light green), so status reads as
+     part of this app's palette rather than a generic monitoring-tool
+     accent color. */
+  --good: #7fb894;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+
+  --ink: #eceef3;
+  --slate: #f7f8fb;
+  --raise: #e7e9f0;
+  --mist: #545b6a;
+  --paper: #14161c;
+  --overlay-tint: 15, 18, 26;
+  --glass-strength: 74%;
+  --glass-strength-up: 84%;
+  --wash-top: 55%;
+  --wash-bottom: 78%;
+  --lift: 0 20px 50px rgba(30, 34, 46, 0.14);
+  --inner: inset 0 1px 0 var(--rim-lit), inset 0 -1px 0 rgba(30, 34, 46, 0.05);
+}

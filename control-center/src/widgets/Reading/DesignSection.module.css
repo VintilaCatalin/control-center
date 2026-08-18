@@ -1,0 +1,136 @@
+.section {
+  padding-top: var(--space-4);
+}
+
+.heading {
+  composes: title2 from '../../tokens/typography.module.css';
+  color: var(--text-primary);
+  font-weight: 650;
+  margin: 0 0 var(--space-4);
+}
+
+/* Fewer, bigger columns than FeedSection's 220px rhythm - design imagery
+   earns real size, not a thumbnail's worth of space. */
+.grid {
+  columns: 300px;
+  column-gap: var(--space-5);
+}
+
+.grid > * {
+  margin-bottom: var(--space-5);
+}
+
+.card {
+  break-inside: avoid;
+  border-radius: var(--r-tile);
+  overflow: hidden;
+  background: rgba(var(--overlay-tint), 0.02);
+  border: 1px solid var(--rim);
+  transition:
+    transform var(--dur-base) var(--ease),
+    box-shadow var(--dur-base) var(--ease);
+}
+
+.card:hover,
+.card:focus-within {
+  transform: translateY(-3px);
+  box-shadow: var(--lift);
+}
+
+.media {
+  display: block;
+  width: 100%;
+  border: none;
+  padding: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.art {
+  width: 100% !important;
+  height: auto !important;
+  border-radius: 0 !important;
+  transition: transform var(--dur-slow) var(--ease);
+}
+
+.card:hover .art {
+  transform: scale(1.03);
+}
+
+.artFallback {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  background: linear-gradient(135deg, rgba(var(--overlay-tint), 0.08), rgba(var(--overlay-tint), 0.02));
+}
+
+.body {
+  position: relative;
+  padding: var(--space-4);
+}
+
+.textBtn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+  border: none;
+  background: none;
+  padding: 0;
+  padding-right: 60px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.title {
+  composes: headline from '../../tokens/typography.module.css';
+  color: var(--text-primary);
+  font-weight: 640;
+  line-height: 1.35;
+}
+
+.excerpt {
+  composes: callout from '../../tokens/typography.module.css';
+  color: var(--text-secondary);
+  line-height: 1.55;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.meta {
+  composes: footnote from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+}
+
+.actions {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-4);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.dismissBtn {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 999px;
+  background: none;
+  color: var(--text-tertiary);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease);
+}
+
+.dismissBtn:hover {
+  color: var(--warn);
+  background: color-mix(in oklab, var(--warn) 14%, transparent);
+}

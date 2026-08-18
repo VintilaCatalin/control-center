@@ -1,0 +1,117 @@
+.section {
+  padding-top: var(--space-4);
+}
+
+.heading {
+  composes: title2 from '../../tokens/typography.module.css';
+  color: var(--text-primary);
+  font-weight: 650;
+  margin: 0 0 var(--space-3);
+}
+
+/* column-width, not a fixed column-count - the browser fits as many
+   280px-ish columns as the container (the panel's own resized width,
+   once this sits inside a PanelGrid panel) actually allows, so narrowing
+   or widening a panel changes the column COUNT instead of just squeezing
+   the same number of columns into less space. */
+.list {
+  columns: 280px;
+  column-gap: var(--space-6);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  break-inside: avoid;
+  border-top: 1px solid var(--rim);
+}
+
+.row:first-child {
+  border-top: none;
+}
+
+/* Title and metadata stack, not share a row - forcing them onto one line
+   (meta pinned right via margin-left:auto) was what left the title with
+   whatever horizontal space happened to be left over, truncating it to a
+   fragment even at a comfortable column width. */
+.rowBody {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  padding: 10px var(--space-2);
+  margin: 0 calc(var(--space-2) * -1);
+  border: none;
+  border-radius: 9px;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--dur-fast) var(--ease);
+}
+
+.rowBody:hover {
+  background: rgba(var(--overlay-tint), 0.05);
+}
+
+.dot {
+  flex-shrink: 0;
+  width: 7px;
+  height: 7px;
+  margin-top: 7px;
+  border-radius: 999px;
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.title {
+  composes: callout from '../../tokens/typography.module.css';
+  color: var(--text-primary);
+  font-weight: 570;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.meta {
+  composes: caption from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+}
+
+.rowActions {
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.dismissBtn {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 999px;
+  background: none;
+  color: var(--text-tertiary);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease);
+}
+
+.dismissBtn:hover {
+  color: var(--warn);
+  background: color-mix(in oklab, var(--warn) 14%, transparent);
+}

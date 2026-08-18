@@ -1,0 +1,104 @@
+.glance {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-3);
+}
+
+.links {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.link {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 1px solid var(--rim);
+  background: rgba(var(--overlay-tint), 0.05);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease);
+}
+
+.link:hover {
+  color: var(--text-primary);
+  background: rgba(var(--overlay-tint), 0.1);
+  border-color: color-mix(in oklab, var(--accent) 40%, transparent);
+}
+
+.hero {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  text-align: center;
+}
+
+/* A real portrait, not a small utility avatar - the ring is a gradient
+   border (not a flat one), the closest this app gets to a "profile
+   story ring" without inventing a whole new decorative system. */
+.avatarRing {
+  flex-shrink: 0;
+  padding: 3px;
+  border-radius: 999px;
+  background: conic-gradient(from 180deg, var(--accent), color-mix(in oklab, var(--accent) 40%, white 30%), var(--accent));
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 96px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: linear-gradient(160deg, var(--accent), color-mix(in oklab, var(--accent) 55%, black 25%));
+  color: #0a0c10;
+  font-weight: 650;
+  font-size: 34px;
+  border: 2px solid var(--ink);
+}
+
+.avatarImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.greeting {
+  composes: title1 from '../../tokens/typography.module.css';
+  color: var(--text-primary);
+  font-weight: 680;
+  line-height: 1.15;
+}
+
+.subline {
+  composes: callout from '../../tokens/typography.module.css';
+  color: var(--text-secondary);
+  font-weight: 550;
+}
+
+.context {
+  composes: footnote from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+}

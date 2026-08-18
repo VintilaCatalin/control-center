@@ -1,0 +1,26 @@
+/* A real desktop application occupying the viewport, not a webpage -
+   fixed to 100vh, no outer margin/padding/rounding at this level (the
+   sidebar has to be flush against the actual window edge - see
+   MainSidebar.module.css). No shared "frame" box wrapping sidebar and
+   content together; they're independent flex items, divided only by
+   the sidebar's own border. */
+.shell {
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+}
+
+/* A flex column, not just a scroll box - lets a single-child
+   application root (Notes' content pane, Plex's page, Overview's own
+   wrapper, ...) stretch to fill the available height via ordinary flex
+   sizing instead of each needing its own height:100% special-cased
+   against this container. */
+.content {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}

@@ -1,0 +1,49 @@
+/* Same "own application surface" treatment as Reading.module.css/
+   Plex.module.css - a distinct rounded pane in the shell's content
+   region, full width now that there's no second nav column competing
+   for it (see SettingsView.tsx). */
+.page {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  margin: var(--space-4);
+  border-radius: var(--r-card);
+  overflow: hidden;
+  background: var(--glass);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  box-shadow: var(--lift), var(--inner);
+  border: 1px solid var(--rim);
+}
+
+.content {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.stateWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 100%;
+  padding: var(--space-6);
+  text-align: center;
+}
+
+.stateTitle {
+  composes: callout from '../tokens/typography.module.css';
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.stateBody {
+  composes: caption from '../tokens/typography.module.css';
+  color: var(--text-tertiary);
+}

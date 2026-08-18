@@ -1,0 +1,87 @@
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 5px 8px;
+  border-radius: 8px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--dur-fast) var(--ease);
+}
+
+.row:hover {
+  background: color-mix(in oklab, var(--accent) 8%, transparent);
+}
+
+.dotWrap {
+  position: relative;
+  flex: none;
+  width: 7px;
+  height: 7px;
+  display: grid;
+  place-items: center;
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+}
+
+.dotOn {
+  background: var(--good);
+  box-shadow: 0 0 6px color-mix(in oklab, var(--good) 70%, transparent);
+}
+
+.dotOff {
+  background: var(--warn);
+  box-shadow: 0 0 6px color-mix(in oklab, var(--warn) 60%, transparent);
+}
+
+.dotRing {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  border: 1px solid var(--good);
+  pointer-events: none;
+}
+
+.name {
+  composes: footnote from '../../tokens/typography.module.css';
+  color: var(--text-primary);
+  font-weight: 560;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.latency {
+  composes: caption from '../../tokens/typography.module.css';
+  flex: none;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+  font-size: 10px;
+}
+
+.tag {
+  composes: caption from '../../tokens/typography.module.css';
+  flex: none;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 9px;
+}
+
+.tagRunning {
+  color: var(--good);
+  background: color-mix(in oklab, var(--good) 16%, transparent);
+}
+
+.tagStopped {
+  color: var(--warn);
+  background: color-mix(in oklab, var(--warn) 16%, transparent);
+}

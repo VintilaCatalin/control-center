@@ -1,0 +1,147 @@
+.glance {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  height: 100%;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.heading {
+  composes: callout from '../../tokens/typography.module.css';
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-primary);
+  font-weight: 620;
+}
+
+.viewAll {
+  composes: caption from '../../tokens/typography.module.css';
+  margin-left: auto;
+  color: var(--text-tertiary);
+  background: none;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 2px 4px;
+  transition: color var(--dur-fast) var(--ease);
+}
+
+.viewAll:hover {
+  color: var(--accent);
+}
+
+.empty {
+  composes: footnote from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  font-style: italic;
+  padding: var(--space-2) 0;
+}
+
+.sections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sectionLabel {
+  composes: eyebrow from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  padding: 0 var(--space-2);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-2);
+  border: none;
+  border-radius: 9px;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--dur-fast) var(--ease);
+}
+
+.row:hover {
+  background: rgba(var(--overlay-tint), 0.05);
+}
+
+.glyph {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  margin-top: 1px;
+  border-radius: 8px;
+  background: rgba(var(--overlay-tint), 0.06);
+  color: var(--text-tertiary);
+}
+
+.glyphPinned {
+  background: color-mix(in oklab, var(--accent) 18%, transparent);
+  color: var(--accent);
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
+}
+
+.topRow {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.title {
+  composes: subhead from '../../tokens/typography.module.css';
+  color: var(--text-primary);
+  font-weight: 660;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.folder {
+  composes: caption from '../../tokens/typography.module.css';
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(var(--overlay-tint), 0.05);
+}
+
+.preview {
+  composes: caption from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}

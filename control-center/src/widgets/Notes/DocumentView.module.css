@@ -1,0 +1,181 @@
+.canvas {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+.scroll {
+  height: 100%;
+  overflow-y: auto;
+  display: flex;
+  justify-content: center;
+}
+
+/* The comfortable reading column, centred in whatever space the shell
+   gives it - generous side margins do the framing, not a card border.
+   The column itself can run wide; body text stays capped to a readable
+   measure independently (see Markdown.module.css's .doc max-width).
+   Top/bottom padding are close in scale on purpose (24px/40px, not the
+   16px/80px split an earlier pass had) - some extra room at the bottom
+   for comfortable scroll-past-end, but not so much it reads as an empty
+   void under short notes. */
+.column {
+  width: 100%;
+  max-width: 1280px;
+  padding: var(--space-5) var(--space-6) var(--space-6);
+}
+
+/* Barely there - the main pane itself is already the glass plane (see
+   NotesShell.module.css's .main). This is just enough of a wash to
+   register as a reading plane at all, not a second card. */
+.surface {
+  background: rgba(var(--overlay-tint), 0.012);
+  border-radius: var(--r-card);
+  padding: var(--space-5) calc(var(--space-6) * 1.25) var(--space-6);
+}
+
+/* title -> metadata -> first content: close, but not cramped - enough
+   air to read as deliberate front matter rather than a compressed
+   header stapled to the body. */
+.head {
+  margin-bottom: var(--space-4);
+}
+
+.breadcrumb {
+  composes: eyebrow from "../../tokens/typography.module.css";
+  color: var(--text-tertiary);
+  margin-bottom: 6px;
+}
+
+.titleRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.title {
+  composes: title1 from "../../tokens/typography.module.css";
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--text-primary);
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
+.titleIcon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  color: var(--text-secondary);
+  /* The title's own line-height leaves the glyph looking off-centre
+     against the cap-height of the text beside it - nudge it down a
+     touch rather than trusting flex align-items: center alone. */
+  transform: translateY(1px);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  padding-top: var(--space-2);
+}
+
+/* Ghost icon buttons - no border, no filled background at rest, so the
+   title stays the only thing with real visual weight up here. */
+.iconBtn {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: none;
+  background: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease);
+}
+
+.iconBtn:hover {
+  color: var(--text-primary);
+  background: rgba(var(--overlay-tint), 0.06);
+}
+
+.iconBtnActive {
+  color: #f2c94c;
+}
+
+/* The one action here that isn't icon-only - "clear Edit action" earns
+   a label, not just a glyph you have to guess at. */
+.editBtn {
+  composes: caption from "../../tokens/typography.module.css";
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 var(--space-3);
+  border-radius: 999px;
+  border: 1px solid var(--rim);
+  background: none;
+  color: var(--text-secondary);
+  font-weight: 560;
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease);
+}
+
+.editBtn:hover {
+  color: var(--text-primary);
+  background: rgba(var(--overlay-tint), 0.06);
+  border-color: var(--rim-lit);
+}
+
+.meta {
+  composes: footnote from "../../tokens/typography.module.css";
+  color: var(--text-tertiary);
+  margin-top: 4px;
+}
+
+.loading {
+  min-height: 200px;
+}
+
+/* Same max-width as Markdown.module.css's .doc (read mode) - they were
+   previously out of sync (.doc capped at 66ch, .editor uncapped at
+   100% of the whole wide surface), so switching Read<->Edit visibly
+   changed the column's width. Both now share one measure. `padding: 0`
+   is deliberate, not a no-op default - a bare <textarea> carries the
+   browser's own UA-stylesheet padding (2px in Chromium), which .doc (a
+   plain div) never had, so text sat 2px off from where the exact same
+   content renders in read mode despite the two elements' own boxes
+   coinciding exactly. */
+.editor {
+  composes: body from "../../tokens/typography.module.css";
+  display: block;
+  width: 100%;
+  max-width: 80ch;
+  min-height: 50vh;
+  padding: 0;
+  margin: 0;
+  resize: none;
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  line-height: 1.75;
+  /* Height is set inline by DocumentView's resizeEditor() to exactly
+     match scrollHeight, so it never needs its own internal scrollbar -
+     the outer .scroll container does all the scrolling, same as Read
+     mode. min-height above stays as a floor for short notes. */
+  overflow: hidden;
+}
+
+.editor:focus {
+  outline: none;
+}

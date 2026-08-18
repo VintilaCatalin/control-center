@@ -1,0 +1,103 @@
+/* Same shape as GlobalUtilities' own .utilityBtn (full-width row, icon +
+   label + trailing value) - deliberately not a standalone pill any more,
+   so this reads as the first row of one cohesive utility strip instead
+   of a chip that doesn't match its neighbours. */
+.trigger {
+  composes: callout from '../tokens/typography.module.css';
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  height: 38px;
+  padding: 0 var(--space-2);
+  border: none;
+  border-radius: 9px;
+  background: none;
+  color: var(--text-tertiary);
+  font-weight: 540;
+  font-size: 0.95em;
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease);
+}
+
+.trigger:hover,
+.trigger[aria-expanded='true'] {
+  color: var(--text-primary);
+  background: rgba(var(--overlay-tint), 0.06);
+}
+
+.trigger:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.iconSlot {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  color: var(--text-secondary);
+}
+
+.label {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.temp {
+  flex-shrink: 0;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+/* Icon-only, centred - the fix for the temperature label overflowing
+   past the collapsed 72px rail: the full row (icon + "Weather" + degrees)
+   never even tries to render at that width any more. */
+.trigger[data-collapsed] {
+  justify-content: center;
+  padding: 0;
+}
+
+.trigger[data-collapsed] .label,
+.trigger[data-collapsed] .temp {
+  display: none;
+}
+
+/* The same --popup-* surface tokens every floating popup in the app uses
+   (Sheet, Menu, Overlay) plus one addition specific to this popup: an
+   ambient accent glow, not a coloured border, the same "wallpaper as
+   light source" idea the rest of the app uses. Doesn't use the Overlay
+   component directly since it anchors to its trigger's own position
+   rather than centring/drawering. */
+.panel {
+  position: fixed;
+  z-index: 60;
+  overflow: hidden;
+  width: 340px;
+  padding: var(--space-4);
+  border-radius: 16px;
+  background: var(--popup-bg);
+  backdrop-filter: var(--popup-blur);
+  -webkit-backdrop-filter: var(--popup-blur);
+  border: 1px solid var(--popup-border);
+  box-shadow: var(--popup-shadow), 0 0 46px color-mix(in oklab, var(--accent) 20%, transparent);
+}
+
+/* The same top sheen every Card in the app has (primitives/Card) - see
+   Overlay.module.css's identical rule for why this is the piece that
+   actually reads as "glass". */
+.panel::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 42%;
+  background: linear-gradient(rgba(var(--overlay-tint), 0.055), transparent);
+  pointer-events: none;
+}

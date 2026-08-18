@@ -1,0 +1,345 @@
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.title {
+  composes: title2 from '../../tokens/typography.module.css';
+  color: var(--text-primary);
+  font-weight: 640;
+  margin: 0;
+}
+
+/* A fixed height, not an aspect-ratio-driven one - every card in this
+   row (featured and supporting alike) shares the exact same height and
+   only differs in width, matching the reference composition. "A bit
+   taller" per explicit feedback - was ~290px when height followed a
+   16:9 ratio off the featured card's own width alone. */
+.row {
+  display: flex;
+  gap: var(--space-4);
+  height: 400px;
+}
+
+/* Forces ArtTile to fill this card's own box exactly instead of sizing
+   itself off its own aspect-ratio class - these cards aren't 16:9
+   boxes any more, they're "whatever height the row is, at this card's
+   own width". !important is deliberate: ArtTile's .landscape class sets
+   aspect-ratio directly on the same element this className lands on,
+   equal specificity, so source order (not importance) would otherwise
+   decide the winner - not something to leave to chance here. */
+.artFill {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  aspect-ratio: auto !important;
+}
+
+/* ---- featured card (large) ---- */
+
+.featured {
+  position: relative;
+  overflow: hidden;
+  flex: 0 0 calc(50% - var(--space-2));
+  height: 100%;
+  border-radius: var(--r-tile);
+  cursor: pointer;
+  box-shadow: var(--lift);
+  outline: none;
+}
+
+.featured:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.featuredShade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(2, 3, 5, 0.97) 0%, rgba(2, 3, 5, 0.72) 38%, rgba(2, 3, 5, 0.14) 68%, transparent);
+  pointer-events: none;
+}
+
+.featuredProgress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 4px;
+  background: rgba(2, 3, 5, 0.5);
+  z-index: 2;
+  pointer-events: none;
+}
+
+.featuredProgressFill {
+  height: 100%;
+  background: var(--accent);
+}
+
+.featuredMeta {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  padding: var(--space-5) var(--space-5) var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.featuredEyebrowRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 18px;
+}
+
+.featuredEyebrow {
+  composes: eyebrow from '../../tokens/typography.module.css';
+  color: var(--accent);
+}
+
+.typeBadge {
+  composes: caption from '../../tokens/typography.module.css';
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: color-mix(in oklab, var(--accent) 30%, transparent);
+  color: rgba(var(--overlay-tint), 0.95);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  font-size: 10px;
+}
+
+.liveDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: #e0665a;
+  box-shadow: 0 0 8px #e0665a;
+  animation: pulse 1.8s var(--ease) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* Clearly primary - the biggest, boldest text in the whole card, the
+   way the reference's title dominates its card. */
+.featuredTitle {
+  composes: title1 from '../../tokens/typography.module.css';
+  color: rgba(var(--overlay-tint), 0.98);
+  font-weight: 700;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.55);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Secondary, deliberately quieter than the title - smaller, dimmer,
+   never competing with it. */
+.featuredMetaRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.featuredMetaItem {
+  composes: caption from '../../tokens/typography.module.css';
+  color: rgba(var(--overlay-tint), 0.68);
+}
+
+.featuredSummary {
+  composes: callout from '../../tokens/typography.module.css';
+  margin: 2px 0 0;
+  max-width: 52ch;
+  color: rgba(var(--overlay-tint), 0.78);
+  line-height: 1.5;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.featuredActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: 6px;
+  pointer-events: auto;
+}
+
+.resumeBtn {
+  composes: callout from '../../tokens/typography.module.css';
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 40px;
+  padding: 0 var(--space-4);
+  border: none;
+  border-radius: 999px;
+  background: rgba(var(--overlay-tint), 0.95);
+  color: #0a0c10;
+  font-weight: 660;
+  cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease);
+}
+
+.resumeBtn:hover {
+  transform: scale(1.03);
+}
+
+.infoBtn {
+  composes: callout from '../../tokens/typography.module.css';
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 40px;
+  padding: 0 var(--space-4);
+  border: 1px solid rgba(var(--overlay-tint), 0.3);
+  border-radius: 999px;
+  background: rgba(var(--overlay-tint), 0.1);
+  color: rgba(var(--overlay-tint), 0.95);
+  font-weight: 560;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  transition:
+    background var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease);
+}
+
+.infoBtn:hover {
+  background: rgba(var(--overlay-tint), 0.18);
+  border-color: rgba(var(--overlay-tint), 0.45);
+}
+
+/* ---- supporting cards (small, two visible, horizontally scrollable) ---- */
+
+.supportingScroll {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  gap: var(--space-3);
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+}
+
+.supportingScroll::-webkit-scrollbar {
+  height: 6px;
+}
+
+/* Exactly two visible per view - half the lane's own width each, minus
+   half the gap between them. */
+.supportingSlot {
+  flex: 0 0 calc(50% - 6px);
+  height: 100%;
+  scroll-snap-align: start;
+}
+
+.supporting {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+  border-radius: var(--r-tile);
+  cursor: pointer;
+  box-shadow: var(--lift);
+  outline: none;
+}
+
+.supporting:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.supportingShade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(2, 3, 5, 0.95) 0%, rgba(2, 3, 5, 0.55) 40%, rgba(2, 3, 5, 0.06) 70%, transparent);
+  pointer-events: none;
+}
+
+.supportingPlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: rgba(var(--overlay-tint), 0.95);
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease);
+  pointer-events: none;
+}
+
+.supporting:hover .supportingPlay,
+.supporting:focus-visible .supportingPlay {
+  opacity: 1;
+}
+
+.supportingPlay svg {
+  width: 30px;
+  height: 30px;
+  filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.5));
+}
+
+.supportingProgress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  background: rgba(2, 3, 5, 0.5);
+  z-index: 2;
+  pointer-events: none;
+}
+
+.supportingProgressFill {
+  height: 100%;
+  background: var(--accent);
+}
+
+.supportingMeta {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  padding: var(--space-4) var(--space-3) var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  pointer-events: none;
+}
+
+.supportingTitle {
+  composes: headline from '../../tokens/typography.module.css';
+  font-weight: 650;
+  color: rgba(var(--overlay-tint), 0.98);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.supportingSub {
+  composes: caption from '../../tokens/typography.module.css';
+  color: rgba(var(--overlay-tint), 0.68);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.supportingEmpty {
+  composes: callout from '../../tokens/typography.module.css';
+  flex: 1;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  color: var(--text-tertiary);
+  text-align: center;
+}

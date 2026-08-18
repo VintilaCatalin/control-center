@@ -1,0 +1,21 @@
+.empty {
+  composes: subhead from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  font-style: italic;
+}
+
+/* Wraps onto additional rows rather than scrolling sideways - this is a
+   content-heavy grid of covers, not a deliberately horizontal-browsing
+   strip (unlike Favorites, which stays a single scrollable row on
+   purpose). panelBody's own vertical overflow:auto (PanelGrid) handles
+   anything that doesn't fit the panel's current height. */
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.item {
+  flex: 0 0 auto;
+  width: 120px;
+}

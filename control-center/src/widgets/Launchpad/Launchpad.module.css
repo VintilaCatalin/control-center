@@ -1,0 +1,194 @@
+.count {
+  composes: footnote from "../../tokens/typography.module.css";
+  color: var(--text-tertiary);
+}
+
+.headActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.iconBtn {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  border: 1px solid var(--rim);
+  background: rgba(var(--overlay-tint), 0.05);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease);
+}
+
+.iconBtn:hover:not(:disabled) {
+  color: var(--text-primary);
+  background: var(--rim);
+}
+
+.iconBtn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* A real icon-only dock now - like a real OS taskbar/dock, not a grid or
+   list of icon+caption pairs. Names live in a floating tooltip that only
+   appears on hover/focus (see .appTooltip), so at rest this is pure
+   glassy icon art, densely packed, wrapping into more rows as the
+   library grows rather than a fixed grid of icon-plus-label cells. */
+/* Padding, not just gap - hover lifts (-6px) and scales (1.06) tiles past
+   their own flex box, and the panel body around this dock clips on both
+   axes (overflow-x: hidden always, overflow-y: auto still bounded at the
+   scroll edges). Without this padding a tile sitting flush against the
+   dock's own edge gets its hover state hard-clipped. */
+.dock {
+  display: flex;
+  flex-wrap: balance;
+  gap: var(--space-3);
+  padding: 10px 8px 4px;
+}
+
+.appButton {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  outline: none;
+}
+
+.appButton:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: var(--r-tile);
+}
+
+.drop-before::before,
+.drop-after::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--accent);
+  box-shadow: 0 0 10px var(--accent);
+  z-index: 4;
+}
+
+.drop-before::before {
+  left: -10px;
+}
+
+.drop-after::after {
+  right: -10px;
+}
+
+/* The glass plate itself - a real frosted-glass tile (blur + translucent
+   gradient + inner glossy sheen along the top edge), not a flat icon
+   background. `!important` overrides ArtTile's own default .contain
+   background (a flat --slate fill) since this tile needs the glass
+   recipe instead. */
+.appTile {
+  position: relative;
+  flex-shrink: 0;
+  width: 68px;
+  height: 68px;
+  border-radius: 20px !important;
+  background: linear-gradient(
+    155deg,
+    rgba(255, 255, 255, 0.14),
+    rgba(255, 255, 255, 0.03)
+  ) !important;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow:
+    var(--lift),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -8px 16px -8px rgba(0, 0, 0, 0.3);
+  transition:
+    box-shadow var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease);
+}
+
+.appButton:hover .appTile,
+.appButton:focus-visible .appTile {
+  border-color: color-mix(
+    in oklab,
+    var(--accent) 55%,
+    rgba(255, 255, 255, 0.16)
+  );
+  box-shadow:
+    var(--lift),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -8px 16px -8px rgba(0, 0, 0, 0.3),
+    0 0 0 1px color-mix(in oklab, var(--accent) 35%, transparent),
+    0 0 22px color-mix(in oklab, var(--accent) 40%, transparent);
+}
+
+.appGlyph {
+  composes: title2 from "../../tokens/typography.module.css";
+  color: var(--text-primary);
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* The floating name tooltip - hidden at rest, fades/rises in above the
+   icon on hover/focus, same idiom a real dock uses instead of a
+   permanent caption under every single icon. */
+/* Below the icon, not above it - the panel body this dock lives in
+   scrolls (overflow-y: auto), which clips anything positioned above a
+   tile sitting near the top edge before it ever gets the chance to show.
+   Below has nowhere near that problem for a dock that's normally taller
+   than it is close to its own bottom edge. */
+.appTooltip {
+  composes: caption from "../../tokens/typography.module.css";
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translate(-50%, -4px);
+  padding: 5px 10px;
+  border-radius: 8px;
+  background: var(--slate);
+  border: 1px solid var(--rim-lit);
+  box-shadow: var(--lift);
+  color: var(--text-primary);
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 5;
+  transition:
+    opacity var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease);
+}
+
+.appButton:hover .appTooltip,
+.appButton:focus-visible .appTooltip {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.skeletonSlot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.empty {
+  composes: subhead from "../../tokens/typography.module.css";
+  color: var(--text-tertiary);
+  font-style: italic;
+}
+
+.emptyError {
+  composes: subhead from "../../tokens/typography.module.css";
+  color: var(--warn);
+  font-style: normal;
+}

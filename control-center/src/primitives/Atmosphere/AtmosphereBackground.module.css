@@ -1,0 +1,38 @@
+/* Sits behind everything (painted right after body's own flat --ink
+   background, before .shell's content) so glass cards' existing
+   translucency lets it show through, without needing any z-index
+   coordination with the rest of the app.
+
+   transform: translateZ(0) pins this to its own stable compositor layer.
+   Without it, a fixed-position layer sitting behind cards that use
+   backdrop-filter (every Card) would get swept into recompositing
+   whenever something nearby animates transform - e.g. GameTile's hover
+   lift/scale - which read as a brief flicker in the background on every
+   game hover. Isolating this layer means those unrelated animations no
+   longer have any reason to touch it. */
+.host {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  transform: translateZ(0);
+}
+
+.layer {
+  position: absolute;
+  inset: 0;
+  will-change: opacity;
+}
+
+.image {
+  position: absolute;
+  inset: 0;
+  background-position: center;
+  background-size: cover;
+  transform: scale(1.04);
+}
+
+.wash {
+  position: absolute;
+  inset: 0;
+}

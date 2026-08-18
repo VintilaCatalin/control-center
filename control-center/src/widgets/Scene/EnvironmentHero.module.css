@@ -1,0 +1,272 @@
+/* Deliberately not composing Card's glass/blur treatment - the wallpaper
+   itself is the content here, not something glimpsed behind glass, so it
+   stays crisp and full-bleed. Same corner radius/shadow language as every
+   other surface in the app, built by hand instead. */
+.hero {
+  position: relative;
+  height: clamp(380px, 54vh, 620px);
+  border-radius: var(--r-card);
+  overflow: hidden;
+  background: linear-gradient(160deg, var(--raise), var(--slate));
+  box-shadow: var(--lift), var(--inner);
+  border: 1px solid var(--rim);
+}
+
+.imageLayer {
+  position: absolute;
+  inset: 0;
+  background-position: center;
+  background-size: cover;
+  transform: scale(1.02);
+}
+
+/* A soft accent-tinted highlight in one corner - the palette's presence
+   felt in the hero itself, not just in the swatch row below. */
+.glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+
+.shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(2, 3, 5, 0.94),
+    rgba(2, 3, 5, 0.62) 46%,
+    rgba(2, 3, 5, 0.1) 74%,
+    transparent
+  );
+  pointer-events: none;
+}
+
+.eyebrow {
+  composes: eyebrow from '../../tokens/typography.module.css';
+  position: absolute;
+  top: var(--space-5);
+  left: var(--space-5);
+  color: rgba(var(--overlay-tint), 0.7);
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.5);
+}
+
+.content {
+  position: absolute;
+  inset: auto 0 0 0;
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.systemRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+/* The gradient strip IS the Colorful action now, not a swatch legend next
+   to a separate button - border/glow on hover so it reads as a control,
+   not decoration. Same height as the swatch circles beside it (22px) so
+   the two read as one row of equally-weighted controls, not a thin bar
+   next to full-size buttons. */
+.paletteStrip {
+  width: 130px;
+  height: 22px;
+  border-radius: 999px;
+  flex-shrink: 0;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
+  transition: box-shadow var(--dur-fast) var(--ease);
+}
+
+.paletteStrip:hover:not(:disabled),
+.paletteStrip:focus-visible {
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.35),
+    0 0 0 3px rgba(var(--overlay-tint), 0.3);
+  outline: none;
+}
+
+.paletteStrip:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.swatches {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  border: 2px solid rgba(var(--overlay-tint), 0.5);
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+/* A visual reading of light state, not a line of text - one pip per
+   light, coloured to its actual reported hex when on (so the row itself
+   echoes whatever's currently painted, colourful or flat), dim grey when
+   off. Compact by design: this is a status glance, not the old app's
+   full per-light monitoring list - Scene stays a control surface, not a
+   dashboard. */
+.lightStatus {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+  max-width: 130px;
+}
+
+.lightStatusEmpty {
+  composes: footnote from '../../tokens/typography.module.css';
+  color: rgba(var(--overlay-tint), 0.6);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
+}
+
+.lightPip {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--text-tertiary);
+  opacity: 0.4;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
+  transition: opacity var(--dur-fast) var(--ease);
+}
+
+.lightPip[data-on] {
+  opacity: 1;
+  background: #f2c94c;
+  box-shadow: 0 0 7px #f2c94c;
+}
+
+/* ---- manual overrides + brightness/saturation ---- */
+
+/* flex-start, not space-between - the previous space-between was the
+   actual bug pushing .sliders to the far right edge of the hero
+   (the container spans the hero's full width via .content, so
+   space-between stretched .modes and .sliders to opposite ends of it).
+   Every lighting control belongs in one adjacent cluster. */
+.controlsRow {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--space-5);
+  flex-wrap: wrap;
+}
+
+.modes {
+  display: flex;
+  gap: var(--space-1);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.modeBtn {
+  composes: caption from '../../tokens/typography.module.css';
+  color: rgba(var(--overlay-tint), 0.85);
+  background: rgba(var(--overlay-tint), 0.1);
+  border: 1px solid rgba(var(--overlay-tint), 0.18);
+  border-radius: 999px;
+  padding: 5px 12px;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  transition:
+    color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease);
+}
+
+.modeBtn:hover:not(:disabled) {
+  color: var(--text-primary);
+  background: rgba(var(--overlay-tint), 0.2);
+}
+
+.modeBtn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Stacked, not stretched across the hero - these are two short controls
+   next to the mode pills, not a second full-width row competing with the
+   wallpaper for space. */
+.sliders {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  flex-shrink: 0;
+  width: 168px;
+}
+
+.sliderGroup {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.sliderLabel {
+  composes: caption from '../../tokens/typography.module.css';
+  color: rgba(var(--overlay-tint), 0.65);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
+  flex-shrink: 0;
+  width: 34px;
+}
+
+.sliderValue {
+  composes: caption from '../../tokens/typography.module.css';
+  color: rgba(var(--overlay-tint), 0.75);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+  width: 34px;
+  text-align: right;
+}
+
+.slider {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(var(--overlay-tint), 0.25);
+  outline: none;
+  cursor: pointer;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: var(--paper);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+  transition: transform var(--dur-fast) var(--ease);
+}
+
+.slider::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+
+.slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: none;
+  border-radius: 999px;
+  background: var(--paper);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+
+.slider::-moz-range-track {
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(var(--overlay-tint), 0.25);
+}

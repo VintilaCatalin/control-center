@@ -1,0 +1,87 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+  height: 100%;
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+.sub {
+  composes: caption from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  overflow-y: auto;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* The "glow" is a radial gradient drawn *inside* the swatch's own box
+   (bright core fading to transparent before the edge), not a box-shadow
+   that needs to bleed past it - it can never get clipped by a scrolling
+   ancestor because it never needs to escape its element in the first
+   place. */
+.swatch {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: var(--rim-lit);
+  transition: background var(--dur-slow) var(--ease);
+}
+
+.name {
+  composes: footnote from '../../tokens/typography.module.css';
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.brightnessTrack {
+  flex: 0 0 48px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(var(--overlay-tint), 0.06);
+  overflow: hidden;
+}
+
+.brightnessFill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--accent);
+  transition: width var(--dur-slow) var(--ease);
+}
+
+.state {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--space-4);
+}
+
+.stateBody {
+  composes: caption from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  max-width: 32ch;
+}

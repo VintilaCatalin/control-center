@@ -1,0 +1,34 @@
+/* Same "own application surface" treatment as Plex.module.css - a
+   distinct rounded pane in the shell's content region, not an edge-to-edge
+   page. */
+.page {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  margin: var(--space-4);
+  border-radius: var(--r-card);
+  overflow: hidden;
+  background: var(--glass);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  box-shadow: var(--lift), var(--inner);
+  border: 1px solid var(--rim);
+}
+
+.content {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.state {
+  composes: callout from '../tokens/typography.module.css';
+  display: grid;
+  place-items: center;
+  color: var(--text-tertiary);
+  min-height: 320px;
+}

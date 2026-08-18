@@ -1,0 +1,99 @@
+.menu {
+  position: fixed;
+  z-index: 60;
+  min-width: 194px;
+  max-height: min(420px, calc(100vh - 24px));
+  overflow-y: auto;
+  padding: 6px;
+  border-radius: 14px;
+  background: var(--popup-bg);
+  backdrop-filter: var(--popup-blur);
+  -webkit-backdrop-filter: var(--popup-blur);
+  border: 1px solid var(--popup-border);
+  box-shadow: var(--popup-shadow);
+}
+
+/* The same top sheen every Card in the app has (primitives/Card) - see
+   Overlay.module.css's identical rule for why this is the piece that
+   actually reads as "glass". */
+.menu::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 42%;
+  background: linear-gradient(rgba(var(--overlay-tint), 0.055), transparent);
+  pointer-events: none;
+}
+
+.item {
+  composes: callout from '../../tokens/typography.module.css';
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  width: 100%;
+  text-align: left;
+  color: var(--text-primary);
+  background: transparent;
+  border: 0;
+  border-radius: 9px;
+  padding: var(--space-2) var(--space-3);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease);
+}
+
+.item:hover,
+.item:focus-visible {
+  background: var(--rim);
+  outline: none;
+}
+
+.danger {
+  color: #ff8a8a;
+}
+
+.itemMain {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+/* A small chip behind the glyph, not a bare icon floating next to text -
+   reads as a real product menu row (profile menu) rather than a plain
+   context-menu list, without needing a second menu component. */
+.itemIcon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  background: rgba(var(--overlay-tint), 0.05);
+  color: var(--text-tertiary);
+  transition:
+    background var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
+}
+
+.item:hover .itemIcon {
+  background: rgba(var(--overlay-tint), 0.09);
+  color: var(--text-secondary);
+}
+
+.sep {
+  border: 0;
+  border-top: 1px solid var(--rim);
+  margin: var(--space-2) var(--space-1);
+}
+
+.heading {
+  composes: eyebrow from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  padding: var(--space-2) var(--space-3) var(--space-1);
+}
+
+.hint {
+  composes: caption from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+}

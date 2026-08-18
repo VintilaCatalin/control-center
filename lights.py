@@ -417,7 +417,8 @@ def paint(cfg, *args):
             continue
         try:
             done = subprocess.run([sys.executable, str(script), *args],
-                                  capture_output=True, text=True, timeout=90)
+                                  capture_output=True, text=True, timeout=90,
+                                  creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
         except (OSError, subprocess.SubprocessError) as e:
             pass
 
@@ -599,9 +600,14 @@ def apply_colorful(cfg, token, palette, brightness_pct=100, saturation_pct=100,
         list(pool.map(send, list(enumerate(targets))))
 
     # The PC and the keyboard are independent hardware - fire them off now
-    # rather than making them wait behind Govee's cloud round trips.
+    # rather than making them wait behind Govee's cloud round trips. Both
+    # scripts now accept --saturation the same way they already accept
+    # --brightness (rgb_paint_win.py's shape()/chroma_paint.py's render()),
+    # so the same slider that adjusts the HA/Govee/Hue lights above also
+    # reaches OpenRGB and the Chroma keyboard, instead of only the flat
+    # HA colours changing while the PC/keyboard stayed at full punch.
     if source:
-        paint(cfg, "--image", str(source), "--brightness", str(brightness_pct))
+        paint(cfg, "--image", str(source), "--brightness", str(brightness_pct), "--saturation", str(saturation_pct))
 
     # Segments LAST, deliberately. Painting them first meant any later
     # whole-device write - a duplicate entity for the same lamp, a group
@@ -672,7 +678,8 @@ def apply_game(cfg, token):
         if script.is_file():
             try:
                 subprocess.run([sys.executable, str(script), "--off"],
-                               capture_output=True, timeout=15)
+                               capture_output=True, timeout=15,
+                               creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
             except Exception:
                 pass
 

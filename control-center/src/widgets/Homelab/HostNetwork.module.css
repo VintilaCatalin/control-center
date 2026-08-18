@@ -1,0 +1,15 @@
+.panel {
+  height: 100%;
+  min-width: 0;
+}
+
+.empty {
+  composes: caption from '../../tokens/typography.module.css';
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-tertiary);
+  text-align: center;
+  padding: var(--space-4);
+}

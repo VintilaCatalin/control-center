@@ -1,0 +1,144 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.label {
+  composes: eyebrow from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+}
+
+.row {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.input {
+  composes: callout from '../../tokens/typography.module.css';
+  flex: 1;
+  min-width: 0;
+  color: var(--text-primary);
+  background: rgba(var(--overlay-tint), 0.05);
+  border: 1px solid var(--rim);
+  border-radius: 10px;
+  padding: var(--space-2) var(--space-3);
+}
+
+.input:focus {
+  outline: none;
+  border-color: color-mix(in oklab, var(--accent) 70%, transparent);
+}
+
+.input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.textarea {
+  composes: body from '../../tokens/typography.module.css';
+  resize: vertical;
+  min-height: 120px;
+  color: var(--text-primary);
+  background: rgba(var(--overlay-tint), 0.05);
+  border: 1px solid var(--rim);
+  border-radius: 12px;
+  padding: var(--space-3);
+  line-height: 1.6;
+}
+
+.textarea:focus {
+  outline: none;
+  border-color: color-mix(in oklab, var(--accent) 70%, transparent);
+}
+
+/* A custom chevron, not the browser's own default arrow - appearance:
+   none strips that (and its inconsistent native inset), the wrapper
+   gives us a fixed, correctly-centred inset to replace it with instead,
+   matching how every other icon-affordance control in the app is built. */
+.selectWrap {
+  position: relative;
+  display: block;
+}
+
+.select {
+  composes: input;
+  appearance: none;
+  width: 100%;
+  padding-right: calc(var(--space-3) * 2 + 14px);
+  cursor: pointer;
+}
+
+.select option {
+  background: var(--slate);
+  color: var(--text-primary);
+}
+
+.selectChevron {
+  position: absolute;
+  top: 50%;
+  right: var(--space-3);
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  color: var(--text-tertiary);
+  pointer-events: none;
+}
+
+.btn {
+  composes: caption from '../../tokens/typography.module.css';
+  flex-shrink: 0;
+  color: var(--text-secondary);
+  background: rgba(var(--overlay-tint), 0.05);
+  border: 1px solid var(--rim);
+  border-radius: 10px;
+  padding: var(--space-2) var(--space-4);
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease);
+}
+
+.btn:hover:not(:disabled) {
+  color: var(--text-primary);
+  background: rgba(var(--overlay-tint), 0.1);
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.primary {
+  color: #0a0c10;
+  background: var(--accent);
+  border-color: transparent;
+}
+
+.primary:hover:not(:disabled) {
+  filter: brightness(1.12);
+  color: #0a0c10;
+}
+
+.danger {
+  color: #0a0c10;
+  background: var(--warn);
+  border-color: transparent;
+}
+
+.danger:hover:not(:disabled) {
+  filter: brightness(1.1);
+  color: #0a0c10;
+}
+
+.error {
+  composes: footnote from '../../tokens/typography.module.css';
+  color: var(--warn);
+  margin-top: var(--space-2);
+}
+
+.hint {
+  composes: footnote from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+}

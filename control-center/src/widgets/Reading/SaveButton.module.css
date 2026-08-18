@@ -1,0 +1,64 @@
+/* Positioned absolutely by default (top-right of whatever positioned
+   ancestor it's placed in) - every current use wants exactly that, so
+   layout is owned here rather than re-declared per card type. */
+.btn {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(2, 3, 5, 0.5);
+  backdrop-filter: blur(6px);
+  color: rgba(255, 255, 255, 0.85);
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease);
+}
+
+.btn:hover {
+  color: #fff;
+  transform: scale(1.08);
+}
+
+.active {
+  color: var(--accent);
+  background: rgba(2, 3, 5, 0.65);
+}
+
+.small {
+  top: 8px;
+  right: 8px;
+  width: 26px;
+  height: 26px;
+}
+
+.inline {
+  position: static;
+  flex-shrink: 0;
+}
+
+/* On-panel variant for text-editorial cards, which have no dark image to
+   sit a light glass chip over - a tinted circle matching the card's own
+   surface reads correctly there instead. */
+.onPanel {
+  background: rgba(var(--overlay-tint), 0.08);
+  color: var(--text-tertiary);
+  backdrop-filter: none;
+}
+
+.onPanel:hover {
+  color: var(--text-primary);
+  background: rgba(var(--overlay-tint), 0.14);
+}
+
+.onPanel.active {
+  color: var(--accent);
+  background: color-mix(in oklab, var(--accent) 18%, transparent);
+}

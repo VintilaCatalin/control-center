@@ -1,0 +1,176 @@
+.stage {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.artLayer {
+  position: absolute;
+  inset: 0;
+  background-position: center;
+  background-size: cover;
+  background-color: var(--raise);
+}
+
+.artFallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(120% 100% at 50% 0%, var(--raise), var(--slate));
+  color: var(--text-tertiary);
+}
+
+/* Positioning only, no background - keeps Skeleton's own shimmer
+   background from fighting with artLayer's background-color in the
+   cascade. */
+.skeletonArt {
+  position: absolute;
+  inset: 0;
+}
+
+.artShade {
+  position: absolute;
+  inset: 0;
+  /* Strong enough that title/subtitle stay legible over any photo, not
+     just typical ones - a busy bright area under the text shouldn't be
+     able to fight it. */
+  background: linear-gradient(
+    to top,
+    rgba(2, 3, 5, 0.96),
+    rgba(2, 3, 5, 0.72) 42%,
+    rgba(2, 3, 5, 0.15) 75%,
+    transparent
+  );
+  pointer-events: none;
+}
+
+.eyebrow {
+  composes: eyebrow from '../../tokens/typography.module.css';
+  position: relative;
+  z-index: 2;
+  padding: var(--space-5) var(--space-5) 0;
+  color: var(--text-tertiary);
+}
+
+.content {
+  position: relative;
+  z-index: 2;
+  margin-top: auto;
+  padding: var(--space-4) var(--space-5) var(--space-5);
+  display: flex;
+  flex-direction: column;
+}
+
+.title {
+  composes: title2 from '../../tokens/typography.module.css';
+  color: var(--text-primary);
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.55);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.subtitle {
+  composes: subhead from '../../tokens/typography.module.css';
+  color: var(--text-secondary);
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.55);
+  margin-top: var(--space-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.timeRow {
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--space-4);
+}
+
+.time {
+  composes: footnote from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.scrubTrack {
+  position: relative;
+  height: 4px;
+  border-radius: 4px;
+  background: rgba(var(--overlay-tint), 0.16);
+  margin-top: var(--space-2);
+  overflow: hidden;
+  cursor: pointer;
+  transition: height var(--dur-fast) var(--ease);
+}
+
+.scrubTrack:hover {
+  height: 6px;
+}
+
+.scrubFill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 4px;
+  background: var(--accent);
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+}
+
+/* ---- empty / error message ---- */
+
+.message {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  text-align: center;
+  height: 100%;
+  padding: var(--space-6);
+  color: var(--text-tertiary);
+}
+
+.messageTitle {
+  composes: title2 from '../../tokens/typography.module.css';
+  color: var(--text-primary);
+}
+
+.messageSub {
+  composes: subhead from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+}
+
+.messageError {
+  color: var(--warn);
+}
+
+/* ---- loading skeleton ---- */
+
+.skeletonContent {
+  position: relative;
+  z-index: 2;
+  margin-top: auto;
+  padding: var(--space-4) var(--space-5) var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.skeletonControls {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}

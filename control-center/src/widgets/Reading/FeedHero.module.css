@@ -1,0 +1,267 @@
+.hero {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: var(--space-4);
+  align-items: stretch;
+}
+
+@media (max-width: 860px) {
+  .hero {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---- the one photo tile - sized as an accent, not a page dominator.
+   2.4/1 (vs. the previous 16/9) is what actually shrinks it: at a fixed
+   width, height scales inversely with the aspect ratio. ---- */
+
+/* Un-clipped on purpose - .tile itself clips to give the photo its shape,
+   but the glow behind it needs room to bleed past that box, so it lives
+   in this wrapper instead (see MetricChart's own note on this exact
+   class of bug in Homelab: a glow inside an overflow:hidden box never
+   escapes it, however large the blur). */
+.tileWrap {
+  position: relative;
+}
+
+.tile {
+  position: relative;
+  border-radius: var(--r-card);
+  overflow: hidden;
+  box-shadow: var(--lift);
+  transition: transform var(--dur-base) var(--ease);
+}
+
+.tile:hover,
+.tile:focus-within {
+  transform: translateY(-3px);
+}
+
+/* An ambient wash of the story's own topic colour sitting just behind the
+   tile - the one cue that this is "the featured story", not just the
+   first item in a list, before a reader even reads the badge. */
+.glow {
+  position: absolute;
+  inset: -14% -5%;
+  z-index: -1;
+  background: radial-gradient(ellipse at 30% 15%, color-mix(in oklab, var(--tile-color) 50%, transparent), transparent 65%);
+  filter: blur(36px);
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.tileMedia {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 2.4 / 1;
+  border: none;
+  padding: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.art {
+  width: 100% !important;
+  height: 100% !important;
+  aspect-ratio: auto !important;
+  border-radius: 0 !important;
+}
+
+.playBadge {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: rgba(2, 3, 5, 0.1);
+  pointer-events: none;
+}
+
+.playBadge svg {
+  width: 32px;
+  height: 32px;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.5));
+}
+
+.scrim {
+  position: absolute;
+  inset: auto 0 0;
+  height: 80%;
+  background: linear-gradient(to top, rgba(2, 3, 5, 0.9) 10%, rgba(2, 3, 5, 0.4) 55%, transparent);
+  pointer-events: none;
+}
+
+/* Reload/Pin/Save as one row of matching glass chips, top-right - not
+   just SaveButton alone any more. A bad or off-topic source image
+   shouldn't be stuck there until it ages out of the recency window on
+   its own: Reload skips to the next eligible story, Pin locks today's
+   pick in place so a good one survives the next poll. */
+.tileActions {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  z-index: 3;
+  display: flex;
+  gap: 8px;
+}
+
+.tileActionBtn {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  border: none;
+  background: rgba(2, 3, 5, 0.5);
+  backdrop-filter: blur(6px);
+  color: rgba(255, 255, 255, 0.85);
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease);
+}
+
+.tileActionBtn:hover {
+  color: #fff;
+  transform: scale(1.08);
+}
+
+.tileActionActive {
+  color: var(--accent);
+  background: rgba(2, 3, 5, 0.65);
+}
+
+.badge {
+  composes: eyebrow from '../../tokens/typography.module.css';
+  position: absolute;
+  top: var(--space-3);
+  left: var(--space-3);
+  z-index: 2;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--tile-color);
+  color: #0a0c10;
+  font-weight: 750;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+.tileText {
+  position: absolute;
+  inset: auto 0 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--space-4) var(--space-4) var(--space-3);
+}
+
+.tileTitle {
+  composes: title1 from '../../tokens/typography.module.css';
+  color: #fff;
+  font-weight: 680;
+  letter-spacing: -0.015em;
+  line-height: 1.15;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.tileMeta {
+  composes: caption from '../../tokens/typography.module.css';
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* ---- side column: three companion stories, each with real weight (an
+   excerpt, not just a headline) - deliberately few and substantial
+   rather than a longer list of bare title rows. Equal height via
+   flex:1 so the column collectively matches the photo tile's height. ---- */
+
+.sideList {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.sideRow {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  min-height: 0;
+  border-top: 1px solid var(--rim);
+}
+
+.sideRow:first-child {
+  border-top: none;
+}
+
+.sideRowBody {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0 var(--space-2);
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  border-radius: 10px;
+  transition: background var(--dur-fast) var(--ease);
+}
+
+.sideRowBody:hover {
+  background: rgba(var(--overlay-tint), 0.05);
+}
+
+.sideTopRow {
+  composes: caption from '../../tokens/typography.module.css';
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--text-tertiary);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.sideTopic {
+  font-weight: 650;
+  flex-shrink: 0;
+}
+
+.sideSource {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sideDot {
+  flex-shrink: 0;
+}
+
+.sideTitle {
+  composes: subhead from '../../tokens/typography.module.css';
+  color: var(--text-primary);
+  font-weight: 640;
+  line-height: 1.32;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.sideExcerpt {
+  composes: footnote from '../../tokens/typography.module.css';
+  color: var(--text-secondary);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

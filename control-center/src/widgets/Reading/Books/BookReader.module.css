@@ -1,0 +1,74 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  display: flex;
+  flex-direction: column;
+  background: var(--ink);
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  padding: var(--space-3) var(--space-5);
+}
+
+.backBtn {
+  composes: callout from '../../../tokens/typography.module.css';
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 var(--space-3) 0 var(--space-2);
+  border-radius: 999px;
+  border: none;
+  background: rgba(var(--overlay-tint), 0.08);
+  color: var(--text-primary);
+  font-weight: 560;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease);
+  max-width: 60%;
+  overflow: hidden;
+}
+
+.backBtn span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.backBtn:hover {
+  background: rgba(var(--overlay-tint), 0.14);
+}
+
+.openExternal {
+  composes: caption from '../../../tokens/typography.module.css';
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 var(--space-3);
+  border-radius: 999px;
+  border: 1px solid var(--rim-lit);
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-decoration: none;
+  flex-shrink: 0;
+  transition:
+    color var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease);
+}
+
+.openExternal:hover {
+  color: var(--text-primary);
+  border-color: var(--accent);
+}
+
+.frame {
+  flex: 1;
+  width: 100%;
+  border: none;
+  background: #fff;
+}

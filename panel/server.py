@@ -8,6 +8,8 @@ import asyncio
 import base64
 import configparser
 import ctypes
+import hashlib
+import html as html_entities
 import json
 import mimetypes
 import os
@@ -18,10 +20,11 @@ import subprocess
 import sys
 import threading
 import time
+from collections import deque
 from datetime import datetime, timedelta, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import urlparse, parse_qs
+from urllib.parse import urlparse, parse_qs, urljoin
 
 import requests
 import icalendar
@@ -38,6 +41,10 @@ STATE_FILE = CONFIG_DIR / "state.json"
 # config.ini stays hand-edited; this file is owned by the UI.
 STORE_FILE = CONFIG_DIR / "panel-store.json"
 COVER_DIR = CONFIG_DIR / "covers"
+# Extracted article full-text, one JSON file per reading item id - see
+# _extract_article(). Disk-backed (not just in-memory) so the cache
+# survives a backend restart, same reasoning as COVER_DIR.
+ARTICLE_DIR = CONFIG_DIR / "articles"
 
 DEFAULTS = {
     "latitude": "44.3302", "longitude": "23.7949", "place": "Craiova", "units": "celsius",
@@ -66,18 +73,25 @@ DEFAULTS = {
     "radarr_url": "", "radarr_key": "",
     "immich_url": "", "immich_key": "", "immich_album": "",
     "overseerr_url": "", "overseerr_key": "",
+    # Additive data sources for the Homelab dashboard - neither replaces the
+    # TCP-probe service grid, both are optional (Homelab degrades to
+    # probe-only data if left empty).
+    "netdata_url": "", "portainer_url": "", "portainer_token": "", "portainer_endpoint_id": "",
     "vda_dll": r"C:\Users\catal\Scripts\VirtualDesktopAccessor.dll",
     "calendar_ics": "",
     "screenshots_dir": str(Path.home() / "Pictures" / "Screenshots"),
     "downloads_dir": str(Path.home() / "Downloads"),
+    "accent_override": "", "reduced_motion": "false", "sidebar_default_collapsed": "false",
+    "default_app": "overview",
+    "background_mode": "wallpaper", "background_color": "#0b0d12", "background_image": "",
 }
 
 INTERVALS = {
     "media": 2, "hardware": 4, "lights": 10, "plex": 30,
     "weather": 900, "games": 600, "wallpapers": 60, "feeds": 900,
-    "homelab": 15, "downloads": 8, "upcoming": 900, "notes": 20, "ui": 5,
+    "homelab": 15, "downloads": 8, "upcoming": 900, "notes": 20, "ui": 5, "tasks": 10,
     "photo": 20, "popular": 1800, "audio": 15, "desktops": 3, "calendar": 900,
-    "files": 20,
+    "files": 20, "reading": 900,
 }
 
 WEATHER_CODES = {
@@ -102,6 +116,23 @@ SETTINGS_SCHEMA = [
          "hint": "Google Calendar: Settings → your calendar → Integrate calendar → 'Secret address "
                  "in iCal format' (has a private-… token). The plain 'public/basic.ics' link 404s "
                  "unless you've made the whole calendar public."},
+    ]},
+    {"group": "Interface", "keys": [
+        {"key": "accent_override", "label": "Accent colour", "type": "text",
+         "hint": "#rrggbb — leave blank to follow your current wallpaper automatically"},
+        {"key": "sidebar_default_collapsed", "label": "Collapse sidebar by default", "type": "bool"},
+        {"key": "reduced_motion", "label": "Reduce motion", "type": "bool",
+         "hint": "Turns off decorative animation across the app (charts, transitions, hover motion)"},
+        {"key": "default_app", "label": "Open on launch", "type": "select",
+         "options": ["overview", "games", "scene", "notes", "plex", "reading", "homelab"],
+         "hint": "Which application is showing the moment Control Center starts"},
+        {"key": "background_mode", "label": "App background", "type": "select",
+         "options": ["wallpaper", "color", "image"],
+         "hint": "Wallpaper (default, follows Scene) — Color (flat) — Image (a picture you choose)"},
+        {"key": "background_color", "label": "Background colour", "type": "text",
+         "hint": "#rrggbb — used when App background is set to Color"},
+        {"key": "background_image", "label": "Background image", "type": "image",
+         "hint": "Used when App background is set to Image"},
     ]},
     {"group": "Lights", "keys": [
         {"key": "ha_url", "label": "Home Assistant", "type": "text"},
@@ -164,6 +195,14 @@ SETTINGS_SCHEMA = [
         {"key": "sonarr_key", "label": "Sonarr key", "type": "secret"},
         {"key": "radarr_url", "label": "Radarr", "type": "text"},
         {"key": "radarr_key", "label": "Radarr key", "type": "secret"},
+        {"key": "netdata_url", "label": "Netdata", "type": "text",
+         "hint": "Server root, e.g. http://192.168.1.53:19999 — powers live host CPU/RAM/disk/network graphs"},
+        {"key": "portainer_url", "label": "Portainer", "type": "text",
+         "hint": "Server root, e.g. http://192.168.1.53:9000 — powers real container cards"},
+        {"key": "portainer_token", "label": "Portainer access token", "type": "secret",
+         "hint": "Portainer > My account > Access tokens"},
+        {"key": "portainer_endpoint_id", "label": "Portainer environment id", "type": "text",
+         "hint": "Optional. Leave empty to use the first Docker environment Portainer manages"},
     ]},
     {"group": "Machine", "keys": [
         {"key": "lhm_url", "label": "LibreHardwareMonitor", "type": "text",
@@ -178,7 +217,7 @@ SETTINGS_SCHEMA = [
 ]
 
 SECRET_KEYS = {"plex_token", "griddb_key", "wallhaven_key",
-               "qbit_pass", "sonarr_key", "radarr_key"}
+               "qbit_pass", "sonarr_key", "radarr_key", "portainer_token"}
 
 # Where each setting came from, so --diag can prove it rather than guess.
 CONFIG_ORIGIN = {}
@@ -297,6 +336,17 @@ def _wallpaper_palette(path, count=7):
 
 
 def collect_accent(cfg, _shared):
+    result = _collect_accent_auto(cfg)
+    # A manual pin from Settings > Appearance - wins for the accent colour
+    # itself, but bg/palette/source (Scene's hero background, the swatch
+    # picker) still come from whatever the wallpaper actually is. Pinning
+    # accent was never meant to also freeze the wallpaper preview.
+    override = str(cfg.get("accent_override") or "").strip()
+    if re.fullmatch(r"#[0-9a-fA-F]{6}", override):
+        result = {**result, "hex": override, "from": "override"}
+    return result
+
+def _collect_accent_auto(cfg):
     source = None
     try: source = json.loads(STATE_FILE.read_text(encoding="utf-8")).get("last_source")
     except Exception: pass
@@ -510,16 +560,19 @@ def _lhm_number(value):
     match = re.search(r"-?\d+(?:[.,]\d+)?", value or "")
     return float(match.group().replace(",", ".")) if match else None
 
+_prev_disk_io = {}
+
 def collect_hardware(cfg, _shared):
     out = {"cpu_temp": None, "cpu_load": None, "gpu_temp": None,
-           "gpu_load": None, "ram_used": None, "ram_total": None,
-           "vram_used": None, "vram_total": None, "uptime": None}
+           "gpu_load": None, "ram_used": None, "ram_total": None, "ram_pct": None,
+           "vram_used": None, "vram_total": None, "uptime": None, "disk_io": []}
     try:
         import psutil
         out["cpu_load"] = round(psutil.cpu_percent(interval=None))
         mem = psutil.virtual_memory()
         out["ram_used"] = round(mem.used / 1024 ** 3, 1)
         out["ram_total"] = round(mem.total / 1024 ** 3, 1)
+        out["ram_pct"] = round(mem.used / mem.total * 100) if mem.total else None
         out["uptime"] = int(time.time() - psutil.boot_time())
         disks = []
         for part in psutil.disk_partitions(all=False):
@@ -529,6 +582,34 @@ def collect_hardware(cfg, _shared):
             disks.append({"drive": part.device.rstrip("\\"), "used": round(usage.used / 1024 ** 3),
                           "total": round(usage.total / 1024 ** 3), "pct": round(usage.percent)})
         out["disks"] = disks
+    except Exception: pass
+
+    # Real per-drive read/write throughput (KiB/s) - psutil only reports
+    # cumulative byte counters, so the rate is a delta against the last
+    # poll (same idea Netdata's own disk_io chart uses), recorded into the
+    # same in-memory history ring buffer everything else on this machine
+    # already uses.
+    try:
+        now_t = time.time()
+        disk_io = []
+        for device, counters in psutil.disk_io_counters(perdisk=True).items():
+            prev = _prev_disk_io.get(device)
+            _prev_disk_io[device] = (counters.read_bytes, counters.write_bytes, now_t)
+            if not prev: continue
+            prev_read, prev_write, prev_t = prev
+            dt = now_t - prev_t
+            if dt <= 0: continue
+            read_kibs = round(max(0, counters.read_bytes - prev_read) / 1024 / dt, 1)
+            write_kibs = round(max(0, counters.write_bytes - prev_write) / 1024 / dt, 1)
+            _record_metric(f"local_dio_r_{device}", read_kibs)
+            _record_metric(f"local_dio_w_{device}", write_kibs)
+            reads = _metric_series(f"local_dio_r_{device}")
+            writes = _metric_series(f"local_dio_w_{device}")
+            if not any(r["v"] for r in reads) and not any(w["v"] for w in writes): continue
+            history = [{"t": r["t"], "read": r["v"], "write": writes[i]["v"] if i < len(writes) else 0} for i, r in enumerate(reads)]
+            disk_io.append({"device": device, "read_kibs": read_kibs, "write_kibs": write_kibs, "history": history})
+        disk_io.sort(key=lambda d: -(d["read_kibs"] + d["write_kibs"]))
+        out["disk_io"] = disk_io[:3]
     except Exception: pass
 
     try:
@@ -543,6 +624,17 @@ def collect_hardware(cfg, _shared):
             out["vram_total"] = round(vram.total / 1024 ** 3, 1)
         finally: pynvml.nvmlShutdown()
     except Exception: pass
+
+    # This machine's own trend, not the remote homelab server's (Netdata
+    # already retains that separately, see the METRIC HISTORY note below) -
+    # the "few numbers nothing else already retains" case that mechanism is
+    # meant for, just fed from psutil/pynvml instead of a Netdata poll.
+    _record_metric("local_cpu_load", out["cpu_load"])
+    _record_metric("local_ram_pct", out["ram_pct"])
+    _record_metric("local_gpu_load", out["gpu_load"])
+    out["cpu_history"] = _metric_series("local_cpu_load")
+    out["ram_history"] = _metric_series("local_ram_pct")
+    out["gpu_history"] = _metric_series("local_gpu_load")
 
     try:
         r = requests.get(cfg["lhm_url"], timeout=3)
@@ -706,33 +798,347 @@ def _probe(host, port, timeout=1.2):
     except Exception:
         return False, None
 
+
+# ──────────────────────────────────────────────
+#  METRIC HISTORY - a small in-memory ring buffer for the few numbers
+#  nothing else already retains (service latency, up-count, qBittorrent
+#  throughput). Deliberately NOT used for host CPU/RAM/disk/network -
+#  Netdata already retains that history server-side (see below), so
+#  re-recording it here would just be a second, laggier copy of the same
+#  numbers. Process-memory only (not persisted) - a backend restart loses
+#  the last ~45 minutes, same tradeoff every other in-memory collector
+#  state in this file already makes.
+# ──────────────────────────────────────────────
+
+_METRIC_HISTORY_MAXLEN = 180  # ~45 min at the homelab collector's 15s cadence
+_metric_history = {}
+
+def _record_metric(key, value):
+    if value is None: return
+    _metric_history.setdefault(key, deque(maxlen=_METRIC_HISTORY_MAXLEN)).append(
+        {"t": time.time(), "v": value})
+
+def _metric_series(key):
+    return list(_metric_history.get(key, ()))
+
+
+# ──────────────────────────────────────────────
+#  NETDATA - live + historical metrics for the actual homelab server.
+#  collect_hardware (psutil/pynvml) reports THIS machine's stats, not
+#  the server's - Netdata is the only thing in this file that ever
+#  talks to the server's own resource usage. A pure read-only REST
+#  client against Netdata's own chart retention, so no ring buffer of
+#  our own is needed for these values. Every metric block is its own
+#  try/except - Netdata's exact chart ids/dimensions vary by version and
+#  by what's actually monitored on that box, so one missing chart (no
+#  temperature sensor wired up, say) degrades to "no data for that
+#  metric" rather than losing CPU/RAM/disk/network too.
+# ──────────────────────────────────────────────
+
+_netdata_charts_cache = {"at": 0.0, "charts": None}
+
+def _netdata_get(cfg, path, **params):
+    base = str(cfg.get("netdata_url") or "").strip().rstrip("/")
+    if not base: return None
+    r = requests.get(f"{base}{path}", params=params, timeout=3)
+    r.raise_for_status()
+    return r.json()
+
+def _netdata_charts(cfg):
+    """Which chart ids exist (disk mount, temperature sensor, ...) is
+    environment-specific - discovered once and cached for 5 minutes
+    rather than re-listing on every 15s poll."""
+    cache = _netdata_charts_cache
+    if cache["charts"] is not None and time.monotonic() - cache["at"] < 300:
+        return cache["charts"]
+    try:
+        data = _netdata_get(cfg, "/api/v1/charts") or {}
+        charts = data.get("charts") or {}
+    except Exception:
+        charts = cache["charts"] or {}
+    cache.update(at=time.monotonic(), charts=charts)
+    return charts
+
+def _netdata_series(cfg, chart, after=-1800, points=90):
+    """One chart's recent history as [{"t", "v": {dimension: value}}],
+    oldest first, or None if the chart doesn't exist / isn't reachable."""
+    if not chart: return None
+    try:
+        data = _netdata_get(cfg, "/api/v1/data", chart=chart, after=after, points=points,
+                            format="json", group="average")
+        labels = (data or {}).get("labels") or []
+        rows = (data or {}).get("data") or []
+    except Exception:
+        return None
+    if not labels or not rows: return None
+    out = []
+    # Netdata's /api/v1/data returns rows newest-first - reversed here so
+    # every consumer of this function actually gets what the docstring
+    # above promises (oldest first / chronological), instead of each
+    # chart having to know to undo Netdata's own ordering itself.
+    for row in reversed(rows):
+        if not row: continue
+        point = dict(zip(labels, row))
+        ts = point.pop(labels[0], None)
+        if ts is None: continue
+        out.append({"t": ts, "v": point})
+    return out or None
+
+def collect_netdata_metrics(cfg):
+    if not str(cfg.get("netdata_url") or "").strip():
+        return {"configured": False}
+    out = {"configured": True}
+    charts = _netdata_charts(cfg)
+
+    try:
+        cpu = _netdata_series(cfg, "system.cpu")
+        if cpu:
+            def used_pct(point): return round(sum(v for k, v in point.items() if k != "idle" and v is not None), 1)
+            out["cpu"] = {"pct": used_pct(cpu[-1]["v"]),
+                          "history": [{"t": p["t"], "v": used_pct(p["v"])} for p in cpu]}
+    except Exception: pass
+
+    try:
+        ram = _netdata_series(cfg, "system.ram")
+        if ram:
+            def ram_pct(point):
+                total = sum(v for v in point.values() if v is not None)
+                used = point.get("used")
+                return round(used / total * 100, 1) if total and used is not None else None
+            latest = ram[-1]["v"]
+            total_mb = sum(v for v in latest.values() if v is not None)
+            out["ram"] = {"pct": ram_pct(latest),
+                          "used_gb": round((latest.get("used") or 0) / 1024, 1),
+                          "total_gb": round(total_mb / 1024, 1) if total_mb else None,
+                          "history": [{"t": p["t"], "v": ram_pct(p["v"])} for p in ram if ram_pct(p["v"]) is not None]}
+    except Exception: pass
+
+    # Every real mounted filesystem Netdata tracks, not just one "shortest
+    # match" guess - a box with a separate data volume (the common
+    # homelab shape: a small OS disk plus a big media/storage disk) gets
+    # a real per-mount reading for each, not just whichever mount Netdata
+    # happened to chart first. tmpfs-ish /run and anything under 4GB
+    # total (stray /boot partitions etc.) are filtered out as noise, not
+    # because they're being hidden - they're just not "a drive" in any
+    # sense a person cares about here.
+    try:
+        disks = []
+        for cid in charts:
+            if not cid.startswith("disk_space."): continue
+            mount = cid[len("disk_space."):]
+            if mount == "/run": continue
+            series = _netdata_series(cfg, cid, points=60)
+            if not series: continue
+            def disk_pct(point):
+                used, avail = point.get("used"), point.get("avail")
+                total = (used or 0) + (avail or 0)
+                return round(used / total * 100, 1) if total and used is not None else None
+            latest = series[-1]["v"]
+            total_gb = (latest.get("used") or 0) + (latest.get("avail") or 0)
+            if total_gb < 4: continue
+            disks.append({
+                "mount": mount, "pct": disk_pct(latest),
+                "used_gb": round(latest.get("used") or 0, 1), "total_gb": round(total_gb, 1),
+                "history": [{"t": p["t"], "v": disk_pct(p["v"])} for p in series if disk_pct(p["v"]) is not None],
+            })
+        disks.sort(key=lambda d: -d["total_gb"])
+        out["disks"] = disks[:4]
+    except Exception: pass
+
+    # Real per-device read/write throughput (KiB/s) - the genuinely live
+    # "drive activity" number a capacity bar can never show. A device
+    # that saw zero I/O across the whole window (an unused/empty disk)
+    # doesn't get a slot - not a fabricated flat line.
+    try:
+        disk_io = []
+        for cid in charts:
+            if not cid.startswith("disk."): continue
+            device = cid[len("disk."):]
+            # device-mapper/LVM volumes (dm-N) double-count the same I/O
+            # their underlying physical device already reports - real
+            # activity, just not a second real drive.
+            if device.startswith("dm-"): continue
+            series = _netdata_series(cfg, cid, points=60)
+            if not series: continue
+            latest = series[-1]["v"]
+            read_kibs = round(abs(latest.get("reads") or 0), 1)
+            write_kibs = round(abs(latest.get("writes") or 0), 1)
+            history = [{"t": p["t"], "read": round(abs(p["v"].get("reads") or 0), 1),
+                        "write": round(abs(p["v"].get("writes") or 0), 1)} for p in series]
+            if not any(h["read"] or h["write"] for h in history): continue
+            disk_io.append({"device": device, "read_kibs": read_kibs, "write_kibs": write_kibs, "history": history})
+        disk_io.sort(key=lambda d: -(d["read_kibs"] + d["write_kibs"]))
+        out["disk_io"] = disk_io[:3]
+    except Exception: pass
+
+    try:
+        net = _netdata_series(cfg, "system.net")
+        if net:
+            latest = net[-1]["v"]
+            out["net"] = {"in_kbps": round(abs(latest.get("received") or 0), 1),
+                          "out_kbps": round(abs(latest.get("sent") or 0), 1),
+                          "history": [{"t": p["t"], "in": round(abs(p["v"].get("received") or 0), 1),
+                                       "out": round(abs(p["v"].get("sent") or 0), 1)} for p in net]}
+    except Exception: pass
+
+    try:
+        # "shortest match containing temperature" used to land on
+        # sensors.temperature_histogram (a bucket histogram, not a reading -
+        # every value came back 0). Real per-sensor charts all end in
+        # _input (as opposed to _alarm, a 0/1 threshold state); among
+        # those, prefer the CPU package sensor since that's the one
+        # reading someone actually means by "the machine's temperature".
+        temp_candidates = [cid for cid in charts if "temperature" in cid.lower() and cid.lower().endswith("_input")]
+        def _temp_rank(cid):
+            low = cid.lower()
+            if "coretemp" in low and "package" in low: return (0, len(cid))
+            if "coretemp" in low: return (1, len(cid))
+            return (2, len(cid))
+        temp_candidates.sort(key=_temp_rank)
+        temp_chart = temp_candidates[0] if temp_candidates else None
+        temp = _netdata_series(cfg, temp_chart, points=60) if temp_chart else None
+        if temp:
+            def first_val(point):
+                vals = [v for v in point.values() if v is not None]
+                return round(vals[0], 1) if vals else None
+            out["temp"] = {"c": first_val(temp[-1]["v"]),
+                           "history": [{"t": p["t"], "v": first_val(p["v"])} for p in temp if first_val(p["v"]) is not None]}
+    except Exception: pass
+
+    return out
+
+
+# ──────────────────────────────────────────────
+#  PORTAINER - real Docker container state, additive to (not a
+#  replacement for) the TCP-probe service grid below. Uses a static
+#  Portainer access token (Portainer > My account > Access tokens), not
+#  the username/password JWT flow - simpler and it's exactly what a
+#  read-only dashboard integration should hold.
+# ──────────────────────────────────────────────
+
+_portainer_endpoint_cache = {"at": 0.0, "id": None, "base": None, "token": None}
+
+def _portainer_get(cfg, path, **params):
+    base = str(cfg.get("portainer_url") or "").strip().rstrip("/")
+    token = str(cfg.get("portainer_token") or "").strip()
+    if not base or not token: return None
+    r = requests.get(f"{base}{path}", headers={"X-API-Key": token}, params=params, timeout=4)
+    r.raise_for_status()
+    return r.json()
+
+def _portainer_endpoint_id(cfg):
+    configured = str(cfg.get("portainer_endpoint_id") or "").strip()
+    if configured: return configured
+    base = str(cfg.get("portainer_url") or "").strip()
+    token = str(cfg.get("portainer_token") or "").strip()
+    cache = _portainer_endpoint_cache
+    if cache["id"] and cache["base"] == base and cache["token"] == token and time.monotonic() - cache["at"] < 300:
+        return cache["id"]
+    try:
+        endpoints = _portainer_get(cfg, "/api/endpoints") or []
+        eid = endpoints[0]["Id"] if endpoints else None
+    except Exception:
+        eid = None
+    cache.update(at=time.monotonic(), id=eid, base=base, token=token)
+    return eid
+
+def collect_docker_containers(cfg):
+    base = str(cfg.get("portainer_url") or "").strip()
+    token = str(cfg.get("portainer_token") or "").strip()
+    if not base or not token:
+        return {"configured": False, "containers": [], "running": 0, "total": 0}
+    try:
+        eid = _portainer_endpoint_id(cfg)
+        if not eid:
+            return {"configured": True, "error": "Portainer has no Docker environment to read",
+                    "containers": [], "running": 0, "total": 0}
+        rows = _portainer_get(cfg, f"/api/endpoints/{eid}/docker/containers/json", all="true") or []
+        containers = []
+        for c in rows:
+            state = c.get("State") or "unknown"
+            containers.append({
+                "id": (c.get("Id") or "")[:12],
+                "name": (c.get("Names") or ["?"])[0].lstrip("/"),
+                "image": c.get("Image"), "state": state, "status": c.get("Status"),
+            })
+        containers.sort(key=lambda c: (c["state"] != "running", c["name"].lower()))
+        running = sum(1 for c in containers if c["state"] == "running")
+        return {"configured": True, "error": None, "containers": containers,
+                "running": running, "total": len(containers)}
+    except Exception as e:
+        return {"configured": True, "error": str(e)[:160], "containers": [], "running": 0, "total": 0}
+
+
+_NAME_NOISE_RE = re.compile(r"[\s\-_]+")
+
+def _name_key(s):
+    return _NAME_NOISE_RE.sub("", s or "").lower()
+
 def collect_homelab(cfg, _shared):
     server_ip = "192.168.1.53"
     ssh_online, ssh_ms = _probe(server_ip, 22, 1.5)
 
     services = _service_lines(cfg)
-    # Probes run in parallel: fifteen sequential 1.2s timeouts would mean an
-    # eighteen-second collector, and the whole view would feel broken.
     results = [None] * len(services)
     def check(i, svc):
         host = urlparse(svc["url"]).hostname if svc["url"].startswith("http") else None
         online, ms = _probe(server_ip, svc["port"])
         results[i] = {**svc, "online": online, "ms": ms, "host": host or server_ip}
-    threads = [threading.Thread(target=check, args=(i, svc), daemon=True)
-               for i, svc in enumerate(services)]
+
+    # Netdata and Portainer each make several outbound HTTP calls of their
+    # own - run them as siblings of the service probes, not after them, and
+    # cap the whole batch at one join timeout. collect_homelab runs
+    # synchronously inside Snapshot.loop()'s single scheduling thread (see
+    # Snapshot.loop), so if this function ran calls serially, a slow/down
+    # Netdata or Portainer would stall every OTHER collector's cadence too,
+    # not just this one's.
+    netdata_box = {"value": {"configured": False}}
+    def fetch_netdata(): netdata_box["value"] = collect_netdata_metrics(cfg)
+
+    docker_box = {"value": {"configured": False, "containers": [], "running": 0, "total": 0}}
+    def fetch_docker(): docker_box["value"] = collect_docker_containers(cfg)
+
+    threads = [threading.Thread(target=check, args=(i, svc), daemon=True) for i, svc in enumerate(services)]
+    threads.append(threading.Thread(target=fetch_netdata, daemon=True))
+    threads.append(threading.Thread(target=fetch_docker, daemon=True))
     for t in threads: t.start()
-    for t in threads: t.join(timeout=3)
+    for t in threads: t.join(timeout=5)
 
     found = [r for r in results if r]
+
+    # A service whose name matches a container's name gets that
+    # container's live state attached - purely additive enrichment, the
+    # TCP probe's "online" stays the source of truth for the status dot
+    # either way (a container can be "running" while the app inside it
+    # is still starting up and not yet answering its port).
+    containers = docker_box["value"].get("containers") or []
+    container_keys = [(c, _name_key(c["name"])) for c in containers]
+    for svc in found:
+        needle = _name_key(svc["name"])
+        match = next((c for c, key in container_keys if needle and key and (needle in key or key in needle)), None)
+        if match:
+            svc["container"] = {"name": match["name"], "state": match["state"], "status": match["status"]}
+
     groups = []
     for name in GROUP_ORDER:
         members = [r for r in found if r["group"] == name]
         if members:
             groups.append({"group": name, "services": members,
                            "up": sum(1 for m in members if m["online"]), "count": len(members)})
+
+    up, count = sum(1 for r in found if r["online"]), len(found)
+    latencies = [r["ms"] for r in found if r["online"] and r["ms"] is not None]
+    avg_latency = round(sum(latencies) / len(latencies), 1) if latencies else None
+    _record_metric("hl_up_count", up)
+    _record_metric("hl_latency_ms", avg_latency)
+
     return {"server_ip": server_ip, "ssh_online": ssh_online, "ssh_ms": ssh_ms,
-            "services": found, "groups": groups,
-            "up": sum(1 for r in found if r["online"]), "count": len(found)}
+            "services": found, "groups": groups, "up": up, "count": count,
+            "netdata": netdata_box["value"], "docker": docker_box["value"],
+            "history": {"up_count": _metric_series("hl_up_count"),
+                        "latency_ms": _metric_series("hl_latency_ms"),
+                        "qbit_dl": _metric_series("qbit_dl"),
+                        "qbit_up": _metric_series("qbit_up")}}
 
 
 # ──────────────────────────────────────────────
@@ -756,6 +1162,11 @@ def collect_notes(cfg, _shared):
     if not root.is_dir():
         return {"dir": str(root), "notes": [], "error": "folder not found"}
     limit = int(cfg.get("notes_limit", "300"))
+    # Pinning is a panel-store annotation, not vault content - Obsidian
+    # owns these files, so "pinned" lives in store.json (same pattern as
+    # wallpaper_favorites) rather than as invented frontmatter nothing
+    # else would recognise.
+    pinned_set = set(load_store().get("pinned_notes") or [])
     notes = []
     for path in root.rglob("*"):
         if path.suffix.lower() not in (".md", ".markdown", ".txt") or not path.is_file(): continue
@@ -770,9 +1181,11 @@ def collect_notes(cfg, _shared):
             preview = lines[0][:120] if lines else ""
         except Exception: pass
         rel = path.relative_to(root)
-        notes.append({"name": path.stem, "rel": str(rel).replace("\\", "/"),
+        rel_str = str(rel).replace("\\", "/")
+        notes.append({"name": path.stem, "rel": rel_str,
                       "folder": str(rel.parent).replace("\\", "/") if str(rel.parent) != "." else "",
-                      "when": stat.st_mtime, "size": stat.st_size, "preview": preview})
+                      "when": stat.st_mtime, "size": stat.st_size, "preview": preview,
+                      "pinned": rel_str in pinned_set})
     notes.sort(key=lambda n: -n["when"])
     folders = sorted({n["folder"] for n in notes if n["folder"]}, key=str.lower)
     return {"dir": str(root), "notes": notes[:limit], "total": len(notes),
@@ -819,6 +1232,91 @@ def new_note(cfg, name, folder=""):
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(f"# {stem}\n\n", encoding="utf-8", newline="\n")
     return {"ok": True, "rel": rel}
+
+def pin_note(cfg, rel, pinned):
+    rel = str(rel or "")
+    if not rel: return {"ok": False, "error": "no rel"}
+    def mutate(store):
+        others = [r for r in store.get("pinned_notes") or [] if r != rel]
+        store["pinned_notes"] = others + ([rel] if pinned else [])
+    edit_store(mutate)
+    return {"ok": True}
+
+
+# ──────────────────────────────────────────────
+#  QUICK TASKS
+# ──────────────────────────────────────────────
+# A small action-oriented task layer, deliberately separate from Notes -
+# not tied to any markdown file, so it stays simple (no file writes, no
+# vault path guards) and can surface in Overview later without dragging
+# the whole notes collector along. Lives in the same store.json every
+# other lightweight annotation (favorites, hidden panels, ...) already
+# uses - no new persistence mechanism.
+
+def collect_tasks(_cfg, _shared):
+    store = load_store()
+    tasks = store.get("tasks") or []
+    tasks = sorted(tasks, key=lambda t: (not t.get("pinned"), t.get("done", False), -float(t.get("created") or 0)))
+    return {"tasks": tasks}
+
+def add_task(text, priority="normal", notes=""):
+    import uuid
+    text = str(text or "").strip()
+    if not text: return {"ok": False, "error": "empty task"}
+    if priority not in ("low", "normal", "high"): priority = "normal"
+    notes = str(notes or "").strip()[:2000] or None
+    task = {"id": uuid.uuid4().hex[:12], "text": text[:280], "done": False,
+            "priority": priority, "pinned": False, "created": time.time(), "completed": None,
+            "notes": notes}
+    def mutate(store):
+        store.setdefault("tasks", []).append(task)
+    edit_store(mutate)
+    return {"ok": True, "task": task}
+
+def edit_task(task_id, text=None, priority=None, notes=None, pinned=None):
+    result = {"ok": False, "error": "not found"}
+    def mutate(store):
+        nonlocal result
+        for t in store.get("tasks") or []:
+            if t.get("id") != task_id: continue
+            if text is not None:
+                clean = str(text).strip()
+                if not clean:
+                    result = {"ok": False, "error": "empty task"}
+                    return
+                t["text"] = clean[:280]
+            if priority is not None and priority in ("low", "normal", "high"):
+                t["priority"] = priority
+            if notes is not None:
+                t["notes"] = str(notes).strip()[:2000] or None
+            if pinned is not None:
+                t["pinned"] = bool(pinned)
+            result = {"ok": True, "task": t}
+    edit_store(mutate)
+    return result
+
+def toggle_task(task_id, done):
+    def mutate(store):
+        for t in store.get("tasks") or []:
+            if t.get("id") == task_id:
+                t["done"] = bool(done)
+                t["completed"] = time.time() if done else None
+    edit_store(mutate)
+    return {"ok": True}
+
+def pin_task(task_id, pinned):
+    def mutate(store):
+        for t in store.get("tasks") or []:
+            if t.get("id") == task_id:
+                t["pinned"] = bool(pinned)
+    edit_store(mutate)
+    return {"ok": True}
+
+def delete_task(task_id):
+    def mutate(store):
+        store["tasks"] = [t for t in store.get("tasks") or [] if t.get("id") != task_id]
+    edit_store(mutate)
+    return {"ok": True}
 
 
 # ──────────────────────────────────────────────
@@ -914,8 +1412,11 @@ def collect_downloads(cfg, _shared):
         "eta": t.get("eta") if (t.get("eta") or 0) < 8640000 else None,
         "size": t.get("size") or 0, "category": t.get("category") or "",
     } for t in active[:12]]
+    dl, up = info.get("dl_info_speed") or 0, info.get("up_info_speed") or 0
+    _record_metric("qbit_dl", dl)
+    _record_metric("qbit_up", up)
     return {"configured": True, "torrents": torrents, "active": len(active), "total": len(rows),
-            "dl": info.get("dl_info_speed") or 0, "up": info.get("up_info_speed") or 0}
+            "dl": dl, "up": up}
 
 def _arr_calendar(base, key, kind):
     base = str(base).strip().rstrip("/")
@@ -1080,6 +1581,8 @@ def _overseerr(cfg, path, **params):
     r.raise_for_status()
     return r.json()
 
+_OVERSEERR_MEDIA_STATUS = {1: "unknown", 2: "pending", 3: "processing", 4: "partial", 5: "available"}
+
 def collect_popular(cfg, _shared):
     """This used to tally Overseerr's own /request log - which, on a house with
     one requester, is just a mirror of your own history wearing a trenchcoat.
@@ -1099,11 +1602,12 @@ def collect_popular(cfg, _shared):
         try:
             data = _overseerr(cfg, path, page=1)
             rows = []
-            for item in (data or {}).get("results", [])[:10]:
+            for rank, item in enumerate((data or {}).get("results", [])[:12], start=1):
                 info = item.get("mediaInfo") or {}
                 rows.append({
-                    "tmdb": item.get("id"), "trending": True,
-                    "status": info.get("status"),
+                    "tmdb": item.get("id"), "rank": rank,
+                    "popularity": item.get("popularity"),
+                    "status": _OVERSEERR_MEDIA_STATUS.get(info.get("status"), "unknown"),
                     "title": item.get("title") or item.get("name") or f"#{item.get('id')}",
                     "poster": poster(item),
                     "year": str(item.get("releaseDate") or item.get("firstAirDate") or "")[:4],
@@ -1122,6 +1626,8 @@ def collect_upcoming(cfg, _shared):
     items.sort(key=lambda i: i["when"] or 0)
     configured = bool(str(cfg["sonarr_url"]).strip() or str(cfg["radarr_url"]).strip())
     return {"configured": configured, "items": items[:20]}
+
+
 
 
 # ──────────────────────────────────────────────
@@ -1146,7 +1652,7 @@ def collect_calendar(cfg, _shared):
         # recurring_ical_events expands RRULEs (daily standups, birthdays,
         # anniversaries…) into real occurrences - without it a calendar
         # widget would only ever show one-off events, which is most feeds.
-        events = recurring_ical_events.of(cal).between(now - timedelta(hours=6), now + timedelta(days=14))
+        events = recurring_ical_events.of(cal).between(now - timedelta(days=60), now + timedelta(days=180))
     except Exception as e:
         return {"configured": True, "items": [], "error": str(e)[:160]}
 
@@ -1173,7 +1679,7 @@ def collect_calendar(cfg, _shared):
             "when": ts, "all_day": all_day, "ongoing": ongoing,
         })
     items.sort(key=lambda i: i["when"])
-    return {"configured": True, "items": items[:24]}
+    return {"configured": True, "items": items[:120]}
 
 
 def collect_lights(cfg, _shared):
@@ -1224,24 +1730,38 @@ def collect_plex(cfg, _shared):
     def art(item):
         thumb = item.get("thumb") or item.get("parentThumb") or item.get("grandparentThumb")
         return f"{base}{thumb}?X-Plex-Token={token}" if thumb else None
+    # Plex's "art" field is the wide fanart/backdrop image (distinct from
+    # "thumb", the poster) - a cheap additive lookup, same URL-building
+    # pattern as art() above, so the Home hero has real backdrop imagery
+    # instead of stretching a portrait poster across a wide banner.
+    def backdrop(item):
+        key = item.get("art") or item.get("parentArt") or item.get("grandparentArt")
+        return f"{base}{key}?X-Plex-Token={token}" if key else None
     out = {"configured": True, "playing": [], "recent": [], "sections": [], "error": None}
 
     try:
         sessions = _plex_get(cfg, "/status/sessions").get("Metadata") or []
         for item in sessions:
             out["playing"].append({
+                "ratingKey": item.get("ratingKey"),
                 "title": item.get("title"), "show": item.get("grandparentTitle") or item.get("parentTitle"),
                 "type": item.get("type"), "user": ((item.get("User") or {}).get("title")),
-                "art": art(item), "launch": None,
+                "art": art(item), "backdrop": backdrop(item), "launch": None,
+                "duration": item.get("duration"), "viewOffset": item.get("viewOffset"),
             })
     except Exception as e: out["error"] = f"sessions: {e}"[:160]
 
     machine = _plex_machine(cfg)
     limit = int(cfg.get("plex_limit", "40"))
     def pack(item):
-        return {"title": item.get("title"), "show": item.get("grandparentTitle") or item.get("parentTitle"),
-                "type": item.get("type"), "year": item.get("year"), "art": art(item),
-                "launch": _plex_launch(cfg, machine, item)}
+        return {"ratingKey": item.get("ratingKey"),
+                "title": item.get("title"), "show": item.get("grandparentTitle") or item.get("parentTitle"),
+                "type": item.get("type"), "year": item.get("year"), "art": art(item), "backdrop": backdrop(item),
+                "launch": _plex_launch(cfg, machine, item),
+                "summary": item.get("summary") or None,
+                "duration": item.get("duration"), "viewOffset": item.get("viewOffset"),
+                "viewCount": item.get("viewCount"),
+                "index": item.get("index"), "parentIndex": item.get("parentIndex")}
 
     try:
         deck = []
@@ -1278,6 +1798,42 @@ def collect_plex(cfg, _shared):
     except Exception as e: out["error"] = f"sections: {e}"[:160]
 
     return out
+
+def plex_item_detail(cfg, rating_key):
+    if not cfg["plex_url"].strip() or not cfg["plex_token"].strip():
+        return {"error": "not configured"}
+    base = cfg["plex_url"].rstrip("/")
+    token = cfg["plex_token"].strip()
+    data = _plex_get(cfg, f"/library/metadata/{rating_key}")
+    items = data.get("Metadata") or []
+    if not items:
+        return {"error": "not found"}
+    item = items[0]
+    def art(key):
+        return f"{base}{key}?X-Plex-Token={token}" if key else None
+    machine = _plex_machine(cfg)
+    genres = [g.get("tag") for g in (item.get("Genre") or []) if g.get("tag")]
+    return {
+        "ratingKey": item.get("ratingKey"),
+        "title": item.get("title"),
+        "show": item.get("grandparentTitle") or item.get("parentTitle"),
+        "type": item.get("type"),
+        "year": item.get("year"),
+        "summary": item.get("summary"),
+        "art": art(item.get("thumb") or item.get("parentThumb") or item.get("grandparentThumb")),
+        "backdrop": art(item.get("art")),
+        "genres": genres,
+        "contentRating": item.get("contentRating"),
+        "rating": item.get("audienceRating") or item.get("rating"),
+        "studio": item.get("studio"),
+        "duration": item.get("duration"),
+        "viewOffset": item.get("viewOffset"),
+        "viewCount": item.get("viewCount"),
+        "index": item.get("index"),
+        "parentIndex": item.get("parentIndex"),
+        "childCount": item.get("childCount") or item.get("leafCount"),
+        "launch": _plex_launch(cfg, machine, item),
+    }
 
 def _steam_libraries(steam_path):
     roots = []
@@ -1484,28 +2040,89 @@ DEFAULT_APPS = [
 ]
 
 DEFAULT_LAYOUTS = {
+    # Every Overview section is a real PanelGrid panel - resizable,
+    # reorderable, hideable, persisted the same way Games/Homelab already
+    # are. Visual hierarchy comes from `bleed` + deliberately varied sizes
+    # (see Overview.tsx), not from opting any section out of the shared
+    # panel system. Homelab (ov-pulse/ov-upnext from the old app) is
+    # excluded entirely - that's the separate Homelab application's job.
     "overview": {
-        "order": ["pad", "ov-photo-card", "machine", "ov-storage", "ov-recent",
-                  "ov-nowplaying", "ov-notes-glance", "ov-calendar", "ov-pulse", "ov-upnext"],
+        "order": ["pad", "ov-nowplaying", "ov-profile", "ov-weather", "ov-calendar",
+                  "ov-news", "ov-notes-tasks", "ov-recent", "ov-system"],
         "sizes": {
-            "pad": {"w": 2, "h": 8}, "ov-photo-card": {"w": 2, "h": 5},
-            "machine": {"w": 2, "h": 5}, "ov-storage": {"w": 2, "h": 5},
-            "ov-recent": {"w": 3, "h": 4}, "ov-nowplaying": {"w": 3, "h": 4},
-            "ov-notes-glance": {"w": 2, "h": 4}, "ov-calendar": {"w": 2, "h": 5},
-            "ov-pulse": {"w": 2, "h": 4}, "ov-upnext": {"w": 2, "h": 4},
+            "pad": {"w": 3, "h": 6}, "ov-nowplaying": {"w": 3, "h": 6},
+            "ov-profile": {"w": 2, "h": 5}, "ov-weather": {"w": 2, "h": 4}, "ov-calendar": {"w": 2, "h": 6},
+            "ov-news": {"w": 3, "h": 6}, "ov-notes-tasks": {"w": 2, "h": 5},
+            "ov-recent": {"w": 3, "h": 4}, "ov-system": {"w": 3, "h": 5},
         },
-        # The Homelab tab already does this job properly - showing a thin
-        # slice of it again here was exactly what "Overview is horrible"
-        # was about. Still there, just opt-in via the panel toggle now.
-        "hidden": ["ov-pulse", "ov-upnext"],
     },
+    # Homelab is entirely panels now - no fixed hero composition. Every
+    # surface (Plex, the Immich photo, Overseerr's discover charts,
+    # qBittorrent, the Sonarr/Radarr timeline, host metrics, HA lights,
+    # the service grid) is independently movable/resizable/hideable
+    # through the exact same generic layout routes every other grid uses.
     "homelab": {
-        "order": ["hl-host-card", "hl-docker", "photo-card", "hl-dl", "hl-upnext", "hl-popular"],
+        "order": ["hl-photo", "hl-cpu", "hl-ram", "hl-network", "hl-storage",
+                  "hl-wanted", "hl-downloads", "hl-lights", "hl-services"],
         "sizes": {
-            "hl-host-card": {"w": 2, "h": 3}, "hl-docker": {"w": 3, "h": 4},
-            "photo-card": {"w": 3, "h": 7}, "hl-dl": {"w": 3, "h": 4},
-            "hl-upnext": {"w": 2, "h": 4}, "hl-popular": {"w": 3, "h": 6},
+            "hl-photo": {"w": 3, "h": 9},
+            "hl-cpu": {"w": 3, "h": 6}, "hl-ram": {"w": 2, "h": 6},
+            "hl-network": {"w": 3, "h": 6}, "hl-storage": {"w": 5, "h": 7},
+            "hl-wanted": {"w": 8, "h": 5},
+            "hl-downloads": {"w": 3, "h": 5},
+            "hl-lights": {"w": 2, "h": 4}, "hl-services": {"w": 3, "h": 5},
         },
+        "hidden": [],
+    },
+    # Registered the same way overview/homelab are - the routes and
+    # effective_layout() are already generic over `view`, this dict entry
+    # is the only thing a new grid needs. Shelf panel ids are prefixed
+    # ("shelf-<id>") so they can't collide with favorites/playtime; the
+    # default sizes put Steam/Xbox/Other side by side, roughly proportional
+    # to how many games each shelf tends to hold.
+    "games": {
+        "order": ["favorites", "playtime", "shelf-steam", "shelf-xbox", "shelf-other"],
+        "sizes": {
+            "favorites": {"w": 5, "h": 6}, "playtime": {"w": 3, "h": 6},
+            "shelf-steam": {"w": 4, "h": 8}, "shelf-xbox": {"w": 2, "h": 8},
+            "shelf-other": {"w": 2, "h": 8},
+        },
+        "hidden": [],
+    },
+    # Scene's Hero and the Favorites panel beside it are a fixed top-row
+    # composition, not part of this grid (Hero is a deliberately composed
+    # surface, never a panel; Favorites is pinned next to it so the two
+    # stay aligned edge-to-edge, not something a reorder/hide could ever
+    # separate). This grid is just the bottom row: Yours and Wallhaven,
+    # genuinely interchangeable with each other, split the full width
+    # 50/50 by default.
+    "scene": {
+        "order": ["yours", "wallhaven"],
+        "sizes": {"yours": {"w": 4, "h": 8}, "wallhaven": {"w": 4, "h": 8}},
+        "hidden": [],
+    },
+    # Registered the same way games' shelf panels are: ids are dynamic
+    # (one per Plex library the user actually has - "plex-<key>",
+    # PlexHome.tsx), so there's nothing meaningful to default here. An
+    # empty entry is still required though - effective_layout()/the
+    # /api/layout/* routes only recognise views present in this dict at
+    # all, so without this entry every reorder/resize/hide call for Plex
+    # returns {"ok": False} and silently never persists (order/sizes
+    # only ever lived in PanelGrid's own 6-second optimistic local
+    # state, snapping back to default the moment that timer cleared or
+    # the page reloaded).
+    "plex-home": {
+        "order": [],
+        "sizes": {},
+        "hidden": [],
+    },
+    # Same shape as "plex-home" above: Reading's For You page turns each
+    # topic that actually has content into a resizable/reorderable panel
+    # (ReadingFeed.tsx's ForYouBody) - which topics exist depends on the
+    # user's own sources, so there's no fixed default set here either.
+    "reading-foryou": {
+        "order": [],
+        "sizes": {},
         "hidden": [],
     },
 }
@@ -1523,7 +2140,15 @@ def _blank_store():
             "place": {}, "order": {}, "art": {}, "hidden": [], "manual": [],
             "apps": [dict(a) for a in DEFAULT_APPS], "favorites": [], "widths": {},
             "settings": {}, "profile": {}, "views": [dict(v) for v in DEFAULT_VIEWS],
-            "pages": [], "layouts": {}}
+            "pages": [], "layouts": {}, "wallpaper_favorites": [],
+            "pinned_notes": [], "tasks": [],
+            # Reading (control-center's redesigned feed - see collect_reading).
+            # saved/read/hidden are keyed by item id rather than booleans baked
+            # into a feed item, since items themselves are re-derived from RSS
+            # every poll and would otherwise lose that state on the next fetch.
+            "reading_sources": [], "reading_saved": [], "reading_read": [],
+            "reading_hidden": [], "books": [], "reading_bookmarks": [],
+            "reading_prefs": {"topic_order": [], "topic_hidden": []}}
 
 def load_store():
     """Never raise. A corrupt store should cost you your tile order, not your panel."""
@@ -1550,6 +2175,34 @@ def load_store():
                       if isinstance(v, dict) and v.get("key") in {d["key"] for d in DEFAULT_VIEWS}]
     for view in store["views"]:
         if view.get("key") == "settings": view["visible"] = True
+
+    # Migration: first load after the Reading redesign. "reading_sources"
+    # missing from the file on disk (rather than merely empty - the user may
+    # have deliberately deleted every source later) means this store predates
+    # it. A custom "feeds" settings value gets carried over as sources rather
+    # than silently discarded; legacy entries land in "interesting" since the
+    # old free-text field had no topic concept and guessing one would be
+    # dishonest. Otherwise seed the curated defaults.
+    if "reading_sources" not in found:
+        seeded = []
+        legacy_feeds = str(store.get("settings", {}).get("feeds") or "").strip()
+        if legacy_feeds and legacy_feeds != DEFAULTS["feeds"].strip():
+            seen_urls = set()
+            for line in legacy_feeds.splitlines():
+                line = line.strip()
+                if not line or "|" not in line: continue
+                label, url = [p.strip() for p in line.split("|", 1)]
+                if not url or url in seen_urls: continue
+                seen_urls.add(url)
+                seeded.append({
+                    "id": (re.sub(r"[^a-z0-9]+", "-", label.lower()).strip("-")
+                           or hashlib.sha1(url.encode()).hexdigest()[:8]),
+                    "type": "youtube" if YT_RE.search(url) else "rss",
+                    "label": label, "url": url, "topic": "interesting", "enabled": True,
+                })
+        if not seeded:
+            seeded = [dict(s) for s in DEFAULT_READING_SOURCES]
+        store["reading_sources"] = seeded
     return store
 
 def save_store(store):
@@ -1868,6 +2521,36 @@ def save_cover(source, game_id):
     return "/api/cover?path=" + requests.utils.quote(str(target)) + f"&v={int(time.time())}"
 
 
+_DATA_URL_RE = re.compile(r"^data:image/(\w+);base64,(.+)$", re.S)
+_IMG_EXT_BY_MIME = {"jpeg": ".jpg", "jpg": ".jpg", "png": ".png", "webp": ".webp", "gif": ".gif", "bmp": ".bmp"}
+
+def save_uploaded_image_data(data_url, stem):
+    """Writes a browser file-picker's data: URL into COVER_DIR under a
+    fixed filename stem (any existing file with that stem is replaced
+    first, so switching from a .png to a .jpg doesn't leave the old one
+    behind) - the upload counterpart to save_cover(), which only ever
+    copies a file that's already on disk. Shared by the profile photo and
+    the custom background image uploads - same 8MB sanity cap, same
+    /api/cover serving convention, just a different stem per caller."""
+    found = _DATA_URL_RE.match(data_url)
+    if not found: return None
+    ext = _IMG_EXT_BY_MIME.get(found.group(1).lower(), ".jpg")
+    try:
+        raw = base64.b64decode(found.group(2))
+    except Exception:
+        return None
+    if not raw or len(raw) > 8 * 1024 * 1024: return None  # 8MB sanity cap
+    COVER_DIR.mkdir(parents=True, exist_ok=True)
+    for stale in COVER_DIR.glob(f"{stem}.*"):
+        try: stale.unlink()
+        except OSError: pass
+    target = COVER_DIR / f"{stem}{ext}"
+    target.write_bytes(raw)
+    return "/api/cover?path=" + requests.utils.quote(str(target)) + f"&v={int(time.time())}"
+
+def save_profile_photo_data(data_url):
+    return save_uploaded_image_data(data_url, "profile-photo")
+
 def effective_layout(store, view):
     """Merge saved panel positions/sizes over the built-in defaults, rather
     than trusting the save blindly - a panel added after you last touched
@@ -1875,24 +2558,48 @@ def effective_layout(store, view):
     shouldn't linger as a ghost entry forever."""
     base = DEFAULT_LAYOUTS.get(view, {"order": [], "sizes": {}, "hidden": []})
     saved = (store.get("layouts") or {}).get(view) or {}
-    order = [p for p in (saved.get("order") or base["order"]) if p in base["sizes"]]
-    order += [p for p in base["order"] if p not in order]
     sizes = {**base["sizes"], **(saved.get("sizes") or {})}
+    # Views like "plex-home" register with an empty base["sizes"] on
+    # purpose (panel ids are per-user/dynamic - one per Plex library the
+    # user actually has - so there's no fixed default set to check
+    # membership against). For those, filtering order/hidden against
+    # base["sizes"] would strip every saved entry, since that dict is
+    # always empty: a resized panel survives (sizes is a plain merge,
+    # not filtered) but a hidden or reordered one silently reverted
+    # every time - the bug behind "hide panel isn't saved for Plex".
+    # Skip the ghost-id pruning for these views and trust what was
+    # saved; a stale id left behind by a since-removed panel is inert
+    # (PanelGrid.tsx already tolerates ids with no matching panel).
+    dynamic = not base["sizes"]
+    def known(pid):
+        return dynamic or pid in base["sizes"]
+    order = [p for p in (saved.get("order") or base["order"]) if known(p)]
+    order += [p for p in base["order"] if p not in order]
     # "hidden" has to fall back the same way "order" does - an empty list is
     # a real, meaningful choice ("show everything"), so only trust it once
     # the user has actually saved one; before that, use the defaults.
     raw_hidden = saved["hidden"] if "hidden" in saved else base["hidden"]
-    hidden = [p for p in raw_hidden if p in base["sizes"]]
+    hidden = [p for p in raw_hidden if known(p)]
     return {"order": order, "sizes": sizes, "hidden": hidden}
 
-def collect_ui(_cfg, _shared):
+def collect_ui(cfg, _shared):
     """Nav labels, visibility and the profile - polled so a settings change
     reaches the page without a reload."""
     store = load_store()
     return {"views": store.get("views") or [dict(v) for v in DEFAULT_VIEWS],
             "profile": store.get("profile") or {},
             "pages": store.get("pages") or [],
-            "layouts": {v: effective_layout(store, v) for v in DEFAULT_LAYOUTS}}
+            "layouts": {v: effective_layout(store, v) for v in DEFAULT_LAYOUTS},
+            # Applied at boot (theme too, via profile above) rather than
+            # only inside the Settings surface itself - a toggle in
+            # Settings > Appearance should take effect on the next poll
+            # everywhere, not just next time Settings happens to be open.
+            "prefs": {"reduced_motion": truthy(cfg.get("reduced_motion")),
+                      "sidebar_default_collapsed": truthy(cfg.get("sidebar_default_collapsed")),
+                      "default_app": str(cfg.get("default_app") or "overview"),
+                      "background_mode": str(cfg.get("background_mode") or "wallpaper"),
+                      "background_color": str(cfg.get("background_color") or ""),
+                      "background_image": str(cfg.get("background_image") or "")}}
 
 
 def collect_apps(_cfg, _shared):
@@ -2013,6 +2720,22 @@ def _strip_html(text, limit=180):
     clean = re.sub(r"\s+", " ", clean).strip()
     return clean[:limit]
 
+_IMG_EXT_RE = re.compile(r"\.(jpe?g|png|gif|webp|avif|bmp)(?:$|\?)", re.I)
+
+def _enclosure_image_url(enclosure):
+    """<enclosure> is a generic "attached media" tag, not specifically an
+    image one - Codrops (among others) uses it to attach an mp4 demo reel
+    per post, which an <img> can never render, so that URL used to get
+    handed out as `thumb` anyway and just silently failed to load. Only
+    trust it as a thumbnail when its own declared type says image/*, or
+    (no type given) the URL itself looks like one."""
+    if enclosure is None: return None
+    found_url = enclosure.get("url")
+    if not found_url: return None
+    mime = (enclosure.get("type") or "").lower()
+    if mime: return found_url if mime.startswith("image/") else None
+    return found_url if _IMG_EXT_RE.search(found_url) else None
+
 def _feed_items(url, limit=12):
     import xml.etree.ElementTree as ET
     from email.utils import parsedate_to_datetime
@@ -2054,8 +2777,7 @@ def _feed_items(url, limit=12):
             found = re.search(r"(\d+)\s*points?", body)
             if found: points = int(found.group(1))
         items.append(pack(text(node, "title"), text(node, "link"), stamp,
-                          (thumb.get("url") if thumb is not None else
-                           (enclosure.get("url") if enclosure is not None else None)),
+                          (thumb.get("url") if thumb is not None else _enclosure_image_url(enclosure)),
                           body, {"comments": comments, "points": points,
                                  "author": text(node, "{http://purl.org/dc/elements/1.1/}creator")}))
 
@@ -2081,6 +2803,236 @@ def _feed_items(url, limit=12):
                               link.get("href") if link is not None else None, stamp,
                               thumb.get("url") if thumb is not None else None, blurb,
                               {"author": text(node, "atom:author/atom:name"), "views": views}))
+    return items
+
+_DATE_RE = re.compile(r"\b(\d{4}-\d{2}-\d{2})\b")
+
+_ARTICLE_META_RE = {
+    "title": re.compile(r'<meta[^>]+property=["\']og:title["\'][^>]+content=["\']([^"\']+)["\']', re.I),
+    # Same pattern _fetch_og_image's own _OG_IMAGE_RE uses (defined further
+    # down in the Reading section) - duplicated rather than shared since
+    # this dict is built at module load, before that name exists yet.
+    "image": re.compile(r'<meta[^>]+property=["\']og:image["\'][^>]+content=["\']([^"\']+)["\']', re.I),
+    "description": re.compile(r'<meta[^>]+property=["\']og:description["\'][^>]+content=["\']([^"\']+)["\']', re.I),
+    "published": re.compile(r'<meta[^>]+property=["\']article:published_time["\'][^>]+content=["\']([^"\']+)["\']', re.I),
+}
+
+def _fetch_article_meta(url):
+    """One request, every og:/article: meta tag this app cares about - the
+    JSON-LD ItemList path below only ever gets bare URLs from the page
+    (schema.org's ItemList has no title/image/date fields), so each entry
+    needs its own real title/image/summary/timestamp the same way a
+    single-article open already does (see _fetch_og_image) - just fetching
+    all four at once here instead of image alone."""
+    try:
+        r = requests.get(url, timeout=6, headers={"User-Agent": "desk-panel/1.0"})
+        r.raise_for_status()
+    except Exception:
+        return {}
+    out = {}
+    for key, pattern in _ARTICLE_META_RE.items():
+        found = pattern.search(r.text)
+        if found: out[key] = html_entities.unescape(found.group(1))
+    return out
+
+def _slug_title(url):
+    """Readable-ish fallback if a meta fetch fails - most CMS URL slugs are
+    the headline itself, dash-separated, with a trailing numeric id."""
+    slug = urlparse(url).path.rstrip("/").rsplit("/", 1)[-1]
+    slug = re.sub(r"-\d{3,}$", "", slug)
+    return " ".join(w.capitalize() for w in slug.split("-")) or url
+
+def _json_ld_listing_urls(html, origin_host, limit):
+    """Many news CMSes (this one included) embed a schema.org ItemList as
+    <script type="application/ld+json"> declaring exactly which articles
+    belong to the current category/team/tag page - the same signal search
+    engines use. It's far more precise than any DOM heuristic could be
+    (it's the site's own explicit statement of "this page's listing"), and
+    it's a generic, widely-used schema, not specific to this one site - so
+    it's tried FIRST, before ever falling back to guessing from markup."""
+    for match in re.finditer(r'<script[^>]+type=["\']application/ld\+json["\'][^>]*>(.*?)</script>', html, re.S | re.I):
+        try:
+            data = json.loads(match.group(1))
+        except Exception:
+            continue
+        if data.get("@type") != "ItemList":
+            continue
+        urls = []
+        for entry in data.get("itemListElement") or []:
+            entry_url = entry.get("url") if isinstance(entry, dict) else None
+            if not entry_url: continue
+            host = (urlparse(entry_url).hostname or "").replace("www.", "")
+            if host != origin_host: continue
+            urls.append(entry_url)
+            if len(urls) >= limit: break
+        if urls: return urls
+    return []
+
+def _webpage_listing_items(url, limit=20):
+    """Generic article-listing extraction for sources with no RSS/XML feed
+    (e.g. a plain news section page) - no site-specific scraper. Tries the
+    page's own JSON-LD ItemList first (see _json_ld_listing_urls - when a
+    team/category page embeds one, it's the actual list of articles that
+    belong to THIS page specifically, not just whatever repeated card
+    pattern happens to be biggest, which can just as easily be a generic
+    site-wide "trending" widget that has nothing to do with the page you
+    asked for). Falls back to structural DOM clustering only when no
+    ItemList is present. Raises on anything that doesn't look like a real
+    listing either way (same as a broken RSS parse), so it lands in
+    collect_reading's per-source `errors` dict exactly like today - no new
+    frontend error path needed."""
+    import lxml.html
+
+    r = requests.get(url, timeout=12, headers={"User-Agent": "desk-panel/1.0"})
+    r.raise_for_status()
+    origin_host = (urlparse(url).hostname or "").replace("www.", "")
+
+    listing_urls = _json_ld_listing_urls(r.text, origin_host, limit)
+    if listing_urls:
+        items = []
+        for entry_url in listing_urls:
+            meta = _fetch_article_meta(entry_url)
+            when = None
+            if meta.get("published"):
+                try: when = datetime.fromisoformat(meta["published"].replace("Z", "+00:00")).timestamp()
+                except Exception: when = None
+            items.append({
+                "title": meta.get("title") or _slug_title(entry_url),
+                "url": entry_url, "when": when, "thumb": meta.get("image"),
+                "blurb": _strip_html(meta.get("description"), limit=220) if meta.get("description") else "",
+                "domain": origin_host, "kind": "link",
+            })
+        if items: return items
+
+    doc = lxml.html.fromstring(r.text)
+    doc.make_links_absolute(url)
+
+    def is_boilerplate(node):
+        for ancestor in node.iterancestors():
+            if ancestor.tag in ("nav", "header", "footer"): return True
+        return False
+
+    def container_signature(anchor):
+        """Nearest classed ancestor of this anchor - both its (tag, class)
+        identity (the dict key candidates get grouped by) and the node
+        itself (the "card" whose heading/image/time/summary belong to this
+        entry), so callers never need to re-walk the tree a second time."""
+        node = anchor.getparent()
+        depth = 0
+        while node is not None and depth < 4:
+            cls = (node.get("class") or "").strip()
+            if cls: return (node.tag, cls, depth), node
+            node = node.getparent()
+            depth += 1
+        return None, None
+
+    candidates = []
+    for a in doc.iter("a"):
+        href = a.get("href") or ""
+        if not href.startswith(("http://", "https://")): continue
+        host = (urlparse(href).hostname or "").replace("www.", "")
+        if host != origin_host: continue
+        if is_boilerplate(a): continue
+        text = _strip_html(a.text_content())
+        has_img = a.find(".//img") is not None or a.tag == "img"
+        if len(text) < 20 and not has_img: continue
+        sig, block = container_signature(a)
+        if sig is None: continue
+        candidates.append((sig, a, href, block))
+
+    if not candidates:
+        raise ValueError("no article listing found on that page")
+
+    # Repetition count alone isn't enough - a "pick your team"/category
+    # nav strip repeats just as reliably as a real article grid, and often
+    # MORE times. Score each repeated cluster by how article-like its
+    # members actually look: longer link text (nav items are short labels,
+    # headlines aren't), a paragraph summary nearby, and article URLs
+    # (most CMSes, this one included, end article paths in a numeric id -
+    # a genuinely common pattern across many news sites, not specific to
+    # one). Highest-scoring cluster wins, not just the most frequent one.
+    _numeric_id_re = re.compile(r"\d{3,}")
+    groups = {}
+    for sig, a, href, block in candidates:
+        groups.setdefault(sig, []).append((a, href, block))
+
+    def cluster_score(members):
+        count = len(members)
+        avg_len = sum(len(_strip_html(a.text_content())) for a, _, _ in members) / count
+        frac_numeric_id = sum(1 for _, href, _ in members if _numeric_id_re.search(href.rsplit("/", 1)[-1])) / count
+        frac_has_p = sum(1 for _, _, block in members if block is not None and block.find(".//p") is not None) / count
+        return count * (1 + avg_len / 30) * (1 + frac_numeric_id) * (1 + 0.5 * frac_has_p)
+
+    scored = {sig: cluster_score(members) for sig, members in groups.items() if len(members) >= 3}
+    if not scored:
+        raise ValueError("no repeated listing pattern found on that page")
+    winner = max(scored, key=lambda s: scored[s])
+
+    seen_urls = set()
+    items = []
+    for sig, a, href, block in candidates:
+        if sig != winner: continue
+        clean_url = href.split("#")[0]
+        if clean_url in seen_urls: continue
+        seen_urls.add(clean_url)
+
+        heading = None
+        for tag in ("h1", "h2", "h3", "h4"):
+            found = block.find(f".//{tag}") if block is not None else None
+            if found is not None and _strip_html(found.text_content()):
+                heading = found
+                break
+        title = _strip_html(heading.text_content()) if heading is not None else _strip_html(a.text_content())
+        if not title:
+            img = a.find(".//img")
+            title = (img.get("alt") if img is not None else "") or ""
+        if not title: continue
+
+        img = block.find(".//img") if block is not None else None
+        thumb = None
+        if img is not None:
+            thumb = img.get("src") or img.get("data-src")
+            if not thumb and img.get("srcset"):
+                thumb = img.get("srcset").split(",")[0].strip().split(" ")[0]
+            if thumb: thumb = urljoin(url, thumb)
+
+        when = None
+        time_el = block.find(".//time") if block is not None else None
+        if time_el is not None:
+            raw_when = time_el.get("datetime") or time_el.text_content()
+            found_date = _DATE_RE.search(raw_when or "")
+            if found_date:
+                try: when = datetime.fromisoformat(found_date.group(1)).timestamp()
+                except Exception: when = None
+        if when is None:
+            # A leading "HH:MM " on the headline itself is a common fast-
+            # news pattern (today's time, no date - the site's own layout
+            # implies "today"). Strip it from the title either way so it
+            # doesn't double up with the frontend's own timestamp display.
+            leading_time = re.match(r"^(\d{1,2}):(\d{2})\s+(.+)", title)
+            if leading_time:
+                hh, mm, rest = int(leading_time.group(1)), int(leading_time.group(2)), leading_time.group(3)
+                if 0 <= hh < 24 and 0 <= mm < 60:
+                    now = datetime.now()
+                    stamp = now.replace(hour=hh, minute=mm, second=0, microsecond=0)
+                    if stamp.timestamp() > time.time(): stamp -= timedelta(days=1)
+                    when = stamp.timestamp()
+                    title = rest
+
+        blurb = ""
+        if block is not None:
+            for p in block.iter("p"):
+                candidate_text = _strip_html(p.text_content())
+                if candidate_text and candidate_text != title:
+                    blurb = candidate_text
+                    break
+
+        items.append({"title": title, "url": clean_url, "when": when, "thumb": thumb,
+                      "blurb": blurb, "domain": origin_host, "kind": "link"})
+        if len(items) >= limit: break
+
+    if not items:
+        raise ValueError("no article listing found on that page")
     return items
 
 FEED_PRESETS = [
@@ -2123,6 +3075,24 @@ FEED_PRESETS = [
 ]
 
 YT_CHANNEL_FEED = "https://www.youtube.com/feeds/videos.xml?channel_id="
+
+# Seeded into reading_sources on first run (see load_store()'s migration).
+# Deliberately a small, curated starting set spanning tech/ai/design/world
+# plus 2-3 YouTube channels, not a wall of presets - more can be added later
+# via source management without a redesign.
+DEFAULT_READING_SOURCES = [
+    {"id": "hn", "type": "rss", "label": "Hacker News", "url": "https://hnrss.org/frontpage", "topic": "tech", "enabled": True},
+    {"id": "verge", "type": "rss", "label": "The Verge", "url": "https://www.theverge.com/rss/index.xml", "topic": "tech", "enabled": True},
+    {"id": "arstechnica", "type": "rss", "label": "Ars Technica", "url": "https://feeds.arstechnica.com/arstechnica/index", "topic": "tech", "enabled": True},
+    {"id": "404media", "type": "rss", "label": "404 Media", "url": "https://www.404media.co/rss/", "topic": "tech", "enabled": True},
+    {"id": "simonw", "type": "rss", "label": "Simon Willison", "url": "https://simonwillison.net/atom/everything/", "topic": "ai", "enabled": True},
+    {"id": "smashing", "type": "rss", "label": "Smashing Magazine", "url": "https://www.smashingmagazine.com/feed/", "topic": "design", "enabled": True},
+    {"id": "sidebar", "type": "rss", "label": "Sidebar", "url": "https://sidebar.io/feed.xml", "topic": "design", "enabled": True},
+    {"id": "world-bbc", "type": "rss", "label": "BBC World", "url": "http://feeds.bbci.co.uk/news/world/rss.xml", "topic": "world", "enabled": True},
+    {"id": "yt-fireship", "type": "youtube", "label": "Fireship", "url": YT_CHANNEL_FEED + "UCsBjURrPoezykLs9EqgamOA", "topic": "youtube", "enabled": True},
+    {"id": "yt-theverge", "type": "youtube", "label": "The Verge", "url": YT_CHANNEL_FEED + "UCddiUEpeqJcYeBxX1IVBKvQ", "topic": "youtube", "enabled": True},
+    {"id": "yt-veritasium", "type": "youtube", "label": "Veritasium", "url": YT_CHANNEL_FEED + "UCHnyfMqiRRG1u-2MsSQLbXA", "topic": "youtube", "enabled": True},
+]
 
 def parse_subscriptions(text):
     """Turn a YouTube subscription export into feed lines.
@@ -2180,27 +3150,550 @@ def collect_feeds(cfg, _shared):
             feeds.append({"label": label, "url": url, "items": [], "error": str(e)[:120]})
     return {"feeds": feeds}
 
+READING_TOPICS = ["tech", "ai", "design", "world", "travel", "games", "interesting", "youtube", "sport"]
+
+_HN_BLURB_RE = re.compile(r"Article URL:\s*\S+|Comments URL:\s*\S+|Points:\s*\d+|#\s*Comments:\s*\d+", re.I)
+
+def _clean_blurb(text):
+    """hnrss (and similar feeds) put a templated 'Article URL: ... Comments
+    URL: ... Points: N # Comments: N' string in <description> instead of an
+    actual summary - showing that as if it were the article's own excerpt
+    is actively misleading, not just unhelpful. Strip those known fields;
+    if nothing real is left, there's no genuine excerpt for this item (the
+    frontend's TextCard already handles a missing blurb gracefully)."""
+    cleaned = _HN_BLURB_RE.sub("", text or "").strip(" -·|").strip()
+    return cleaned if len(cleaned) > 8 else ""
+
+def _normalize_reading_item(source, raw):
+    """One shared shape for both RSS articles and YouTube videos (raw items
+    from _feed_items()), so the frontend only ever branches on `kind` for
+    presentation, never on which backend quirk produced the item."""
+    url = raw.get("url") or ""
+    item_id = hashlib.sha1(f"{source['id']}|{url}".encode()).hexdigest()[:16]
+    blurb = _clean_blurb(raw.get("blurb"))
+    return {
+        "id": item_id,
+        # Kind follows the *source's* own type, not a guess based on
+        # where a given item happens to link to - an HN submission that
+        # links to a YouTube video is still an HN article, not "from
+        # YouTube" (that section is "from your subscribed channels", not
+        # "any link that happens to point at youtube.com").
+        "kind": "video" if source.get("type") == "youtube" else "article",
+        "source_id": source["id"], "source_label": source["label"], "topic": source["topic"],
+        "title": raw.get("title") or "(untitled)", "url": url, "domain": raw.get("domain") or "",
+        "author": raw.get("author"), "published": raw.get("when"),
+        "thumb": raw.get("thumb"), "blurb": blurb,
+        # Word count isn't known from an RSS summary alone - this is a rough
+        # floor from the blurb length only; the article-detail view recomputes
+        # it for real once trafilatura has extracted the full text (see the
+        # /api/reading/article route, added in Phase 2).
+        "read_minutes": max(1, len(blurb) // 1000),
+        # YouTube's own feed XML carries no duration (that needs the Data API,
+        # which needs a key we don't have) - always None for now, a known gap
+        # rather than a faked value.
+        "duration_seconds": None,
+        "saved": False, "read": False,
+    }
+
+def _normalize_bookmark(b):
+    """Same shape as _normalize_reading_item() so ArticleDetail/ReadingCard
+    render a bookmark with zero special-casing - the only real difference
+    is where it came from (pasted by hand, not polled from a subscribed
+    source). Always `saved: True`: adding a bookmark IS the save action,
+    there's no separate un-saved state for something you pasted in."""
+    blurb = b.get("blurb") or ""
+    return {
+        "id": b["id"], "kind": "article", "source_id": "bookmark",
+        "source_label": b.get("source_label") or b.get("domain") or "Bookmark",
+        "topic": b.get("topic") or "interesting", "title": b.get("title") or b["url"],
+        "url": b["url"], "domain": b.get("domain") or "", "author": None,
+        "published": b.get("added_at"), "thumb": b.get("thumb"), "blurb": blurb,
+        "read_minutes": max(1, len(blurb) // 1000), "duration_seconds": None,
+        "saved": True, "read": False,
+    }
+
+_OG_IMAGE_CACHE_FILE = CONFIG_DIR / "og-image-cache.json"
+_OG_IMAGE_RE = re.compile(r'<meta[^>]+property=["\']og:image["\'][^>]+content=["\']([^"\']+)["\']', re.I)
+# Some feeds (Codrops among them) carry no image at all in their RSS -
+# every <enclosure> is a video demo reel, no media:thumbnail, nothing.
+# Rather than leave those permanently text-only, the article's own og:image
+# meta tag (same thing a Slack/Discord link preview reads) gets fetched
+# once per URL, ever, and cached to disk - collect_reading runs every 15
+# minutes (see INTERVALS), so a handful of extra page fetches per cycle
+# is cheap, and a capped budget keeps one large backlog from stalling a
+# single collector run.
+_OG_IMAGE_BUDGET_PER_CYCLE = 40
+
+def _load_og_image_cache():
+    try: return json.loads(_OG_IMAGE_CACHE_FILE.read_text(encoding="utf-8"))
+    except Exception: return {}
+
+def _save_og_image_cache(cache):
+    try:
+        _OG_IMAGE_CACHE_FILE.parent.mkdir(parents=True, exist_ok=True)
+        _OG_IMAGE_CACHE_FILE.write_text(json.dumps(cache), encoding="utf-8")
+    except OSError: pass
+
+def _fetch_og_image(url):
+    try:
+        # A single `iter_content` read doesn't reliably return a full 64KB
+        # just because that's the chunk_size asked for - it returns
+        # whatever the network buffered in one read, which was routinely
+        # under 20KB in practice. og:image is often past that (Colossal's
+        # sits ~77KB in) once a page has enough head content ahead of it,
+        # so every one of those was silently coming back "not found".
+        # This is a one-time-per-URL background fetch (cached forever
+        # after), so just reading the real page is the simple fix.
+        r = requests.get(url, timeout=10, headers={"User-Agent": "desk-panel/1.0"})
+        r.raise_for_status()
+        found = _OG_IMAGE_RE.search(r.text)
+        # HTML attribute values escape `&` as `&amp;` - a raw regex pull
+        # off the page keeps that literal text instead of a real query
+        # separator, which 502'd every fetch through /api/reading/thumb
+        # for any og:image URL with more than one query parameter.
+        return html_entities.unescape(found.group(1)) if found else None
+    except Exception:
+        return None
+
+def _backfill_thumbs(items):
+    """Mutates `items` in place - fills `thumb` for article items that
+    have none, from a per-URL disk cache first and a bounded number of
+    live og:image fetches second. Round-robins across sources for the
+    live-fetch budget - one source with a big backlog of missing thumbs
+    (rockpapershotgun's RSS carries none either, as it turns out) would
+    otherwise burn the whole budget before a smaller source like Codrops
+    ever got a turn."""
+    cache = _load_og_image_cache()
+    changed = False
+
+    by_source: dict[str, list[dict]] = {}
+    for item in items:
+        if item["thumb"] or item["kind"] != "article": continue
+        url = item["url"]
+        if url in cache:
+            if cache[url]: item["thumb"] = cache[url]
+            continue
+        by_source.setdefault(item["source_id"], []).append(item)
+
+    queues = list(by_source.values())
+    budget = _OG_IMAGE_BUDGET_PER_CYCLE
+    while budget > 0 and queues:
+        for queue in list(queues):
+            if budget <= 0: break
+            item = queue.pop(0)
+            if not queue: queues.remove(queue)
+            found = _fetch_og_image(item["url"])
+            cache[item["url"]] = found  # cache the miss too - never re-fetched
+            changed = True
+            if found: item["thumb"] = found
+            budget -= 1
+
+    if changed: _save_og_image_cache(cache)
+
+def collect_reading(cfg, _shared):
+    store = load_store()
+    sources = [s for s in store["reading_sources"] if s.get("enabled")]
+    saved_ids = {s["id"] for s in store["reading_saved"]}
+    read_ids = {r["id"] for r in store["reading_read"]}
+    hidden_ids = {h["id"] for h in store["reading_hidden"]}
+    items, errors = [], {}
+    for source in sources:
+        try:
+            if source.get("type") == "webpage":
+                raw_items = _webpage_listing_items(source["url"], limit=20)
+            else:
+                raw_items = _feed_items(source["url"], limit=20)
+        except Exception as e:
+            errors[source["id"]] = str(e)[:120]
+            continue
+        for raw in raw_items:
+            item = _normalize_reading_item(source, raw)
+            if item["id"] in hidden_ids: continue
+            item["saved"] = item["id"] in saved_ids
+            item["read"] = item["id"] in read_ids
+            items.append(item)
+    _backfill_thumbs(items)
+    items.sort(key=lambda i: i["published"] or 0, reverse=True)
+    bookmarks = sorted((_normalize_bookmark(b) for b in store["reading_bookmarks"]),
+                       key=lambda i: i["published"] or 0, reverse=True)
+    return {"items": items, "sources": store["reading_sources"], "topics": READING_TOPICS,
+            "books": store["books"], "bookmarks": bookmarks, "errors": errors, "fetched_at": time.time()}
+
+def _reading_set_membership(list_key, item_id, want):
+    """Shared body for save/read/hide - each is just 'is this id in this
+    store list', add-or-remove, {id, at} entries so callers can show
+    'saved 3 days ago' later without extra bookkeeping."""
+    def mutate(store):
+        lst = store.setdefault(list_key, [])
+        without = [e for e in lst if e.get("id") != item_id]
+        store[list_key] = without + ([{"id": item_id, "at": time.time()}] if want else [])
+    edit_store(mutate)
+    return {"ok": True}
+
+def reading_set_saved(item_id, saved):
+    return _reading_set_membership("reading_saved", item_id, saved)
+
+def reading_set_read(item_id, read):
+    return _reading_set_membership("reading_read", item_id, read)
+
+def reading_hide_item(item_id):
+    return _reading_set_membership("reading_hidden", item_id, True)
+
+READING_SOURCE_TOPICS = ("tech", "ai", "design", "world", "travel", "games", "interesting", "youtube", "sport")
+
+def reading_add_source(payload):
+    label = str(payload.get("label") or "").strip()
+    url = str(payload.get("url") or "").strip()
+    if not label or not url: return {"ok": False, "error": "label and url required"}
+    if payload.get("type") in ("rss", "youtube", "webpage"):
+        source_type = payload["type"]
+    else:
+        source_type = "youtube" if YT_RE.search(url) else "rss"
+    topic = payload.get("topic") if payload.get("topic") in READING_SOURCE_TOPICS else "interesting"
+    base_id = re.sub(r"[^a-z0-9]+", "-", label.lower()).strip("-") or hashlib.sha1(url.encode()).hexdigest()[:8]
+    result = {"ok": True}
+    def mutate(store):
+        nonlocal result
+        existing = store.setdefault("reading_sources", [])
+        if any(s.get("url") == url for s in existing):
+            result = {"ok": False, "error": "that source is already added"}
+            return
+        sid, used = base_id, {s["id"] for s in existing}
+        while sid in used: sid += "-2"
+        existing.append({"id": sid, "type": source_type, "label": label[:80], "url": url, "topic": topic, "enabled": True})
+        result["id"] = sid
+    edit_store(mutate)
+    return result
+
+def reading_edit_source(source_id, patch):
+    result = {"ok": False, "error": "not found"}
+    def mutate(store):
+        nonlocal result
+        for s in store.get("reading_sources") or []:
+            if s.get("id") != source_id: continue
+            if str(patch.get("label") or "").strip():
+                s["label"] = str(patch["label"]).strip()[:80]
+            if patch.get("type") in ("rss", "youtube", "webpage"):
+                s["type"] = patch["type"]
+            if patch.get("topic") in READING_SOURCE_TOPICS:
+                s["topic"] = patch["topic"]
+            if "enabled" in patch:
+                s["enabled"] = bool(patch["enabled"])
+            result = {"ok": True}
+    edit_store(mutate)
+    return result
+
+def reading_delete_source(source_id):
+    def mutate(store):
+        store["reading_sources"] = [s for s in store.get("reading_sources") or [] if s.get("id") != source_id]
+    edit_store(mutate)
+    return {"ok": True}
+
+def reading_import_subscriptions(text):
+    """Reuses parse_subscriptions() (the existing YouTube OPML/Takeout-CSV
+    parser) - see FEED_PRESETS/YT_CHANNEL_FEED for the rest of that
+    machinery. Dedupes against sources already saved by URL."""
+    found = parse_subscriptions(text)
+    if not found:
+        return {"ok": False, "error": "Couldn't find any channels in that. "
+                                      "Paste the Takeout subscriptions.csv or an OPML export."}
+    added = 0
+    def mutate(store):
+        nonlocal added
+        existing = store.setdefault("reading_sources", [])
+        have_urls = {s.get("url") for s in existing}
+        used_ids = {s["id"] for s in existing}
+        for f in found:
+            url = f["url"]
+            if url in have_urls: continue
+            have_urls.add(url)
+            sid = re.sub(r"[^a-z0-9]+", "-", f["label"].lower()).strip("-") or hashlib.sha1(url.encode()).hexdigest()[:8]
+            while sid in used_ids: sid += "-2"
+            used_ids.add(sid)
+            existing.append({"id": sid, "type": "youtube", "label": f["label"][:80], "url": url,
+                             "topic": "youtube", "enabled": True})
+            added += 1
+    edit_store(mutate)
+    return {"ok": True, "found": len(found), "added": added}
+
+BOOK_STATUSES = ("reading", "want", "finished")
+
+def search_open_library(query):
+    """Proxies Open Library's search - no key needed, per the Reading
+    redesign plan's Books decision. Returns a trimmed shape for the
+    'add book' search-as-you-type UI, not the raw API response.
+
+    `ok` distinguishes "genuinely no matches" (ok: True, results: []) from
+    "the request itself failed" (ok: False, error: ...) - Open Library is
+    occasionally slow/rate-limited/unreachable, and collapsing both into
+    the same empty list made a real outage look identical to a bad search
+    term, with no way to tell the user which one happened."""
+    query = str(query or "").strip()
+    if not query: return {"ok": True, "results": []}
+    try:
+        r = requests.get("https://openlibrary.org/search.json", params={"q": query, "limit": 10},
+                         timeout=10, headers={"User-Agent": "desk-panel/1.0"})
+        r.raise_for_status()
+        docs = r.json().get("docs") or []
+    except requests.exceptions.Timeout:
+        return {"ok": False, "results": [], "error": "Open Library took too long to respond"}
+    except requests.exceptions.RequestException as e:
+        return {"ok": False, "results": [], "error": str(e)[:140]}
+    except Exception as e:
+        return {"ok": False, "results": [], "error": f"Couldn't read Open Library's response ({str(e)[:100]})"}
+    results = []
+    for d in docs[:10]:
+        cover_id = d.get("cover_i")
+        results.append({
+            "title": d.get("title") or "",
+            "author": ", ".join(d.get("author_name") or []) or "Unknown",
+            "openlibrary_key": d.get("key"),
+            "cover_url": f"https://covers.openlibrary.org/b/id/{cover_id}-M.jpg" if cover_id else None,
+            "first_publish_year": d.get("first_publish_year"),
+        })
+    return {"ok": True, "results": results}
+
+_STEAM_NEWS_CACHE = {}
+_STEAM_NEWS_TTL = 900  # matches the other slow-moving/rate-sensitive external calls in this file
+
+def fetch_steam_news(appid, count=5):
+    """Steam's own ISteamNews API - public, no key needed, and only ever
+    called for games with source == "steam" (the appid IS collect_games'
+    own game id for Steam entries, no separate id to look up). This is the
+    one 'reliable source that already exists' the games-activity feature
+    asked for; Xbox/Battle.net/Riot titles have no equivalent, so this
+    stays Steam-only rather than inventing something shakier for them."""
+    cache_key = str(appid)
+    cached = _STEAM_NEWS_CACHE.get(cache_key)
+    if cached and time.time() - cached["at"] < _STEAM_NEWS_TTL:
+        return cached["value"]
+    try:
+        r = requests.get("https://api.steampowered.com/ISteamNews/GetNewsForApp/v0002/",
+                         params={"appid": appid, "count": count, "maxlength": 280, "format": "json"},
+                         timeout=8, headers={"User-Agent": "desk-panel/1.0"})
+        r.raise_for_status()
+        raw_items = (r.json().get("appnews") or {}).get("newsitems") or []
+    except Exception as e:
+        value = {"ok": False, "items": [], "error": str(e)[:140]}
+        _STEAM_NEWS_CACHE[cache_key] = {"at": time.time(), "value": value}
+        return value
+    items = [{"title": n.get("title") or "", "url": n.get("url") or "",
+              "date": n.get("date"), "summary": _strip_html(n.get("contents"), limit=220),
+              "author": n.get("author") or ""} for n in raw_items if n.get("title")]
+    value = {"ok": True, "items": items}
+    _STEAM_NEWS_CACHE[cache_key] = {"at": time.time(), "value": value}
+    return value
+
+def add_book(payload):
+    title = str(payload.get("title") or "").strip()
+    if not title: return {"ok": False, "error": "title required"}
+    author = str(payload.get("author") or "").strip() or "Unknown"
+    ol_key = str(payload.get("openlibrary_key") or "").strip() or None
+    status = payload.get("status") if payload.get("status") in BOOK_STATUSES else "want"
+    book_id = ("ol-" + ol_key.rstrip("/").split("/")[-1]) if ol_key else \
+              ("manual-" + hashlib.sha1(f"{title}|{author}".encode()).hexdigest()[:10])
+    now = time.time()
+    book = {
+        "id": book_id, "title": title[:200], "author": author[:150],
+        "cover_url": str(payload.get("cover_url") or "").strip() or None,
+        "status": status, "progress_pct": 100 if status == "finished" else 0,
+        "pages": int(payload["pages"]) if str(payload.get("pages") or "").isdigit() else None,
+        "added_at": now,
+        "started_at": now if status == "reading" else None,
+        "finished_at": now if status == "finished" else None,
+        "openlibrary_key": ol_key, "notes": "",
+        # Optional link to an actual reading copy - a direct PDF/EPUB URL,
+        # a Google Drive share link, a personal server path, whatever the
+        # user has. Makes the shelf something you can actually read from,
+        # not just a progress tracker - see edit_book() for how it's set/
+        # changed later, and BookDetail.tsx's reader overlay for playback.
+        "file_url": str(payload.get("file_url") or "").strip() or None,
+    }
+    added = {"ok": True, "id": book_id}
+    def mutate(store):
+        if any(b.get("id") == book_id for b in store.get("books") or []):
+            return  # already on the shelf - dedupe silently, not an error
+        store.setdefault("books", []).append(book)
+    edit_store(mutate)
+    return added
+
+def edit_book(book_id, patch):
+    result = {"ok": False, "error": "not found"}
+    def mutate(store):
+        nonlocal result
+        for b in store.get("books") or []:
+            if b.get("id") != book_id: continue
+            if patch.get("status") in BOOK_STATUSES:
+                b["status"] = patch["status"]
+                # Reading now / Finished stamp their own timestamps the
+                # first time you land there, same as toggle_task marking
+                # `completed` - never overwritten on a later edit.
+                if patch["status"] == "reading" and not b.get("started_at"):
+                    b["started_at"] = time.time()
+                if patch["status"] == "finished":
+                    if not b.get("finished_at"): b["finished_at"] = time.time()
+                    b["progress_pct"] = 100
+            if "progress_pct" in patch:
+                try: b["progress_pct"] = max(0, min(100, int(patch["progress_pct"])))
+                except (TypeError, ValueError): pass
+            if "notes" in patch:
+                b["notes"] = str(patch.get("notes") or "")[:2000]
+            if "file_url" in patch:
+                b["file_url"] = str(patch.get("file_url") or "").strip() or None
+            result = {"ok": True}
+        return None
+    edit_store(mutate)
+    return result
+
+def delete_book(book_id):
+    def mutate(store):
+        store["books"] = [b for b in store.get("books") or [] if b.get("id") != book_id]
+    edit_store(mutate)
+    return {"ok": True}
+
+def add_bookmark(payload):
+    """Raindrop-style 'paste a link' bookmark - fetches the page once,
+    pulls title/image/description via trafilatura's metadata extractor
+    (not the full-text extractor _extract_article uses; a bookmark needs
+    a card's worth of metadata, not the whole article body up front - the
+    reader still fetches full text on demand through the same
+    /api/reading/article path every other article uses, since
+    _normalize_bookmark gives it the same id/url shape)."""
+    url = str(payload.get("url") or "").strip()
+    if not url.startswith(("http://", "https://")):
+        return {"ok": False, "error": "that doesn't look like a URL"}
+    bookmark_id = hashlib.sha1(url.encode()).hexdigest()[:16]
+    topic = payload.get("topic") if payload.get("topic") in READING_SOURCE_TOPICS else "interesting"
+    domain = (urlparse(url).hostname or "").replace("www.", "")
+    title, image, excerpt, sitename = url, None, "", domain
+    try:
+        import trafilatura
+        r = requests.get(url, timeout=15, headers={"User-Agent": "desk-panel/1.0"})
+        r.raise_for_status()
+        if r.encoding is None or r.encoding.lower() == "iso-8859-1":
+            r.encoding = r.apparent_encoding
+        meta = trafilatura.extract_metadata(r.text, default_url=url).as_dict()
+        title = (meta.get("title") or "").strip() or url
+        image = meta.get("image") or None
+        excerpt = (meta.get("description") or "").strip()
+        sitename = (meta.get("sitename") or "").strip() or domain
+    except Exception as e:
+        errors_note = str(e)[:120]  # swallowed - a bookmark with just a URL as its title beats a hard failure
+        _ = errors_note
+    bookmark = {
+        "id": bookmark_id, "url": url, "title": title[:200], "domain": domain,
+        "source_label": sitename[:80], "thumb": image, "blurb": excerpt[:400],
+        "topic": topic, "added_at": time.time(),
+    }
+    result = {"ok": True, "id": bookmark_id}
+    def mutate(store):
+        existing = store.setdefault("reading_bookmarks", [])
+        if any(b.get("id") == bookmark_id for b in existing):
+            return  # already bookmarked - dedupe silently
+        existing.append(bookmark)
+    edit_store(mutate)
+    return result
+
+def delete_bookmark(bookmark_id):
+    def mutate(store):
+        store["reading_bookmarks"] = [b for b in store.get("reading_bookmarks") or [] if b.get("id") != bookmark_id]
+    edit_store(mutate)
+    return {"ok": True}
+
+def _extract_article(url, cache_id):
+    """Full-text extraction for the article reader, for sites whose RSS
+    feed only carries a short summary. Disk-cached by item id, including
+    failures - a paywalled/broken URL costs one real fetch attempt ever,
+    not one every time the reader is opened (same "cache the negative
+    result too" shape as _griddb_art's in-memory cache)."""
+    cache_file = ARTICLE_DIR / f"{cache_id}.json"
+    if cache_file.is_file():
+        try: return json.loads(cache_file.read_text(encoding="utf-8"))
+        except Exception: pass
+
+    import trafilatura  # lazy import, same convention as PIL elsewhere
+    import lxml.html
+    from lxml_html_clean import Cleaner
+    result = {"ok": False, "error": "extraction failed"}
+    try:
+        r = requests.get(url, timeout=15, headers={"User-Agent": "desk-panel/1.0"})
+        r.raise_for_status()
+        html = trafilatura.extract(
+            r.text, output_format="html", include_images=True,
+            include_links=True, include_formatting=True, favor_recall=True,
+        )
+        if html:
+            # Extracted content is still third-party HTML - it gets
+            # rendered client-side (article reader), so it's sanitized
+            # here, at the one place both the network fetch and the
+            # cache write happen, rather than trusted to the frontend.
+            cleaner = Cleaner(scripts=True, javascript=True, comments=True, style=True,
+                              links=False, meta=True, page_structure=True, embedded=True,
+                              frames=True, forms=True, annoying_tags=True)
+            clean_doc = cleaner.clean_html(lxml.html.fromstring(html))
+            # Same hotlink problem thumbnails have, but inside the article
+            # body itself - a browser loading these third-party image URLs
+            # directly sends this app's own origin as Referer, which image
+            # CDNs commonly reject. Route every <img> through the same
+            # /api/reading/thumb proxy; baked into the cached HTML once
+            # here rather than rewritten client-side on every read.
+            for img in clean_doc.iter("img"):
+                src = img.get("src")
+                if not src: continue
+                # Some sites emit root-relative image paths ("/games/x.png")
+                # in their article markup - resolved against nothing, that
+                # loads against THIS app's own origin instead of the
+                # source site's, a guaranteed 404 shaped exactly like the
+                # hotlink-block bug this proxy already fixes. Resolve
+                # against the article's own URL first.
+                absolute = urljoin(url, src)
+                if absolute.startswith(("http://", "https://")):
+                    img.set("src", "/api/reading/thumb?url=" + requests.utils.quote(absolute, safe=""))
+                if "srcset" in img.attrib:
+                    del img.attrib["srcset"]
+            clean_html = lxml.html.tostring(clean_doc, encoding="unicode")
+            word_count = len(re.sub(r"<[^>]+>", " ", clean_html).split())
+            result = {"ok": True, "html": clean_html, "word_count": word_count}
+        else:
+            result = {"ok": False, "error": "no article content found"}
+    except Exception as e:
+        result = {"ok": False, "error": str(e)[:160]}
+
+    try:
+        ARTICLE_DIR.mkdir(parents=True, exist_ok=True)
+        cache_file.write_text(json.dumps(result), encoding="utf-8")
+    except OSError:
+        pass  # a cache miss every time is a perf issue, not a correctness one
+    return result
+
 def collect_wallpapers(cfg, _shared):
     folder = Path(cfg["wallpaper_dir"])
-    if not folder.is_dir(): return {"dir": str(folder), "walls": [], "error": "folder not found"}
+    if not folder.is_dir(): return {"dir": str(folder), "walls": [], "favorites": [], "error": "folder not found"}
     current = None
     try: current = json.loads(STATE_FILE.read_text(encoding="utf-8")).get("last_source")
     except Exception: pass
+    fav_paths = set(load_store().get("wallpaper_favorites") or [])
     walls = []
     current_bg = None
     if current and Path(current).is_file():
         current_bg = "/api/bg?path=" + requests.utils.quote(str(current))
     for path in sorted(folder.iterdir(), key=lambda x: x.stat().st_mtime if x.is_file() else 0, reverse=True):
         if path.suffix.lower() not in WALL_EXTS: continue
-        walls.append({"name": path.stem, "path": str(path), "thumb": "/api/wall?path=" + requests.utils.quote(str(path)), "current": current == str(path)})
+        sp = str(path)
+        walls.append({"name": path.stem, "path": sp, "thumb": "/api/wall?path=" + requests.utils.quote(sp), "current": current == sp, "favorite": sp in fav_paths})
     limit = int(cfg.get("wallpaper_limit", "300"))
-    return {"dir": str(folder), "walls": walls[:limit], "total": len(walls), "current_path": current, "current_bg": current_bg}
+    favorites = [w for w in walls if w["favorite"]]
+    return {"dir": str(folder), "walls": walls[:limit], "favorites": favorites, "total": len(walls), "current_path": current, "current_bg": current_bg}
 
 _wall_thumbs = {}
 def wall_thumb(path, size=(300, 250)):
     from PIL import Image
     import io
-    key = f"{path}|{Path(path).stat().st_mtime_ns}"
+    # size is part of the cache key now that callers can request more than
+    # one (the 300x250 grid crop and a larger hero/hover crop of the same
+    # file) - without it the second size to ask for a given path would
+    # silently get served the first size's cached bytes.
+    key = f"{path}|{Path(path).stat().st_mtime_ns}|{size[0]}x{size[1]}"
     if key in _wall_thumbs: return _wall_thumbs[key]
     img = Image.open(path).convert("RGB")
     scale = max(size[0] / img.width, size[1] / img.height)
@@ -2287,7 +3780,8 @@ def set_wallpaper(cfg, path):
     script = HERE.parent / "wallpicker.py"
     if not script.is_file() or not Path(path).is_file(): return False
     try:
-        subprocess.Popen([sys.executable, str(script), "--set", str(path)], creationflags=getattr(subprocess, "DETACHED_PROCESS", 0))
+        subprocess.Popen([sys.executable, str(script), "--set", str(path)],
+                          creationflags=getattr(subprocess, "DETACHED_PROCESS", 0) | getattr(subprocess, "CREATE_NO_WINDOW", 0))
         return True
     except Exception: return False
 
@@ -2302,20 +3796,92 @@ def download_wallpaper(cfg, url, wall_id):
         target.write_bytes(r.content)
     return target
 
-def set_brightness(cfg, percent):
-    token = load_token()
-    if not token: return False
-    level = max(1, min(255, int(255 * int(percent) / 100)))
-    headers = {"Authorization": f"Bearer {token}", "content-type": "application/json"}
-    base = cfg["ha_url"].rstrip("/")
-    for entity in csv_list(cfg["panel_lights"]):
-        try: requests.post(f"{base}/api/services/light/turn_on", headers=headers, timeout=5, json={"entity_id": entity, "brightness": level, "transition": 1.0})
-        except Exception: continue
+def _persist_state(**kw):
     try: state = json.loads(STATE_FILE.read_text(encoding="utf-8"))
     except Exception: state = {}
-    state["brightness"] = int(percent)
+    state.update(kw)
     try: STATE_FILE.write_text(json.dumps(state), encoding="utf-8")
     except Exception: pass
+
+def _rerun_colorful_background():
+    # OpenRGB/Chroma have no live-adjust path (rgb_paint_win.py has no
+    # persistent daemon like chroma_paint.py's - every paint re-connects to
+    # OpenRGB, re-samples the wallpaper and rewrites every device, which is
+    # most of where the old 10-20s slider lag came from). Catching them up
+    # still means re-running lights.py --colorful, but firing it detached
+    # (Popen never blocks this request) means it no longer gates the HA
+    # response below - the room lights react immediately, the PC/keyboard
+    # catch up a couple of seconds later in the background.
+    script = HERE.parent / "lights.py"
+    if not script.is_file(): return False
+    # DETACHED_PROCESS alone only stops the child from inheriting this
+    # process's console - sys.executable is still the console-subsystem
+    # python.exe, so without CREATE_NO_WINDOW too it opens a brand new
+    # visible console of its own (the "a terminal opens" bug).
+    subprocess.Popen([sys.executable, str(script), "--colorful"],
+                      creationflags=getattr(subprocess, "DETACHED_PROCESS", 0) | getattr(subprocess, "CREATE_NO_WINDOW", 0))
+    return True
+
+def _patch_ha_lights(cfg, build_payload):
+    """Runs `build_payload(entity, headers, base) -> dict | None` across
+    every panel_lights entity in parallel and POSTs whatever it returns.
+    This is the actual live-adjust path for HA/Govee/Hue: it touches each
+    light's *current* state directly (brightness only, or current colour
+    re-hsv'd for saturation) instead of recomputing anything from the
+    wallpaper, so it's a handful of small concurrent HTTP calls - a few
+    hundred ms, not a 10-20s image-to-device pipeline. panel_lights are
+    each painted their own flat colour by apply_colorful() (never a
+    per-segment gradient, that's a separate entity set - see
+    segment_groups() in lights.py), so re-sending each one's own current
+    colour can never flatten a gradient it was never part of."""
+    import concurrent.futures
+    token = load_token()
+    if not token: return False
+    headers = {"Authorization": f"Bearer {token}", "content-type": "application/json"}
+    base = cfg["ha_url"].rstrip("/")
+
+    def run(entity):
+        try:
+            payload = build_payload(entity, headers, base)
+            if payload: requests.post(f"{base}/api/services/light/turn_on", headers=headers, timeout=5, json=payload)
+        except Exception: pass
+
+    entities = csv_list(cfg["panel_lights"])
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max(1, len(entities))) as pool:
+        list(pool.map(run, entities))
+    return True
+
+def set_brightness(cfg, percent, mode=None):
+    _persist_state(brightness=int(percent))
+    level = max(1, min(255, int(255 * int(percent) / 100)))
+    ok = _patch_ha_lights(cfg, lambda entity, headers, base: {"entity_id": entity, "brightness": level, "transition": 1.0})
+    if mode == "colorful": _rerun_colorful_background()
+    return ok
+
+def set_saturation(cfg, percent, mode=None):
+    """The live-adjust half of lights.py's own saturation concept
+    (lights.py:184-186's tint()) - re-reads each light's current colour and
+    re-sends it at the new saturation, the same way set_brightness() nudges
+    brightness without recomputing colour. Also persisted to STATE_FILE
+    under the same "saturation" key lights.py's main() already reads on
+    every invocation (lights.py:864), so the next mode/colour applied
+    (from here or from lights.py directly) picks it up as the baseline."""
+    import colorsys
+    _persist_state(saturation=int(percent))
+    factor = max(0.0, min(1.0, int(percent) / 100))
+
+    def build(entity, headers, base):
+        r = requests.get(f"{base}/api/states/{entity}", headers=headers, timeout=5)
+        attrs = (r.json() or {}).get("attributes") or {}
+        rgb = attrs.get("rgb_color")
+        if not rgb: return None
+        h, _s, v = colorsys.rgb_to_hsv(*(c / 255 for c in rgb))
+        nr, ng, nb = colorsys.hsv_to_rgb(h, factor, v)
+        return {"entity_id": entity, "rgb_color": [int(nr * 255), int(ng * 255), int(nb * 255)], "transition": 1.0}
+
+    ok = _patch_ha_lights(cfg, build)
+    if mode == "colorful": _rerun_colorful_background()
+    return ok
     return True
 
 def launch_game(target):
@@ -2346,10 +3912,10 @@ COLLECTORS = {
     "hardware": collect_hardware, "lights": collect_lights, "plex": collect_plex,
     "games": collect_games, "wallpapers": collect_wallpapers, "feeds": collect_feeds,
     "homelab": collect_homelab, "downloads": collect_downloads,
-    "upcoming": collect_upcoming, "notes": collect_notes, "apps": collect_apps,
+    "upcoming": collect_upcoming, "notes": collect_notes, "tasks": collect_tasks, "apps": collect_apps,
     "photo": collect_photo, "popular": collect_popular,
     "ui": collect_ui, "audio": collect_audio, "desktops": collect_desktops,
-    "calendar": collect_calendar, "files": collect_files,
+    "calendar": collect_calendar, "files": collect_files, "reading": collect_reading,
 }
 
 class Snapshot:
@@ -2426,6 +3992,21 @@ def make_handler(snapshot):
             if path == "/api/store": return self._send(json.dumps(load_store()))
             if path == "/api/feed-presets":
                 return self._send(json.dumps({"presets": FEED_PRESETS}))
+            if path == "/api/reading/article":
+                q = parse_qs(route.query)
+                item_id = (q.get("id") or [""])[0]
+                url = (q.get("url") or [""])[0]
+                if not re.fullmatch(r"[a-f0-9]{16}", item_id) or not url:
+                    return self._send(json.dumps({"ok": False, "error": "bad request"}), code=400)
+                return self._send(json.dumps(_extract_article(url, item_id)))
+            if path == "/api/books/search":
+                q = (parse_qs(route.query).get("q") or [""])[0]
+                return self._send(json.dumps(search_open_library(q)))
+            if path == "/api/games/news":
+                appid = (parse_qs(route.query).get("appid") or [""])[0]
+                if not appid.isdigit():
+                    return self._send(json.dumps({"ok": False, "items": [], "error": "bad appid"}), code=400)
+                return self._send(json.dumps(fetch_steam_news(appid)))
             if path == "/api/settings":
                 store = load_store()
                 effective = load_config()
@@ -2453,6 +4034,12 @@ def make_handler(snapshot):
                 rel = (parse_qs(route.query).get("rel") or [""])[0]
                 try: return self._send(json.dumps(read_note(snapshot.cfg, rel)))
                 except Exception as e: return self._send(json.dumps({"ok": False, "error": str(e)[:140]}), code=400)
+            if path == "/api/plex/item":
+                rating_key = (parse_qs(route.query).get("ratingKey") or [""])[0]
+                if not rating_key.isdigit():
+                    return self._send(json.dumps({"error": "bad ratingKey"}), code=400)
+                try: return self._send(json.dumps(plex_item_detail(snapshot.cfg, rating_key)))
+                except Exception as e: return self._send(json.dumps({"error": str(e)[:160]}), code=502)
             if path == "/api/covers":
                 q = parse_qs(route.query)
                 name = (q.get("name") or [""])[0]
@@ -2493,13 +4080,24 @@ def make_handler(snapshot):
                 kind = {".png": "image/png", ".webp": "image/webp", ".bmp": "image/bmp"}.get(target.suffix.lower(), "image/jpeg")
                 return self._send(target.read_bytes(), kind)
             if path == "/api/wall":
-                wanted = (parse_qs(route.query).get("path") or [""])[0]
+                q = parse_qs(route.query)
+                wanted = (q.get("path") or [""])[0]
                 try:
                     target = Path(wanted).resolve()
                     root = Path(snapshot.cfg["wallpaper_dir"]).resolve()
                 except Exception: return self._send("bad path", "text/plain", 400)
                 if not str(target).startswith(str(root)) or not target.is_file(): return self._send("not allowed", "text/plain", 403)
-                try: return self._send(wall_thumb(str(target)), "image/jpeg")
+                # Optional ?w=&h= for a bigger, crisper crop (Scene's hero,
+                # hover previews) - defaults to the original 300x250 grid
+                # thumbnail when omitted, so every existing caller is
+                # unaffected. Clamped so this can't be abused into an
+                # arbitrarily expensive resize.
+                try:
+                    w = min(2400, max(1, int((q.get("w") or ["300"])[0])))
+                    h = min(2400, max(1, int((q.get("h") or ["250"])[0])))
+                except ValueError:
+                    w, h = 300, 250
+                try: return self._send(wall_thumb(str(target), size=(w, h)), "image/jpeg")
                 except Exception as e: return self._send(f"thumb failed: {e}", "text/plain", 500)
             if path == "/api/bg":
                 wanted = (parse_qs(route.query).get("path") or [""])[0]
@@ -2516,6 +4114,31 @@ def make_handler(snapshot):
                 self.send_header("Cache-Control", "max-age=3600")
                 self.end_headers()
                 return self.wfile.write(body)
+            if path == "/api/reading/thumb":
+                # A browser <img> loading a reading item's thumb straight
+                # from its source site sends this app's own origin as
+                # Referer - some sites (Codrops among them) hotlink-block
+                # on exactly that, so the image just silently fails with
+                # no error surfaced anywhere in the UI. Fetching it here
+                # instead sends no Referer at all (requests never adds one
+                # unless told to) and this app's normal UA, which is what
+                # actually gets past that block - not a caching layer.
+                wanted = (parse_qs(route.query).get("url") or [""])[0]
+                if not wanted.startswith(("http://", "https://")):
+                    return self._send("bad url", "text/plain", 400)
+                try:
+                    r = requests.get(wanted, timeout=10, headers={"User-Agent": "desk-panel/1.0"})
+                    r.raise_for_status()
+                    ctype = r.headers.get("Content-Type", "image/jpeg").split(";")[0].strip()
+                    if not ctype.startswith("image/"): raise ValueError("not an image")
+                except Exception:
+                    return self._send("thumb unavailable", "text/plain", 502)
+                self.send_response(200)
+                self.send_header("Content-Type", ctype)
+                self.send_header("Content-Length", str(len(r.content)))
+                self.send_header("Cache-Control", "max-age=3600")
+                self.end_headers()
+                return self.wfile.write(r.content)
             if path == "/api/filesys/thumb":
                 q = parse_qs(route.query)
                 kind = (q.get("kind") or [""])[0]
@@ -2772,6 +4395,70 @@ def make_handler(snapshot):
                 snapshot.reload()
                 return {"ok": True}
 
+            if path == "/api/settings/profile-photo":
+                # The upload counterpart to save_cover() (which only ever
+                # handles a path already on disk) - a real file picker in
+                # the browser can only ever hand this a data: URL, not a
+                # local path, so this decodes and writes it the same way
+                # save_cover copies an existing file into COVER_DIR.
+                if body.get("remove"):
+                    def mutate(store):
+                        store.setdefault("profile", {})["photo"] = ""
+                    edit_store(mutate)
+                    for stale in COVER_DIR.glob("profile-photo.*"):
+                        try: stale.unlink()
+                        except OSError: pass
+                    snapshot.reload()
+                    return {"ok": True, "url": None}
+                url = save_profile_photo_data(str(body.get("data") or ""))
+                if not url: return {"ok": False, "error": "Couldn't read that image"}
+                def mutate(store):
+                    store.setdefault("profile", {})["photo"] = url
+                edit_store(mutate)
+                snapshot.reload()
+                return {"ok": True, "url": url}
+
+            if path == "/api/settings/background-image":
+                # Same upload shape as /api/settings/profile-photo, just
+                # writing into store["settings"]["background_image"]
+                # instead of store["profile"]["photo"] - a plain settings
+                # key like accent_override, not a profile field, so it
+                # needs no special-cased read path in GET /api/settings.
+                if body.get("remove"):
+                    def mutate(store):
+                        store.setdefault("settings", {}).pop("background_image", None)
+                    edit_store(mutate)
+                    for stale in COVER_DIR.glob("background-image.*"):
+                        try: stale.unlink()
+                        except OSError: pass
+                    snapshot.reload()
+                    return {"ok": True, "url": None}
+                url = save_uploaded_image_data(str(body.get("data") or ""), "background-image")
+                if not url: return {"ok": False, "error": "Couldn't read that image"}
+                def mutate(store):
+                    store.setdefault("settings", {})["background_image"] = url
+                edit_store(mutate)
+                snapshot.reload()
+                return {"ok": True, "url": url}
+
+            if path == "/api/settings/test-connection":
+                # One generic reachability check every Integrations card
+                # uses (see IntegrationsPage.tsx) instead of a bespoke
+                # tester per service - a plain GET against whatever base
+                # URL that integration is configured with, timed, with
+                # the real status code or error surfaced back.
+                url = str(body.get("url") or "").strip()
+                if not url.startswith(("http://", "https://")):
+                    return {"ok": False, "error": "no URL configured"}
+                started = time.monotonic()
+                try:
+                    r = requests.get(url, timeout=6, headers={"User-Agent": "desk-panel/1.0"})
+                    ms = round((time.monotonic() - started) * 1000)
+                    return {"ok": r.status_code < 500, "status": r.status_code, "ms": ms}
+                except Exception as e:
+                    ms = round((time.monotonic() - started) * 1000)
+                    return {"ok": False, "error": str(e)[:160], "ms": ms}
+
             if path == "/api/views":
                 incoming = body.get("views")
                 if not isinstance(incoming, list) or not incoming:
@@ -2940,11 +4627,81 @@ def make_handler(snapshot):
                         result = delete_note(snapshot.cfg, body.get("rel"))
                     elif route.path == "/api/note/rename":
                         result = rename_note(snapshot.cfg, body.get("rel"), body.get("name"))
+                    elif route.path == "/api/note/pin":
+                        result = pin_note(snapshot.cfg, body.get("rel"), bool(body.get("pinned", True)))
                     else:
                         return self._send("not found", "text/plain", 404)
                 except Exception as e:
                     return self._send(json.dumps({"ok": False, "error": str(e)[:140]}), code=400)
                 snapshot.refresh("notes")
+                return self._send(json.dumps(result))
+            if route.path.startswith("/api/tasks"):
+                body = self._body()
+                if route.path == "/api/tasks/add":
+                    result = add_task(body.get("text"), body.get("priority") or "normal", body.get("notes") or "")
+                elif route.path == "/api/tasks/edit":
+                    result = edit_task(
+                        str(body.get("id") or ""),
+                        text=body.get("text"),
+                        priority=body.get("priority"),
+                        notes=body.get("notes"),
+                        pinned=body.get("pinned"),
+                    )
+                elif route.path == "/api/tasks/toggle":
+                    result = toggle_task(str(body.get("id") or ""), bool(body.get("done", True)))
+                elif route.path == "/api/tasks/pin":
+                    result = pin_task(str(body.get("id") or ""), bool(body.get("pinned", True)))
+                elif route.path == "/api/tasks/delete":
+                    result = delete_task(str(body.get("id") or ""))
+                else:
+                    return self._send("not found", "text/plain", 404)
+                snapshot.refresh("tasks")
+                return self._send(json.dumps(result))
+            if (route.path.startswith("/api/reading/source/") or route.path.startswith("/api/reading/bookmark/")
+                    or route.path == "/api/reading/import-subscriptions"):
+                body = self._body()
+                if route.path == "/api/reading/source/add":
+                    result = reading_add_source(body)
+                elif route.path == "/api/reading/source/edit":
+                    result = reading_edit_source(str(body.get("id") or ""), body)
+                elif route.path == "/api/reading/source/delete":
+                    result = reading_delete_source(str(body.get("id") or ""))
+                elif route.path == "/api/reading/import-subscriptions":
+                    result = reading_import_subscriptions(body.get("text"))
+                elif route.path == "/api/reading/bookmark/add":
+                    result = add_bookmark(body)
+                elif route.path == "/api/reading/bookmark/delete":
+                    result = delete_bookmark(str(body.get("id") or ""))
+                else:
+                    return self._send("not found", "text/plain", 404)
+                snapshot.refresh("reading")
+                return self._send(json.dumps(result))
+            if route.path.startswith("/api/reading/"):
+                body = self._body()
+                item_id = str(body.get("id") or "")
+                if not item_id:
+                    return self._send(json.dumps({"ok": False, "error": "no id"}), code=400)
+                if route.path == "/api/reading/save":
+                    result = reading_set_saved(item_id, bool(body.get("saved", True)))
+                elif route.path == "/api/reading/read":
+                    result = reading_set_read(item_id, bool(body.get("read", True)))
+                elif route.path == "/api/reading/hide":
+                    result = reading_hide_item(item_id)
+                else:
+                    return self._send("not found", "text/plain", 404)
+                snapshot.refresh("reading")
+                return self._send(json.dumps(result))
+            if route.path.startswith("/api/books/"):
+                body = self._body()
+                if route.path == "/api/books/add":
+                    result = add_book(body)
+                elif route.path == "/api/books/edit":
+                    result = edit_book(str(body.get("id") or ""), body)
+                elif route.path == "/api/books/delete":
+                    result = delete_book(str(body.get("id") or ""))
+                else:
+                    return self._send("not found", "text/plain", 404)
+                snapshot.refresh("reading")
                 return self._send(json.dumps(result))
             if (route.path.startswith("/api/games/") or route.path.startswith("/api/apps/")
                     or route.path.startswith("/api/settings/") or route.path.startswith("/api/pages")
@@ -2991,16 +4748,61 @@ def make_handler(snapshot):
                 except Exception: body = {}
                 target = body.get("path")
                 if body.get("url"):
-                    try: target = str(download_wallpaper(snapshot.cfg, body["url"], body.get("id") or str(int(time.time()))))
-                    except Exception as e: return self._send(json.dumps({"ok": False, "error": str(e)[:160]}))
+                    # A Wallhaven pick isn't on disk yet - downloading the
+                    # full-res image (several MB) inline used to block this
+                    # whole request until it finished, so the UI's "applying"
+                    # spinner sat there for however long the download took
+                    # on top of the actual apply - the "wallpaper takes a
+                    # while" complaint. Same fire-and-forget shape
+                    # set_wallpaper() already uses for the local-path case:
+                    # respond immediately, do the download+apply in the
+                    # background.
+                    url, wall_id = body["url"], body.get("id") or str(int(time.time()))
+                    def _download_and_apply(url=url, wall_id=wall_id):
+                        try:
+                            path = download_wallpaper(snapshot.cfg, url, wall_id)
+                            set_wallpaper(snapshot.cfg, path)
+                            snapshot.refresh("wallpapers")
+                        except Exception:
+                            pass
+                    threading.Thread(target=_download_and_apply, daemon=True).start()
+                    return self._send(json.dumps({"ok": True}))
                 ok = set_wallpaper(snapshot.cfg, target) if target else False
                 snapshot.refresh("wallpapers")
                 return self._send(json.dumps({"ok": ok, "path": target}))
+            if route.path == "/api/wallpaper/favorite":
+                length = int(self.headers.get("Content-Length") or 0)
+                try: body = json.loads(self.rfile.read(length) or b"{}")
+                except Exception: body = {}
+                wp = str(body.get("path") or "")
+                on = bool(body.get("favorite", True))
+                if not wp: return self._send(json.dumps({"ok": False, "error": "no path"}), code=400)
+                def mutate(store):
+                    others = [f for f in store.get("wallpaper_favorites") or [] if f != wp]
+                    store["wallpaper_favorites"] = others + ([wp] if on else [])
+                edit_store(mutate)
+                snapshot.refresh("wallpapers")
+                return self._send(json.dumps({"ok": True}))
+            if route.path == "/api/wallpaper/fix-desktops":
+                # wallhaven.py's own recovery action (registry flush +
+                # Explorer restart) for the rare per-virtual-desktop
+                # wallpaper desync - manual only, the UI requires its own
+                # confirmation before ever posting here.
+                script = HERE.parent / "wallhaven.py"
+                if not script.is_file(): return self._send(json.dumps({"ok": False, "error": "wallhaven.py not found"}), code=404)
+                subprocess.Popen([sys.executable, str(script), "--fix-desktops"],
+                                 creationflags=getattr(subprocess, "DETACHED_PROCESS", 0) | getattr(subprocess, "CREATE_NO_WINDOW", 0))
+                return self._send(json.dumps({"ok": True}))
             if route.path == "/api/brightness":
                 length = int(self.headers.get("Content-Length") or 0)
                 try: body = json.loads(self.rfile.read(length) or b"{}")
                 except Exception: body = {}
-                return self._send(json.dumps({"ok": set_brightness(snapshot.cfg, body.get("percent", 100))}))
+                return self._send(json.dumps({"ok": set_brightness(snapshot.cfg, body.get("percent", 100), body.get("mode"))}))
+            if route.path == "/api/saturation":
+                length = int(self.headers.get("Content-Length") or 0)
+                try: body = json.loads(self.rfile.read(length) or b"{}")
+                except Exception: body = {}
+                return self._send(json.dumps({"ok": set_saturation(snapshot.cfg, body.get("percent", 100), body.get("mode"))}))
             if route.path == "/api/lights":
                 length = int(self.headers.get("Content-Length") or 0)
                 try: body = json.loads(self.rfile.read(length) or b"{}")
@@ -3018,7 +4820,7 @@ def make_handler(snapshot):
                     if mode not in allowed: return self._send(json.dumps({"ok": False}), code=400)
                     args = [f"--{mode}"]
                 subprocess.Popen([sys.executable, str(script), *args],
-                                 creationflags=getattr(subprocess, "DETACHED_PROCESS", 0))
+                                 creationflags=getattr(subprocess, "DETACHED_PROCESS", 0) | getattr(subprocess, "CREATE_NO_WINDOW", 0))
                 return self._send(json.dumps({"ok": True}))
             if route.path == "/api/desktop/go":
                 length = int(self.headers.get("Content-Length") or 0)

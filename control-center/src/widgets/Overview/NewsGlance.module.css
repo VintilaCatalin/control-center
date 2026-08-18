@@ -1,0 +1,126 @@
+.glance {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  height: 100%;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.heading {
+  composes: callout from '../../tokens/typography.module.css';
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-primary);
+  font-weight: 620;
+}
+
+.viewAll {
+  composes: caption from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  background: none;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 2px 4px;
+  transition: color var(--dur-fast) var(--ease);
+}
+
+.viewAll:hover {
+  color: var(--accent);
+}
+
+.empty {
+  composes: footnote from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  font-style: italic;
+}
+
+.filter {
+  composes: caption from '../../tokens/typography.module.css';
+  color: var(--text-secondary);
+  background: rgba(var(--overlay-tint), 0.05);
+  border: 1px solid var(--rim);
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.imageRow,
+.textRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-2);
+  border: none;
+  border-radius: 10px;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--dur-fast) var(--ease);
+}
+
+.textRow {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 8px var(--space-2);
+  border-bottom: 1px solid var(--rim);
+  border-radius: 0;
+}
+
+.imageRow:hover,
+.textRow:hover {
+  background: rgba(var(--overlay-tint), 0.05);
+}
+
+.imageThumb {
+  flex-shrink: 0;
+  width: 68px !important;
+  height: 68px !important;
+  border-radius: 12px !important;
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.badge {
+  composes: eyebrow from '../../tokens/typography.module.css';
+  font-weight: 750;
+}
+
+.title {
+  composes: callout from '../../tokens/typography.module.css';
+  color: var(--text-primary);
+  font-weight: 630;
+  line-height: 1.3;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  white-space: normal;
+}
+
+.meta {
+  composes: caption from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+}

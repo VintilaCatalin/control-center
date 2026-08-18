@@ -1,0 +1,154 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: var(--ink);
+}
+
+.scroll {
+  height: 100%;
+  overflow-y: auto;
+}
+
+/* Unlike ArticleDetail's controls-over-the-hero treatment, these sit in
+   normal flow above the player - an iframe swallows pointer events, so
+   floating a back/save button on top of it would fight the player's own
+   controls instead of sitting cleanly beside them. */
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-5);
+}
+
+.backBtn {
+  composes: callout from '../../tokens/typography.module.css';
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 var(--space-3) 0 var(--space-2);
+  border-radius: 999px;
+  border: none;
+  background: rgba(var(--overlay-tint), 0.08);
+  color: var(--text-primary);
+  font-weight: 560;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease);
+}
+
+.backBtn:hover {
+  background: rgba(var(--overlay-tint), 0.14);
+}
+
+.barActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.openBrowserBtn {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  background: rgba(var(--overlay-tint), 0.08);
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition:
+    color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease);
+}
+
+.openBrowserBtn:hover {
+  color: var(--text-primary);
+  background: rgba(var(--overlay-tint), 0.14);
+}
+
+.column {
+  max-width: 62rem;
+  margin: 0 auto;
+  padding: 0 var(--space-5) var(--space-6);
+}
+
+.player {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--r-tile);
+  overflow: hidden;
+  background: #000;
+  box-shadow: var(--lift);
+}
+
+.iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.playerFallbackImg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.title {
+  composes: title1 from '../../tokens/typography.module.css';
+  color: var(--text-primary);
+  font-weight: 660;
+  letter-spacing: -0.01em;
+  margin: var(--space-5) 0 var(--space-4);
+}
+
+.channelRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: var(--space-4);
+  margin-bottom: var(--space-4);
+  border-bottom: 1px solid var(--rim);
+}
+
+.avatar {
+  composes: callout from '../../tokens/typography.module.css';
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--accent) 28%, var(--raise));
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.channelText {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.channelName {
+  composes: callout from '../../tokens/typography.module.css';
+  color: var(--text-primary);
+  font-weight: 610;
+}
+
+.published {
+  composes: caption from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+}
+
+.description {
+  composes: body from '../../tokens/typography.module.css';
+  color: var(--text-secondary);
+  line-height: 1.7;
+  white-space: pre-line;
+}

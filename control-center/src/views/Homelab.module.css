@@ -1,0 +1,9 @@
+.page {
+  padding: var(--space-5) var(--space-6) var(--space-6);
+}
+
+.loadingGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-4);
+}

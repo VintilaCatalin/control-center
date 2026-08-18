@@ -1,0 +1,104 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  composes: footnote from '../../tokens/typography.module.css';
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.preview {
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  border-radius: 999px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(160deg, var(--accent), color-mix(in oklab, var(--accent) 55%, black 25%));
+  border: 1px solid var(--rim-lit);
+}
+
+.previewWide {
+  width: 104px;
+  height: 64px;
+  border-radius: 12px;
+}
+
+.previewImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.previewInitial {
+  composes: title2 from '../../tokens/typography.module.css';
+  color: #0a0c10;
+  font-weight: 700;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.btn {
+  composes: caption from '../../tokens/typography.module.css';
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--rim-lit);
+  background: rgba(var(--overlay-tint), 0.05);
+  color: var(--text-primary);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease);
+}
+
+.btn:hover:not(:disabled) {
+  background: rgba(var(--overlay-tint), 0.1);
+  border-color: color-mix(in oklab, var(--accent) 40%, var(--rim-lit));
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.btnGhost {
+  composes: caption from '../../tokens/typography.module.css';
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: none;
+  background: none;
+  color: var(--text-tertiary);
+  font-weight: 600;
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease);
+}
+
+.btnGhost:hover:not(:disabled) {
+  color: var(--warn);
+}
+
+.hiddenInput {
+  display: none;
+}
+
+.error {
+  composes: caption from '../../tokens/typography.module.css';
+  color: var(--warn);
+  width: 100%;
+}

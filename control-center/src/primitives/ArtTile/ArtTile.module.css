@@ -1,0 +1,81 @@
+.tile {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--r-tile);
+  background: linear-gradient(160deg, var(--raise), var(--slate));
+}
+
+.square {
+  aspect-ratio: 1 / 1;
+}
+
+.portrait {
+  aspect-ratio: 2 / 3;
+}
+
+.landscape {
+  aspect-ratio: 16 / 9;
+}
+
+.img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition:
+    opacity var(--dur-base) var(--ease),
+    transform var(--dur-slow) var(--ease);
+}
+
+/* Hovering any consumer's own outer element also hovers this nested box
+   (the pointer sits over both at once), so this needs no prop/coupling
+   from GameTile etc. - a slow, gradual zoom, not a snap, per "image
+   treatment changes gradually". */
+.tile:hover .img,
+.tile:focus-within .img {
+  transform: scale(1.06);
+}
+
+.contain {
+  object-fit: contain;
+  padding: 14%;
+  background: var(--slate);
+}
+
+.imgSkeleton {
+  position: absolute;
+  inset: 0;
+}
+
+.fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.sheen {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 45%;
+  background: linear-gradient(rgba(var(--overlay-tint), 0.06), transparent);
+  pointer-events: none;
+}
+
+.badge {
+  position: absolute;
+  top: var(--space-2);
+  left: var(--space-2);
+  z-index: 2;
+}
+
+.ribbon {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+}

@@ -1,0 +1,50 @@
+/* The shell's own .content region no longer carries an outer page
+   padding (see Overview.module.css's identical note) - restores Games'
+   original breathing room. */
+.view {
+  width: 100%;
+  padding: var(--space-5) var(--space-6) var(--space-6);
+}
+
+.panelEmpty {
+  composes: subhead from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  font-style: italic;
+  padding: var(--space-4) 0;
+}
+
+/* ---- loading / error ---- */
+
+.skeletonGrid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: var(--space-5);
+}
+
+.skeletonPanel {
+  grid-column: span 4;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.skeletonTiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: var(--space-3);
+}
+
+.skeletonTile {
+  aspect-ratio: 2 / 3;
+}
+
+.message {
+  composes: subhead from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  padding: var(--space-6);
+  text-align: center;
+}
+
+.messageError {
+  color: var(--warn);
+}

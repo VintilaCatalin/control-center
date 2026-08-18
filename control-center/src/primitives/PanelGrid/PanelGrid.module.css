@@ -1,0 +1,233 @@
+/* repeat(8, 1fr) + fixed-px rows + non-dense auto-flow, same reasoning
+   the old app's panel grid used: dense repacks the whole grid on any
+   change, which makes an unrelated panel look like it randomly jumped -
+   plain flow only ever moves things forward, so it stays predictable.
+   grid-auto-rows MUST match PanelGrid.tsx's own ROW_PX constant - the
+   resize handle's px<->row-unit math is computed there, entirely
+   independently of this CSS value, so the two silently drift apart if
+   only one is ever changed. */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  grid-auto-rows: 44px;
+  grid-auto-flow: row;
+  gap: var(--space-5);
+  align-content: start;
+}
+
+.panel {
+  composes: card from '../Card/Card.module.css';
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  padding: var(--space-5);
+  min-width: 0;
+  min-height: 0;
+}
+
+.panelHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-bottom: var(--space-2);
+  flex-shrink: 0;
+}
+
+/* Full-bleed panels (art backgrounds etc.) own the whole card surface -
+   the head becomes a floating overlay so drag/resize affordances still
+   work without a padded header row cutting into the artwork. */
+.panel.bleed {
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Every panel (composes Card, which clips to its own box) needs to let
+   the resize ghost grow past that box to preview a larger size - not
+   just bleed panels. Without this the ghost/border got clipped by the
+   panel's own overflow:hidden, so the resize preview looked like content
+   overflowing inside the panel instead of a clean outline floating
+   around it. panelBody keeps its own overflow-y:auto/overflow-x:hidden
+   regardless, so this doesn't let the panel's actual content spill. */
+.panel.resizing {
+  overflow: visible;
+}
+
+.panel.bleed .panelHead {
+  position: absolute;
+  top: var(--space-3);
+  left: var(--space-3);
+  z-index: 5;
+  margin-bottom: 0;
+  pointer-events: none;
+}
+
+.panel.bleed .panelHead > * {
+  pointer-events: auto;
+}
+
+.panel.bleed .panelBody {
+  height: 100%;
+}
+
+/* Always present at a low-contrast resting opacity rather than 0 - it
+   already reserves its own layout space as a normal flex item (fixed
+   size, never toggled), so hiding it at rest bought nothing but an
+   unexplained gap next to the title. Visible-but-quiet at rest, brighter
+   on panel hover, brightest on the handle itself / while dragging. */
+.dragHandle {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 6px;
+  color: var(--text-tertiary);
+  opacity: 0.32;
+  cursor: grab;
+  transition:
+    opacity var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease);
+}
+
+.dragHandle:active {
+  cursor: grabbing;
+}
+
+.panel:hover .dragHandle {
+  opacity: 0.7;
+}
+
+.dragHandle:hover,
+.dragHandle:focus-visible {
+  opacity: 1;
+  color: var(--text-primary);
+  background: var(--rim);
+}
+
+/* A quiet accent-coloured mark anchors the title to the panel instead of
+   it reading as loose text floating in the header's padding - it also
+   ties the panel chrome itself into the wallpaper-driven accent, the same
+   colour source the Atmosphere layer behind it uses. */
+.panelLabel {
+  composes: eyebrow from '../../tokens/typography.module.css';
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-tertiary);
+}
+
+.panelLabel::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--accent);
+  flex-shrink: 0;
+  opacity: 0.75;
+}
+
+.panelHeaderAction {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+}
+
+/* Vertical scroll only, explicitly - panelBody itself never needs to
+   scroll horizontally (a panel that wants that, like Favorites' single
+   row, handles it on its own inner element). Split out from a blanket
+   `overflow: auto` so there's no horizontal axis here to interact with a
+   child's own horizontal scroller. */
+.panelBody {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.resizeHandle {
+  position: absolute;
+  right: var(--space-2);
+  bottom: var(--space-2);
+  z-index: 5;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  color: var(--text-tertiary);
+  opacity: 0;
+  cursor: nwse-resize;
+  transition:
+    opacity var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
+}
+
+.panel:hover .resizeHandle {
+  opacity: 0.6;
+}
+
+.resizeHandle:hover {
+  opacity: 1;
+  color: var(--accent);
+}
+
+/* The grid cell itself doesn't move during a resize (see the note in
+   PanelGrid.tsx) - only the content dims, as a cue that the real size
+   hasn't committed yet, while the ghost overlay stays fully legible. */
+.resizing .panelBody {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.resizeGhost {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 6;
+  border: 1.5px solid var(--accent);
+  border-radius: inherit;
+  background: color-mix(in oklab, var(--accent) 8%, transparent);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+}
+
+.sizeTag {
+  composes: caption from '../../tokens/typography.module.css';
+  position: absolute;
+  right: var(--space-2);
+  bottom: calc(var(--space-2) + 26px);
+  z-index: 7;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #0a0c10;
+  font-variant-numeric: tabular-nums;
+}
+
+.drop-before::before,
+.drop-after::after {
+  content: '';
+  position: absolute;
+  top: -8px;
+  bottom: -8px;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--accent);
+  box-shadow: 0 0 10px var(--accent);
+  z-index: 4;
+}
+
+.drop-before::before {
+  left: -12px;
+}
+
+.drop-after::after {
+  right: -12px;
+}
+
+.emptyState {
+  composes: subhead from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  font-style: italic;
+  text-align: center;
+  padding: var(--space-6);
+}

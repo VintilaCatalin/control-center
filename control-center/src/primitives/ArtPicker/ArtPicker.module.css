@@ -1,0 +1,116 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.label {
+  composes: eyebrow from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+}
+
+.row {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.input {
+  composes: callout from '../../tokens/typography.module.css';
+  flex: 1;
+  min-width: 160px;
+  color: var(--text-primary);
+  background: rgba(var(--overlay-tint), 0.05);
+  border: 1px solid var(--rim);
+  border-radius: 10px;
+  padding: var(--space-2) var(--space-3);
+}
+
+.input:focus {
+  outline: none;
+  border-color: color-mix(in oklab, var(--accent) 70%, transparent);
+}
+
+.input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.btn {
+  composes: caption from '../../tokens/typography.module.css';
+  flex-shrink: 0;
+  color: var(--text-secondary);
+  background: rgba(var(--overlay-tint), 0.05);
+  border: 1px solid var(--rim);
+  border-radius: 10px;
+  padding: var(--space-2) var(--space-4);
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease);
+}
+
+.btn:hover:not(:disabled) {
+  color: var(--text-primary);
+  background: rgba(var(--overlay-tint), 0.1);
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.empty {
+  composes: subhead from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  padding: var(--space-4) 0;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-1);
+}
+
+.gridSquare {
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+}
+
+.item {
+  position: relative;
+  aspect-ratio: 2 / 3;
+  border: 0;
+  padding: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--raise);
+  cursor: pointer;
+  box-shadow: inset 0 0 0 1px var(--rim);
+  transition: transform var(--dur-base) var(--ease);
+}
+
+.itemSquare {
+  aspect-ratio: 1;
+  background: rgba(var(--overlay-tint), 0.05);
+}
+
+.item:hover:not(:disabled) {
+  transform: translateY(-4px);
+  box-shadow:
+    0 0 0 2px var(--accent),
+    0 12px 24px rgba(0, 0, 0, 0.5);
+}
+
+.item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.itemSquare img {
+  object-fit: contain;
+  padding: 12%;
+}

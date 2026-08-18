@@ -1,0 +1,87 @@
+/* Composable type roles - widgets pull these in with CSS Modules'
+   composes:, e.g. `.trackTitle { composes: title2 from
+   '../../tokens/typography.module.css'; }`, instead of picking their own
+   font-size. Deliberately no color here - color is a separate concern
+   (on-glass vs on-artwork text need different values), so these only ever
+   set family/size/line-height/tracking/weight. */
+
+.display {
+  font-family: var(--font-display);
+  font-size: var(--fs-display);
+  line-height: var(--lh-display);
+  letter-spacing: var(--ls-display);
+  font-weight: var(--fw-display);
+}
+
+.title1 {
+  font-family: var(--font-display);
+  font-size: var(--fs-title1);
+  line-height: var(--lh-title1);
+  letter-spacing: var(--ls-title1);
+  font-weight: var(--fw-title1);
+}
+
+.title2 {
+  font-family: var(--font-display);
+  font-size: var(--fs-title2);
+  line-height: var(--lh-title2);
+  letter-spacing: var(--ls-title2);
+  font-weight: var(--fw-title2);
+}
+
+.headline {
+  font-family: var(--font-text);
+  font-size: var(--fs-headline);
+  line-height: var(--lh-headline);
+  letter-spacing: var(--ls-headline);
+  font-weight: var(--fw-headline);
+}
+
+.body {
+  font-family: var(--font-text);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  letter-spacing: var(--ls-body);
+  font-weight: var(--fw-body);
+}
+
+.callout {
+  font-family: var(--font-text);
+  font-size: var(--fs-callout);
+  line-height: var(--lh-callout);
+  letter-spacing: var(--ls-callout);
+  font-weight: var(--fw-callout);
+}
+
+.subhead {
+  font-family: var(--font-text);
+  font-size: var(--fs-subhead);
+  line-height: var(--lh-subhead);
+  letter-spacing: var(--ls-subhead);
+  font-weight: var(--fw-subhead);
+}
+
+.footnote {
+  font-family: var(--font-text);
+  font-size: var(--fs-footnote);
+  line-height: var(--lh-footnote);
+  letter-spacing: var(--ls-footnote);
+  font-weight: var(--fw-footnote);
+}
+
+.caption {
+  font-family: var(--font-text);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  letter-spacing: var(--ls-caption);
+  font-weight: var(--fw-caption);
+}
+
+.eyebrow {
+  font-family: var(--font-text);
+  font-size: var(--fs-eyebrow);
+  line-height: var(--lh-eyebrow);
+  letter-spacing: var(--ls-eyebrow);
+  font-weight: var(--fw-eyebrow);
+  text-transform: uppercase;
+}

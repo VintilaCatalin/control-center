@@ -1,0 +1,30 @@
+.panel {
+  composes: card from '../../primitives/Card/Card.module.css';
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  padding: var(--space-5);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  margin-bottom: var(--space-2);
+  flex-shrink: 0;
+}
+
+/* Same accent-dot label language as PanelGrid's own panel headers, so
+   this reads as part of the same panel system visually even though it
+   isn't draggable/resizable like Yours/Wallhaven below it. */
+.label {
+  composes: panelLabel from '../../primitives/PanelGrid/PanelGrid.module.css';
+}
+
+.body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}

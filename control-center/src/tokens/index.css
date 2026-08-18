@@ -1,0 +1,110 @@
+@import './colors.css';
+@import './motion.css';
+@import './layout.css';
+@import './typography.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--body);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* One fix for every native <select> in the app, not per-component - the
+   root `color-scheme` (colors.css) already tells the browser which
+   chrome to draw the popup in, but some renderers still fall back to a
+   light popup unless the <option>s themselves also carry an explicit
+   dark background/text colour (this is what was still broken: most
+   selects never had this, only a couple of Reading's own local
+   `option` rules did, everywhere else silently relied on color-scheme
+   alone and lost). Belt-and-suspenders, applied globally so no select
+   built after this can quietly miss it again either. */
+select {
+  color-scheme: dark;
+}
+
+:root[data-theme='light'] select {
+  color-scheme: light;
+}
+
+select option {
+  background: var(--slate);
+  color: var(--text-primary);
+}
+
+/* One scrollbar language, applied globally rather than per-component so
+   nothing scrollable can accidentally miss it - a heavy native browser
+   scrollbar inside a glass card reads as a completely different product.
+   Idle state is effectively invisible; hovering or focusing anything
+   inside a scrollable area (:hover/:focus-within both bubble up through
+   ancestors) reveals a thin, subtle thumb. Wheel/trackpad scrolling is
+   untouched either way - only the thumb's visibility depends on this.
+
+   The reserved gutter (scrollbar-width, the webkit track width) stays
+   CONSTANT between idle and hover - only color/opacity ever changes.
+   Toggling scrollbar-width itself (e.g. none -> thin) was tried first and
+   reflowed the content by the scrollbar's width the moment it appeared,
+   in Chromium too (it implements scrollbar-width now, not just Firefox) -
+   exactly the layout-shift this is meant to avoid. A universal
+   scrollbar-gutter: stable was tried too, to protect against content
+   later starting to overflow - but scrollbar-gutter reserves its space on
+   ANY box with overflow other than visible, including plain overflow:
+   hidden clipping boxes that never show a scrollbar at all (ArtTile,
+   Card, ...). That reserved strip sits inside the border edge but outside
+   the padding edge, which an absolutely-positioned inset:0 cover image
+   doesn't reach - it read as a stray grey/tinted strip on the right edge
+   of every such box (game covers) and a seam on scrolling panels. A
+   constant scrollbar-width alone already fully prevents the shift this
+   was meant to guard against, so it's removed rather than scoped. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+*:hover,
+*:focus-within {
+  scrollbar-color: rgba(var(--overlay-tint), 0.22) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: transparent;
+  background-clip: padding-box;
+  border: 2px solid transparent;
+  border-radius: 999px;
+}
+
+:hover::-webkit-scrollbar-thumb,
+:focus-within::-webkit-scrollbar-thumb {
+  background-color: rgba(var(--overlay-tint), 0.2);
+  transition: background-color var(--dur-fast) var(--ease);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(var(--overlay-tint), 0.34);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}

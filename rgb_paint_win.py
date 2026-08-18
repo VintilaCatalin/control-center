@@ -130,7 +130,7 @@ def sample(img, u, v):
     return img.getpixel((x, y))
 
 
-def shape(cfg, rgb):
+def shape(cfg, rgb, sat_pct=100):
     h, s, val = colorsys.rgb_to_hsv(*(c / 255 for c in rgb))
 
     # A bare LED needs far more saturation than the source pixel has, or the
@@ -140,6 +140,13 @@ def shape(cfg, rgb):
     knee = max(0.001, float(cfg["paint_saturation_knee"]))
     ramp = max(0.0, min(1.0, s / knee))
     s = min(1.0, max(floor * ramp, s * float(cfg["paint_saturation"])))
+
+    # sat_pct is the caller's live saturation slider (0-100), applied as a
+    # final scale on top of the existing punchy-LED curve above rather than
+    # replacing it - at the default 100 this is a no-op (every existing
+    # caller that doesn't pass it keeps today's exact look), and it always
+    # scales from that curve's own output, never accumulates across calls.
+    s = max(0.0, min(1.0, s * max(0.0, min(1.0, sat_pct / 100.0))))
 
     val = val ** float(cfg["paint_gamma"])
     val = max(float(cfg["paint_min_value"]), val)
@@ -184,7 +191,7 @@ def keyboard_rows(dev):
     return [r for r in rows if len(r) > 1]
 
 
-def plan_device(cfg, dev, img):
+def plan_device(cfg, dev, img, sat_pct=100):
     """[(led_index, rgb)] for one device."""
     name = dev.name.lower()
     total = len(dev.leds)
@@ -192,7 +199,7 @@ def plan_device(cfg, dev, img):
 
     def put(idx, u, v):
         if 0 <= idx < total:
-            out[idx] = shape(cfg, sample(img, u, v))
+            out[idx] = shape(cfg, sample(img, u, v), sat_pct)
 
     # ── Strimer: each cable is a 2D patch ──
     if "strimer" in name:
@@ -267,7 +274,7 @@ def pick_mode(dev, cfg=None):
     return None
 
 
-def paint(cfg, img, preview=False, black=False, flat=None, quiet=False):
+def paint(cfg, img, preview=False, black=False, flat=None, quiet=False, sat_pct=100):
     try:
         from openrgb import OpenRGBClient
         from openrgb.utils import RGBColor
@@ -296,9 +303,9 @@ def paint(cfg, img, preview=False, black=False, flat=None, quiet=False):
             if black:
                 colours = [(0, 0, 0)] * len(dev.leds)
             elif flat:
-                colours = [shape(cfg, flat)] * len(dev.leds)
+                colours = [shape(cfg, flat, sat_pct)] * len(dev.leds)
             else:
-                colours = [c or (0, 0, 0) for c in plan_device(cfg, dev, img)]
+                colours = [c or (0, 0, 0) for c in plan_device(cfg, dev, img, sat_pct)]
 
             mode = pick_mode(dev, cfg)
             if not quiet:
@@ -373,11 +380,14 @@ def main():
     ap.add_argument("--off", action="store_true", help="everything black")
     ap.add_argument("--devices", action="store_true", help="list OpenRGB devices")
     ap.add_argument("--brightness", type=int, metavar="PCT")
+    ap.add_argument("--saturation", type=float, metavar="PCT",
+                    help="0-100, scales the punchy-LED curve; omit to keep today's default look")
     args = ap.parse_args()
 
     cfg = load_config()
     if args.brightness is not None:
         cfg["paint_brightness"] = str(max(1, min(100, args.brightness)))
+    sat_pct = args.saturation if args.saturation is not None else 100
 
     if args.devices:
         return list_devices(cfg)
@@ -390,14 +400,14 @@ def main():
     if args.color:
         h = args.color.lstrip("#")
         rgb = tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
-        return paint(cfg, None, preview=args.preview, flat=rgb)
+        return paint(cfg, None, preview=args.preview, flat=rgb, sat_pct=sat_pct)
 
     path = Path(os.path.expanduser(args.image)) if args.image else current_wallpaper()
     if not path or not path.is_file():
         die("no image found - pass --image or set a wallpaper")
 
     print(f"source: {path}\n")
-    paint(cfg, load_source(cfg, path), preview=args.preview)
+    paint(cfg, load_source(cfg, path), preview=args.preview, sat_pct=sat_pct)
 
 
 if __name__ == "__main__":

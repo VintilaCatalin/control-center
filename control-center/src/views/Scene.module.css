@@ -1,0 +1,31 @@
+/* The shell's own .content region no longer carries an outer page
+   padding (see Overview.module.css's identical note) - restores Scene's
+   original breathing room. */
+.scene {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: var(--space-5) var(--space-6) var(--space-6);
+}
+
+/* Top row: Hero + Favorites, edge-aligned. `align-items: stretch` (flex's
+   default, spelled out for clarity) is what actually pins them to the
+   same top/bottom edges - Hero's own clamp()'d height sets the row's
+   height, Favorites stretches to match it exactly rather than being
+   independently sized and merely eyeballed into alignment. */
+.topRow {
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-5);
+}
+
+.heroCol {
+  flex: 0 0 75%;
+  min-width: 0;
+}
+
+.favoritesCol {
+  flex: 1 1 0%;
+  min-width: 0;
+  display: flex;
+}

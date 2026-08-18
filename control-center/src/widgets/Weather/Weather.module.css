@@ -1,0 +1,149 @@
+.root {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-5);
+  font-family: var(--body);
+  min-height: 76px;
+}
+
+.now {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+}
+
+.temp {
+  font-family: var(--display);
+  font-stretch: 87.5%;
+  font-size: var(--fs-display);
+  line-height: 0.88;
+  color: var(--paper);
+  text-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
+}
+
+.temp sup {
+  font-size: var(--fs-title);
+  font-weight: 500;
+  color: var(--mist);
+  vertical-align: super;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-top: var(--space-2);
+  font-size: var(--fs-label);
+  color: var(--mist);
+}
+
+.days {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  width: 44px;
+  padding: var(--space-2) var(--space-1);
+  border-radius: var(--r-tile);
+  color: var(--mist);
+  transition:
+    background var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
+}
+
+.day:hover {
+  background: var(--rim);
+  color: var(--paper);
+  transform: translateY(-2px);
+}
+
+.dayLabel {
+  font-size: var(--fs-caption);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.dayHigh {
+  font-family: var(--display);
+  font-size: var(--fs-title);
+  font-weight: 600;
+  /* Explicit, not inherited from .day - the old app kept this bright
+     against the muted label/low regardless of hover (index.html:284-289),
+     and that hierarchy is worth keeping, not flattening. */
+  color: var(--paper);
+}
+
+.dayLow {
+  font-size: var(--fs-caption);
+  opacity: 0.55;
+}
+
+/* ---- loading skeleton ---- */
+
+.skel {
+  display: inline-block;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--rim) 25%, var(--rim-lit) 50%, var(--rim) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
+.skelLabel {
+  width: 24px;
+  height: 9px;
+}
+.skelIcon {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+}
+.skelHigh {
+  width: 20px;
+  height: 15px;
+}
+.skelTemp {
+  width: 100px;
+  height: 50px;
+  border-radius: 12px;
+}
+.skelMeta {
+  width: 150px;
+  height: 11px;
+  margin-top: var(--space-2);
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skel {
+    animation: none;
+    opacity: 0.6;
+  }
+}
+
+/* ---- error / empty message ---- */
+
+.message {
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-label);
+  color: var(--mist);
+}
+
+.messageError {
+  color: var(--warn);
+}

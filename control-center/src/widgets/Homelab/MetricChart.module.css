@@ -1,0 +1,111 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  height: 100%;
+  min-width: 0;
+}
+
+.readout {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.readoutValue {
+  composes: display from '../../tokens/typography.module.css';
+  font-size: 2.6rem;
+  line-height: 1;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 10px color-mix(in oklab, currentColor 45%, transparent);
+}
+
+.readoutUnit {
+  font-size: 0.42em;
+  font-weight: 600;
+  margin-left: 4px;
+  opacity: 0.7;
+  text-shadow: none;
+}
+
+.legend {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.legendItem {
+  composes: footnote from '../../tokens/typography.module.css';
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.legendDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  flex: none;
+}
+
+/* The chart itself: a column of one or two "halves", each a row of bars.
+   A single metric only ever uses .barsUp (grows from the bottom). Two
+   metrics share a centre line and mirror away from it - down/up,
+   read/write - instead of two lines overlapping in the same space. */
+.bars {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.barsHalf {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+}
+
+.barsDown {
+  align-items: flex-start;
+}
+
+.bar {
+  flex: 1;
+  min-width: 1px;
+  border-radius: 3px 3px 0 0;
+}
+
+.barsDown .bar {
+  border-radius: 0 0 3px 3px;
+}
+
+.centerLine {
+  flex: none;
+  height: 1px;
+  background: var(--rim);
+}
+
+.xLabels {
+  composes: caption from '../../tokens/typography.module.css';
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.empty {
+  composes: caption from '../../tokens/typography.module.css';
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-tertiary);
+}

@@ -1,0 +1,26 @@
+.field {
+  composes: body from '../../tokens/typography.module.css';
+  display: block;
+  width: 100%;
+  min-height: 140px;
+  resize: none;
+  border: none;
+  background: none;
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+.field:focus {
+  outline: none;
+}
+
+.field::placeholder {
+  color: var(--text-tertiary);
+}
+
+.hint {
+  composes: caption from '../../tokens/typography.module.css';
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-tertiary);
+}

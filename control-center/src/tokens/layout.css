@@ -1,0 +1,32 @@
+/* Font stacks, --gap and the two radii are ported from
+   panel/index.html:67-80 - same typographic identity as the old app.
+
+   The spacing and type scales are new: the old app never had one, it used
+   ad hoc px values per rule (8px here, 11px there, 21px, 58px...). These
+   give new components a small deliberate scale to draw from instead of
+   picking a fresh number each time. */
+:root {
+  --display: 'Bahnschrift SemiBold Condensed', 'Bahnschrift Condensed', 'Bahnschrift',
+    'DIN Alternate', system-ui, sans-serif;
+  --body: 'Segoe UI Variable Display', 'Segoe UI Variable Text', 'Segoe UI', system-ui,
+    sans-serif;
+  --mono: 'Cascadia Mono', 'Consolas', ui-monospace, monospace;
+
+  --gap: 16px;
+  --r-card: 24px;
+  --r-tile: 16px;
+
+  /* 4px base grid */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2.5rem;
+
+  --fs-caption: 0.6875rem; /* 11px */
+  --fs-label: 0.8125rem; /* 13px */
+  --fs-body: 0.9375rem; /* 15px */
+  --fs-title: 1.3125rem; /* 21px */
+  --fs-display: 3.625rem; /* 58px */
+}

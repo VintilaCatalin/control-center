@@ -1,0 +1,83 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.label {
+  composes: eyebrow from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+}
+
+.row {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.input {
+  composes: callout from '../../tokens/typography.module.css';
+  flex: 1;
+  min-width: 0;
+  color: var(--text-primary);
+  background: rgba(var(--overlay-tint), 0.05);
+  border: 1px solid var(--rim);
+  border-radius: 10px;
+  padding: var(--space-2) var(--space-3);
+}
+
+.input:focus {
+  outline: none;
+  border-color: color-mix(in oklab, var(--accent) 70%, transparent);
+}
+
+.input::placeholder {
+  color: var(--text-tertiary);
+}
+
+select.input option {
+  background: var(--slate);
+  color: var(--text-primary);
+}
+
+.btn {
+  composes: caption from '../../tokens/typography.module.css';
+  flex-shrink: 0;
+  color: var(--text-secondary);
+  background: rgba(var(--overlay-tint), 0.05);
+  border: 1px solid var(--rim);
+  border-radius: 10px;
+  padding: var(--space-2) var(--space-4);
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease);
+}
+
+.btn:hover:not(:disabled) {
+  color: var(--text-primary);
+  background: rgba(var(--overlay-tint), 0.1);
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.primary {
+  color: #0a0c10;
+  background: var(--accent);
+  border-color: transparent;
+}
+
+.primary:hover:not(:disabled) {
+  filter: brightness(1.12);
+  color: #0a0c10;
+}
+
+.error {
+  composes: footnote from '../../tokens/typography.module.css';
+  color: var(--warn);
+  margin-top: var(--space-2);
+}

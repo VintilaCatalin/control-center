@@ -409,6 +409,13 @@ def run_gui():
     root.mainloop()
 
 if __name__ == "__main__":
+    # A CLI entry point for the panel/Scene "Fix desktop wallpapers"
+    # action, so it can invoke fix_desktops() the same way it invokes
+    # wallpicker.py/lights.py - a detached subprocess, no GUI - without
+    # touching fix_desktops() itself.
+    if "--fix-desktops" in sys.argv:
+        fix_desktops()
+        sys.exit(0)
     try:
         run_gui()
     except Exception:

@@ -1,0 +1,27 @@
+.cover {
+  width: 100%;
+}
+
+.badge {
+  composes: caption from '../../tokens/typography.module.css';
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(4, 6, 9, 0.72);
+  color: var(--text-primary);
+  backdrop-filter: blur(6px);
+}
+
+.ribbon {
+  composes: caption from '../../tokens/typography.module.css';
+  display: block;
+  text-align: center;
+  padding: var(--space-1) 0;
+  background: rgba(4, 6, 9, 0.85);
+  color: var(--text-tertiary);
+}
+
+.fallbackName {
+  composes: headline from '../../tokens/typography.module.css';
+  color: var(--text-secondary);
+  padding: var(--space-3);
+}

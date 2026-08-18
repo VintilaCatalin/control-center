@@ -1,0 +1,182 @@
+.glance {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  height: 100%;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.heading {
+  composes: callout from '../../tokens/typography.module.css';
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-primary);
+  font-weight: 620;
+}
+
+.viewAll {
+  composes: caption from '../../tokens/typography.module.css';
+  margin-left: auto;
+  color: var(--text-tertiary);
+  background: none;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 2px 4px;
+  transition: color var(--dur-fast) var(--ease);
+}
+
+.viewAll:hover {
+  color: var(--accent);
+}
+
+.summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: -2px;
+}
+
+.ring {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: conic-gradient(var(--accent) calc(var(--pct) * 1%), rgba(var(--overlay-tint), 0.1) 0);
+}
+
+.summaryText {
+  composes: footnote from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+}
+
+.addRow {
+  display: flex;
+}
+
+.input {
+  composes: callout from '../../tokens/typography.module.css';
+  width: 100%;
+  color: var(--text-primary);
+  background: rgba(var(--overlay-tint), 0.05);
+  border: 1px solid var(--rim);
+  border-radius: 9px;
+  padding: 6px 10px;
+}
+
+.input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.input:focus {
+  outline: none;
+  border-color: color-mix(in oklab, var(--accent) 60%, transparent);
+}
+
+.empty {
+  composes: footnote from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  font-style: italic;
+  padding: var(--space-2) 0;
+}
+
+.lists {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.groupLabel {
+  composes: eyebrow from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  padding: 0 4px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: 7px 8px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--dur-fast) var(--ease);
+}
+
+.row:hover:not(:disabled) {
+  background: rgba(var(--overlay-tint), 0.05);
+}
+
+.row:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.priority-low .checkbox {
+  border-color: var(--text-tertiary);
+}
+
+.priority-normal .checkbox {
+  border-color: var(--accent);
+}
+
+.priority-high .checkbox {
+  border-color: #e0665a;
+}
+
+.checkbox {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 17px;
+  height: 17px;
+  border-radius: 999px;
+  border: 1.5px solid var(--rim-lit);
+  color: #fff;
+  transition: border-color var(--dur-fast) var(--ease);
+}
+
+.row:hover .checkbox {
+  border-color: var(--accent);
+}
+
+.text {
+  composes: callout from '../../tokens/typography.module.css';
+  flex: 1;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pinStar {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  color: var(--accent);
+  opacity: 0.8;
+}

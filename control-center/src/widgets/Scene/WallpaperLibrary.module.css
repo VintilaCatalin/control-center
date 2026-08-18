@@ -1,0 +1,149 @@
+.library {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.overflowBtn {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  border: 1px solid var(--rim);
+  background: rgba(var(--overlay-tint), 0.05);
+  color: var(--text-secondary);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease);
+}
+
+.overflowBtn:hover {
+  color: var(--text-primary);
+  background: var(--rim);
+}
+
+.filterBar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  overflow: hidden;
+}
+
+.select,
+.search {
+  composes: caption from '../../tokens/typography.module.css';
+  color: var(--text-primary);
+  background: rgba(var(--overlay-tint), 0.05);
+  border: 1px solid var(--rim);
+  border-radius: 10px;
+  padding: var(--space-2) var(--space-3);
+}
+
+.select:focus,
+.search:focus {
+  outline: none;
+  border-color: color-mix(in oklab, var(--accent) 70%, transparent);
+}
+
+.search {
+  flex: 1;
+  min-width: 140px;
+}
+
+.smallBtn {
+  composes: caption from '../../tokens/typography.module.css';
+  color: var(--text-secondary);
+  background: rgba(var(--overlay-tint), 0.05);
+  border: 1px solid var(--rim);
+  border-radius: 10px;
+  padding: var(--space-2) var(--space-3);
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease);
+}
+
+.smallBtn:hover:not(:disabled) {
+  color: var(--text-primary);
+  background: rgba(var(--overlay-tint), 0.1);
+}
+
+.smallBtn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+
+.pageNote {
+  composes: caption from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--space-4);
+}
+
+.skeletonTile {
+  aspect-ratio: 16 / 9;
+}
+
+.message {
+  composes: subhead from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  font-style: italic;
+  padding: var(--space-6) 0;
+  text-align: center;
+}
+
+.sheetBtn {
+  composes: caption from '../../tokens/typography.module.css';
+  color: var(--text-secondary);
+  background: rgba(var(--overlay-tint), 0.05);
+  border: 1px solid var(--rim);
+  border-radius: 10px;
+  padding: var(--space-2) var(--space-4);
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease);
+}
+
+.sheetBtn:hover:not(:disabled) {
+  color: var(--text-primary);
+  background: rgba(var(--overlay-tint), 0.1);
+}
+
+.sheetBtn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.sheetBtnDanger {
+  color: #0a0c10;
+  background: var(--warn);
+  border-color: transparent;
+}
+
+.sheetBtnDanger:hover:not(:disabled) {
+  filter: brightness(1.1);
+  color: #0a0c10;
+}
+
+.fixResult {
+  composes: footnote from '../../tokens/typography.module.css';
+  color: var(--text-secondary);
+  margin: var(--space-3) 0 0;
+}

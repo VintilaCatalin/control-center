@@ -1,0 +1,76 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  height: 100%;
+  min-width: 0;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.identity {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ip {
+  composes: headline from '../../tokens/typography.module.css';
+  color: var(--text-primary);
+  font-weight: 620;
+  font-variant-numeric: tabular-nums;
+}
+
+.sshLabel {
+  composes: caption from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+}
+
+.pills {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.pill {
+  composes: caption from '../../tokens/typography.module.css';
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(var(--overlay-tint), 0.05);
+  border: 1px solid var(--rim);
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.tempPill {
+  composes: caption from '../../tokens/typography.module.css';
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--metric-color, var(--accent)) 14%, transparent);
+  border: 1px solid color-mix(in oklab, var(--metric-color, var(--accent)) 30%, var(--rim));
+  color: var(--metric-color, var(--accent));
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.chart {
+  flex: 1;
+  min-height: 0;
+}
+
+.empty {
+  composes: caption from '../../tokens/typography.module.css';
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-tertiary);
+  text-align: center;
+}

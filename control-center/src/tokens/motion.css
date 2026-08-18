@@ -1,0 +1,19 @@
+/* --ease is ported from panel/index.html:79 - the one easing curve the old
+   app already used consistently across ~20 transition rules.
+
+   The duration scale is new: the old app never had one, it hardcoded
+   0.15s/0.18s/0.2s/0.5s/1s/2s per rule. These four steps replace that
+   ad hoc spread with an intentional scale - keep new transitions on one
+   of these instead of picking a fresh number each time.
+
+   Keep in sync with tokens/motion.ts, which mirrors these as JS values
+   for Framer Motion (CSS custom properties aren't readable by its
+   transition prop). */
+:root {
+  --ease: cubic-bezier(0.22, 0.68, 0.18, 1);
+
+  --dur-fast: 120ms; /* hover/press micro-feedback */
+  --dur-base: 220ms; /* default UI transitions */
+  --dur-slow: 420ms; /* entrances, larger surface changes */
+  --dur-lazy: 2000ms; /* ambient washes (accent color, background) */
+}

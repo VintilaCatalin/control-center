@@ -1,0 +1,285 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: var(--ink);
+}
+
+.scroll {
+  height: 100%;
+  overflow-y: auto;
+  padding: var(--space-4) var(--space-6) var(--space-6);
+}
+
+.backBtn {
+  composes: callout from '../../../tokens/typography.module.css';
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 var(--space-3) 0 var(--space-2);
+  margin-bottom: var(--space-5);
+  border-radius: 999px;
+  border: none;
+  background: rgba(var(--overlay-tint), 0.08);
+  color: var(--text-primary);
+  font-weight: 560;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease);
+}
+
+.backBtn:hover {
+  background: rgba(var(--overlay-tint), 0.14);
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: var(--space-6);
+  max-width: 56rem;
+  margin: 0 auto;
+}
+
+@media (max-width: 640px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+  .cover {
+    max-width: 220px;
+  }
+}
+
+.cover {
+  border-radius: var(--r-tile);
+  overflow: hidden;
+  box-shadow: var(--lift);
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.title {
+  composes: title1 from '../../../tokens/typography.module.css';
+  color: var(--text-primary);
+  font-weight: 660;
+  margin: 0;
+}
+
+.author {
+  composes: callout from '../../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+}
+
+.statusRow {
+  display: flex;
+  gap: 8px;
+  margin-top: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.statusBtn {
+  composes: caption from '../../../tokens/typography.module.css';
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 34px;
+  padding: 0 var(--space-3);
+  border-radius: 999px;
+  border: 1px solid var(--rim);
+  background: none;
+  color: var(--text-secondary);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease);
+}
+
+.statusBtn:hover {
+  color: var(--text-primary);
+  border-color: var(--rim-lit);
+}
+
+.statusBtnActive {
+  color: var(--accent);
+  background: color-mix(in oklab, var(--accent) 16%, transparent);
+  border-color: color-mix(in oklab, var(--accent) 45%, transparent);
+}
+
+.progressBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: var(--space-2);
+}
+
+.progressLabel {
+  composes: caption from '../../../tokens/typography.module.css';
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-tertiary);
+}
+
+.slider {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.olLink {
+  composes: caption from '../../../tokens/typography.module.css';
+  color: var(--accent);
+  text-decoration: none;
+  width: fit-content;
+}
+
+.olLink:hover {
+  text-decoration: underline;
+}
+
+.fileBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: var(--space-2);
+}
+
+.fileLabel {
+  composes: eyebrow from '../../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+}
+
+.fileRow {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.fileInput {
+  composes: callout from '../../../tokens/typography.module.css';
+  flex: 1;
+  min-width: 0;
+  color: var(--text-primary);
+  background: rgba(var(--overlay-tint), 0.05);
+  border: 1px solid var(--rim);
+  border-radius: 10px;
+  padding: var(--space-2) var(--space-3);
+}
+
+.fileInput:focus {
+  outline: none;
+  border-color: color-mix(in oklab, var(--accent) 70%, transparent);
+}
+
+.fileInput::placeholder {
+  color: var(--text-tertiary);
+}
+
+.readBtn {
+  composes: caption from '../../../tokens/typography.module.css';
+  display: inline-flex;
+  align-items: center;
+  height: 38px;
+  flex-shrink: 0;
+  color: #0a0c10;
+  background: var(--accent);
+  border: none;
+  border-radius: 10px;
+  padding: 0 var(--space-4);
+  font-weight: 650;
+  cursor: pointer;
+  transition: filter var(--dur-fast) var(--ease);
+}
+
+.readBtn:hover {
+  filter: brightness(1.12);
+}
+
+.fileEditBtn {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--rim);
+  border-radius: 10px;
+  background: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease);
+}
+
+.fileEditBtn:hover {
+  color: var(--text-primary);
+  border-color: var(--rim-lit);
+}
+
+.fileDoneBtn {
+  composes: caption from '../../../tokens/typography.module.css';
+  flex-shrink: 0;
+  color: var(--text-secondary);
+  background: rgba(var(--overlay-tint), 0.05);
+  border: 1px solid var(--rim);
+  border-radius: 10px;
+  padding: 0 var(--space-3);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease);
+}
+
+.fileDoneBtn:hover {
+  background: rgba(var(--overlay-tint), 0.1);
+}
+
+.notes {
+  composes: body from '../../../tokens/typography.module.css';
+  width: 100%;
+  margin-top: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--r-tile);
+  border: 1px solid var(--rim);
+  background: rgba(var(--overlay-tint), 0.03);
+  color: var(--text-secondary);
+  resize: vertical;
+  min-height: 90px;
+}
+
+.notes:focus {
+  outline: none;
+  border-color: var(--rim-lit);
+}
+
+.deleteBtn {
+  composes: caption from '../../../tokens/typography.module.css';
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  height: 34px;
+  padding: 0 var(--space-3);
+  margin-top: var(--space-3);
+  border-radius: 999px;
+  border: 1px solid var(--rim);
+  background: none;
+  color: var(--warn);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease);
+}
+
+.deleteBtn:hover {
+  background: color-mix(in oklab, var(--warn) 14%, transparent);
+  border-color: var(--warn);
+}
+
+.deleteBtn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}

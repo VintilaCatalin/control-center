@@ -1,0 +1,78 @@
+.glance {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  height: 100%;
+}
+
+.heading {
+  composes: callout from '../../tokens/typography.module.css';
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-primary);
+  font-weight: 620;
+}
+
+.empty {
+  composes: footnote from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  font-style: italic;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: var(--space-3);
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  transition: transform var(--dur-fast) var(--ease);
+}
+
+.card:hover:not(:disabled),
+.card:focus-visible {
+  transform: translateY(-3px);
+}
+
+.card:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.art {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  border-radius: 12px;
+  background-color: var(--raise);
+  background-position: center;
+  background-size: cover;
+  box-shadow: var(--lift);
+}
+
+.name {
+  composes: caption from '../../tokens/typography.module.css';
+  color: var(--text-primary);
+  font-weight: 620;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.meta {
+  composes: footnote from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

@@ -1,0 +1,317 @@
+/* No own frame/background/scroll region any more - this renders inside
+   the shell's shared AppSidebar (see shell/AppSidebar.module.css),
+   which already provides the glass surface and the one scrollable nav
+   region for whatever application is active. This is purely Notes' own
+   nav content: Search/Quick Capture actions, then Pinned/Recent/All
+   Notes/Folders. */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.top {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex-shrink: 0;
+  margin-bottom: var(--space-5);
+}
+
+/* Shared row language for the two top actions and every section header -
+   icon + label, generous 38px height. This is navigation chrome, not
+   body copy, so it reads at the same brightness as the document's own
+   title (text-primary) rather than the dimmer secondary/tertiary tones
+   reserved for actual note content. */
+.navRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  height: 36px;
+  padding: 0 var(--space-2);
+  border: none;
+  background: none;
+  border-radius: 9px;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease);
+}
+
+.navRow:hover {
+  background: rgba(var(--overlay-tint), 0.08);
+}
+
+.navIcon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 19px;
+  color: var(--text-secondary);
+}
+
+.navRow:hover .navIcon {
+  color: var(--text-primary);
+}
+
+.navLabel {
+  composes: callout from '../../tokens/typography.module.css';
+  font-size: 0.95em;
+  font-weight: 540;
+  flex: 1;
+  text-align: left;
+}
+
+/* Collapsed: icon-only actions, same treatment as the shell's own root
+   nav list at 72px - the folder tree itself has no icon-only form (see
+   Sidebar.tsx), so this is the entirety of collapsed Notes. */
+.sidebar[data-collapsed] .navRow {
+  justify-content: center;
+  padding: 0;
+}
+
+.sidebar[data-collapsed] .navLabel {
+  display: none;
+}
+
+/* No longer its own scroll container - the shell's AppSidebar already
+   provides the one scrollable nav region every application shares (see
+   shell/AppSidebar.module.css's .navScroll), so this just flows inside
+   it. */
+.scroll {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Real separation between Recent/Pinned/All Notes - enough margin that
+   Pinned reads as its own section starting fresh, never as a
+   continuation of Recent above it. */
+.section {
+  margin-bottom: var(--space-4);
+}
+
+.sectionHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  height: 34px;
+  border: none;
+  background: none;
+  border-radius: 8px;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.sectionHead:hover {
+  background: rgba(var(--overlay-tint), 0.07);
+}
+
+.sectionHead .navIcon {
+  width: 16px;
+  color: inherit;
+}
+
+.sectionLabel {
+  composes: callout from '../../tokens/typography.module.css';
+  font-size: 0.95em;
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  font-weight: 620;
+  color: inherit;
+}
+
+.sectionCount {
+  composes: caption from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  padding-right: var(--space-2);
+}
+
+.sectionBody {
+  padding-top: 2px;
+  padding-bottom: var(--space-2);
+}
+
+/* One row per note - spacious (36px, not the previous pass's cramped
+   32px), real contrast (text-secondary at rest, text-primary when
+   active/hovered), never opacity-dimmed. */
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  width: 100%;
+  height: 34px;
+  border: none;
+  background: none;
+  border-radius: 8px;
+  padding-left: 3px;
+  padding-right: var(--space-2);
+  cursor: pointer;
+  text-align: left;
+}
+
+.row:hover {
+  background: rgba(var(--overlay-tint), 0.05);
+}
+
+/* Integrated, not boxed - a soft one-sided wash (fades out, no hard
+   right edge), the same "marker, not a filled control" restraint the
+   rest of the app uses for active state. No border, no full-bleed tint -
+   the note's own icon turning accent-coloured (see .rowIcon below) is
+   the active indicator now, instead of a separate dot doing the same
+   job the icon can do on its own. */
+.rowActive {
+  background: linear-gradient(to right, color-mix(in oklab, var(--accent) 12%, transparent), transparent 85%);
+}
+
+.rowMain {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding-left: 5px;
+}
+
+.rowIcon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  color: var(--text-secondary);
+  transition: color var(--dur-fast) var(--ease);
+}
+
+.rowActive .rowIcon {
+  color: var(--accent);
+}
+
+.rowName {
+  composes: callout from '../../tokens/typography.module.css';
+  font-size: 0.95em;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.rowActive .rowName {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.rowMeta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.pinBtn {
+  display: grid;
+  place-items: center;
+  width: 19px;
+  height: 19px;
+  border: none;
+  background: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+
+.row:hover .pinBtn,
+.pinBtnActive {
+  opacity: 1;
+}
+
+.pinBtnActive {
+  color: #f2c94c;
+}
+
+/* ---- folders ---- */
+
+.foldersHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 34px;
+  padding: 0 0 0 var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.foldersLabel {
+  composes: callout from '../../tokens/typography.module.css';
+  font-size: 0.95em;
+  color: var(--text-primary);
+  font-weight: 620;
+}
+
+.addFolderBtn {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  border: none;
+  background: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease);
+}
+
+.addFolderBtn:hover {
+  color: var(--text-primary);
+  background: rgba(var(--overlay-tint), 0.06);
+}
+
+.emptyFolders {
+  composes: caption from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  padding: var(--space-2);
+}
+
+.folderRow {
+  composes: callout from '../../tokens/typography.module.css';
+  font-size: 0.95em;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  height: 34px;
+  border: none;
+  background: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+.folderRow:hover {
+  background: rgba(var(--overlay-tint), 0.07);
+}
+
+.folderIcon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  color: var(--text-secondary);
+}
+
+.folderName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+}
+
+.folderCount {
+  composes: caption from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+  padding-right: var(--space-2);
+}

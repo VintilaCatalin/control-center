@@ -1,0 +1,23 @@
+.btn {
+  composes: caption from '../../tokens/typography.module.css';
+  flex-shrink: 0;
+  color: var(--text-secondary);
+  background: rgba(var(--overlay-tint), 0.05);
+  border: 1px solid var(--rim);
+  border-radius: 10px;
+  padding: var(--space-2) var(--space-4);
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease);
+}
+
+.btn:hover:not(:disabled) {
+  color: var(--text-primary);
+  background: rgba(var(--overlay-tint), 0.1);
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}

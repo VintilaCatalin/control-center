@@ -1,0 +1,140 @@
+/* One scrim strength for every variant now (was a stronger one for
+   centred modals, a lighter one for the drawer) - both use --popup-
+   scrim/--popup-scrim-blur, same as Sheet's own scrim, so Search/Quick
+   Capture/Tasks/New Note/Rename/Delete all dim the page behind them by
+   the same amount instead of some feeling heavier than others. */
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  background: var(--popup-scrim);
+  backdrop-filter: var(--popup-scrim-blur);
+  -webkit-backdrop-filter: var(--popup-scrim-blur);
+}
+
+.centerWrap {
+  position: fixed;
+  inset: 0;
+  z-index: 71;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 12vh var(--space-5) var(--space-5);
+  pointer-events: none;
+}
+
+.drawerWrap {
+  position: fixed;
+  top: var(--space-5);
+  right: var(--space-5);
+  bottom: var(--space-5);
+  z-index: 71;
+  display: flex;
+  pointer-events: none;
+}
+
+/* The shared --popup-* surface tokens (see tokens/colors.css) - same
+   background/border/blur/shadow every floating popup in the app uses
+   (Sheet, Menu, this, WeatherPopover), so nothing can quietly drift into
+   its own slightly-different translucency again. Radius is deliberately
+   its own value here, not forced to match Sheet's 28px or Menu's 14px -
+   this is a "medium" popup, sized between a compact context menu and a
+   full modal, and scaling radius with a surface's own size is a
+   coherent pattern, not an inconsistency. */
+.card {
+  position: relative;
+  overflow: hidden;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  background: var(--popup-bg);
+  backdrop-filter: var(--popup-blur);
+  -webkit-backdrop-filter: var(--popup-blur);
+  border: 1px solid var(--popup-border);
+  border-radius: 16px;
+  box-shadow: var(--popup-shadow);
+}
+
+/* The same top sheen every Card in the app has (primitives/Card) - this
+   is actually the bigger part of what reads as "glass" at a glance, more
+   than the blur/opacity tuning alone: a soft light catching the top
+   edge, like light through actual glass. Popups never had it, which is
+   most of why they read as flat solid panels next to Card surfaces. */
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 42%;
+  background: linear-gradient(rgba(var(--overlay-tint), 0.055), transparent);
+  pointer-events: none;
+}
+
+.cardCenter {
+  width: 100%;
+  max-width: 640px;
+  max-height: 72vh;
+}
+
+.cardDrawer {
+  /* Wide enough that task text (and now an optional multi-line
+     description) wraps comfortably instead of breaking every few
+     words - the previous 320px was sized for a single-line title only. */
+  width: 440px;
+  max-width: calc(100vw - var(--space-6) * 2);
+  height: 100%;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  padding: var(--space-4) var(--space-4) var(--space-3);
+}
+
+.headTitle {
+  composes: headline from '../../tokens/typography.module.css';
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-primary);
+}
+
+.headIcon {
+  display: grid;
+  place-items: center;
+  color: var(--text-secondary);
+}
+
+.closeBtn {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: none;
+  background: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease);
+}
+
+.closeBtn:hover {
+  color: var(--text-primary);
+  background: rgba(var(--overlay-tint), 0.06);
+}
+
+.body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 var(--space-4) var(--space-4);
+}
+
+.footer {
+  flex-shrink: 0;
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--rim);
+}

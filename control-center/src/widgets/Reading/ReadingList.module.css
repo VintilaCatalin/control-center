@@ -1,0 +1,281 @@
+/* The rail and the list are centred TOGETHER as one unit, not "rail
+   pinned to the panel's far-left edge, list centred in whatever's left" -
+   that read as a stray, disconnected control sitting in the corner
+   rather than something that belongs to the list right next to it. */
+.layout {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: var(--space-5);
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* A quiet plate (the same grouped-strip treatment the sidebar's own
+   utility rows use), not bare text floating with no surface of its own. */
+.sourceRail {
+  position: sticky;
+  top: var(--space-4);
+  flex: 0 0 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: var(--space-2);
+  margin-top: var(--space-4);
+  border-radius: 14px;
+  background: rgba(var(--overlay-tint), 0.025);
+  border: 1px solid var(--rim);
+}
+
+.railHeading {
+  composes: eyebrow from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  padding: var(--space-2) var(--space-2) 6px;
+}
+
+.sourceRow {
+  composes: footnote from '../../tokens/typography.module.css';
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  height: 34px;
+  padding: 0 var(--space-3);
+  border: none;
+  border-radius: 9px;
+  background: none;
+  color: var(--text-tertiary);
+  font-weight: 550;
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease);
+}
+
+.sourceRow:hover {
+  color: var(--text-primary);
+  background: rgba(var(--overlay-tint), 0.06);
+}
+
+.sourceRowActive {
+  color: var(--text-primary);
+  background: color-mix(in oklab, var(--accent) 16%, transparent);
+  font-weight: 650;
+}
+
+.sourceLabel {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+}
+
+.sourceCount {
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.75;
+}
+
+.content {
+  flex: 1 1 640px;
+  min-width: 0;
+}
+
+@media (max-width: 760px) {
+  .layout {
+    flex-direction: column;
+  }
+  .sourceRail {
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: 100%;
+  }
+  .sourceRow {
+    width: auto;
+  }
+}
+
+/* Capped at a real reading measure - the whole point of this layout, vs.
+   the masonry grid's edge-to-edge width. Extra top margin (on top of the
+   page's own padding) gives the heading real room instead of sitting
+   flush against the app chrome above it. */
+.wrap {
+  width: 100%;
+  max-width: 640px;
+  margin-top: var(--space-4);
+  display: flex;
+  flex-direction: column;
+}
+
+.heading {
+  composes: title1 from '../../tokens/typography.module.css';
+  color: var(--text-primary);
+  font-weight: 680;
+  margin: 0 0 var(--space-5);
+}
+
+.row {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  padding: var(--space-5) 0;
+  border-top: 1px solid var(--rim);
+}
+
+.row:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.body {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.thumbWrap {
+  position: relative;
+  flex: none;
+  width: 124px;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.thumb {
+  width: 100% !important;
+  height: 100% !important;
+  aspect-ratio: 1 / 1 !important;
+  border-radius: 0 !important;
+}
+
+.playBadge {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: rgba(2, 3, 5, 0.18);
+  pointer-events: none;
+}
+
+.playBadge svg {
+  width: 22px;
+  height: 22px;
+  filter: drop-shadow(0 1px 6px rgba(0, 0, 0, 0.5));
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+  flex: 1;
+  padding-right: 64px;
+}
+
+.topRow {
+  display: flex;
+  align-items: center;
+}
+
+.badge {
+  composes: eyebrow from '../../tokens/typography.module.css';
+  font-weight: 750;
+}
+
+.title {
+  composes: headline from '../../tokens/typography.module.css';
+  color: var(--text-primary);
+  font-weight: 640;
+  line-height: 1.35;
+}
+
+.excerpt {
+  composes: callout from '../../tokens/typography.module.css';
+  color: var(--text-secondary);
+  line-height: 1.55;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.meta {
+  composes: footnote from '../../tokens/typography.module.css';
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-tertiary);
+  margin-top: 3px;
+}
+
+.source {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 40%;
+}
+
+.dot {
+  flex-shrink: 0;
+}
+
+.readTime {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.actions {
+  position: absolute;
+  top: var(--space-4);
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.row:first-child .actions {
+  top: 0;
+}
+
+.actionBtn {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 999px;
+  background: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease);
+}
+
+.actionBtn:hover {
+  color: var(--warn);
+  background: color-mix(in oklab, var(--warn) 14%, transparent);
+}
+
+@media (max-width: 520px) {
+  .thumbWrap {
+    width: 76px;
+  }
+  .text {
+    padding-right: 40px;
+  }
+}

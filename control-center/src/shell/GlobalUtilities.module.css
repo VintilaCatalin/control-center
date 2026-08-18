@@ -1,0 +1,210 @@
+/* Two tiers, not five independent rows that happen to sit near each
+   other: Weather/Quick Tasks/Quick Note/Panels share one quiet plate
+   (they're all "glance or act, then get back to work"), and Profile sits
+   below its own divider as a distinct identity row - the footer of the
+   sidebar, not just one more item in the same list. */
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 4px;
+  border-radius: 12px;
+  background: rgba(var(--overlay-tint), 0.02);
+}
+
+/* Full labelled row - the sidebar's whole point is that utilities read
+   as real destinations here, not icon-only chrome. */
+.utilityBtn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  height: 38px;
+  padding: 0 var(--space-2);
+  border-radius: 9px;
+  border: none;
+  background: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease);
+}
+
+.utilityBtn:hover {
+  color: var(--text-primary);
+  background: rgba(var(--overlay-tint), 0.06);
+}
+
+.utilityBtn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.utilityBtn[aria-expanded='true'] {
+  color: var(--text-primary);
+  background: rgba(var(--overlay-tint), 0.06);
+}
+
+.iconSlot {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+/* Points at the edge the sidebar will move toward - left to collapse,
+   right (once collapsed) to expand - the same chevron just rotated,
+   not a swapped icon. */
+.collapseIcon {
+  display: grid;
+  place-items: center;
+  transform: rotate(90deg);
+  transition: transform var(--dur-base) var(--ease);
+}
+
+.collapseIcon[data-collapsed] {
+  transform: rotate(-90deg);
+}
+
+.utilityBadge {
+  composes: caption from '../tokens/typography.module.css';
+  position: static;
+  margin-left: auto;
+  min-width: 16px;
+  height: 17px;
+  padding: 0 4px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #0a0c10;
+  font-weight: 700;
+  font-size: 10px;
+}
+
+.utilityLabel {
+  composes: callout from '../tokens/typography.module.css';
+  font-size: 0.95em;
+  font-weight: 540;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.avatarBtn {
+  position: relative;
+  width: 100%;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--space-3);
+  padding: 0 var(--space-2);
+  margin-top: 3px;
+  border-radius: 10px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* A quiet top rule sets Profile apart as its own row - the sidebar's own
+   footer identity, not a fifth item in the utility list above it. */
+.avatarBtn::before {
+  content: '';
+  position: absolute;
+  top: -5px;
+  left: 6px;
+  right: 6px;
+  height: 1px;
+  background: var(--rim);
+}
+
+.avatarBtn:hover {
+  background: rgba(var(--overlay-tint), 0.06);
+}
+
+.avatarCircle {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  overflow: hidden;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(160deg, var(--accent), color-mix(in oklab, var(--accent) 55%, black 25%));
+  color: #0a0c10;
+  font-weight: 650;
+  font-size: 13px;
+  border: 1px solid var(--rim-lit);
+  transition: box-shadow var(--dur-fast) var(--ease);
+}
+
+.avatarBtn:hover .avatarCircle {
+  box-shadow: 0 0 0 3px var(--rim);
+}
+
+.avatarBtn[aria-expanded='true'] .avatarCircle {
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 35%, transparent);
+}
+
+.avatarImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Small on/off dot used as the icon slot for each item in the Panels
+   menu - a lit dot for a visible panel, a hollow one for a hidden one,
+   read at a glance without needing a checkbox glyph. */
+.panelDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 0 6px color-mix(in oklab, var(--accent) 60%, transparent);
+}
+
+.panelDot[data-hidden] {
+  background: none;
+  box-shadow: none;
+  border: 1.5px solid var(--text-tertiary);
+}
+
+/* ---- collapsed (icon-only) state - see MainSidebar's effectiveCollapsed ---- */
+
+.stack[data-collapsed] .utilityBtn,
+.stack[data-collapsed] .avatarBtn {
+  justify-content: center;
+  padding: 0;
+}
+
+.stack[data-collapsed] .utilityLabel {
+  display: none;
+}
+
+/* The badge has nowhere to sit at the row's right edge once there's no
+   row left - it becomes a small notification dot overlaid on the icon
+   itself instead, same idea as an unread-count badge on an app icon. */
+.stack[data-collapsed] .utilityBadge {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  margin-left: 0;
+  min-width: 8px;
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  font-size: 0;
+  overflow: hidden;
+}

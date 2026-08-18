@@ -1,0 +1,128 @@
+.tile {
+  position: relative;
+  cursor: default;
+  outline: none;
+}
+
+.launchable {
+  cursor: pointer;
+}
+
+.tile:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: var(--r-tile);
+}
+
+/* Name is hidden at rest - the art carries the tile. Revealed on
+   hover/focus instead of always-on, so the resting grid reads as pure
+   artwork, not a labeled database list. */
+.nameOverlay {
+  position: absolute;
+  inset: auto 0 0 0;
+  padding: var(--space-3) var(--space-2) var(--space-2);
+  background: linear-gradient(to top, rgba(2, 3, 5, 0.92), transparent);
+  opacity: 0;
+  transform: translateY(6px);
+  transition:
+    opacity var(--dur-base) var(--ease),
+    transform var(--dur-base) var(--ease);
+  pointer-events: none;
+  z-index: 2;
+  border-radius: 0 0 var(--r-tile) var(--r-tile);
+}
+
+.tile:hover .nameOverlay,
+.tile:focus-visible .nameOverlay {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.name {
+  composes: footnote from '../../tokens/typography.module.css';
+  color: var(--text-primary);
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.favBtn,
+.cogBtn {
+  position: absolute;
+  top: var(--space-2);
+  z-index: 3;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  border: none;
+  background: rgba(4, 6, 9, 0.6);
+  color: rgba(var(--overlay-tint), 0.6);
+  opacity: 0;
+  transform: translateY(-4px) scale(0.85);
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  transition:
+    opacity var(--dur-base) var(--ease),
+    transform var(--dur-base) var(--ease),
+    color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease);
+}
+
+.favBtn {
+  right: var(--space-2);
+  /* A small stagger after the name/cog so the reveal reads as one
+     cascade settling into place, not every element popping at once. */
+  transition-delay: 30ms, 30ms, 0ms, 0ms;
+}
+
+.cogBtn {
+  right: calc(var(--space-2) + 30px);
+  transition-delay: 15ms, 15ms, 0ms, 0ms;
+}
+
+.tile:hover .favBtn,
+.tile:hover .cogBtn,
+.tile:focus-within .favBtn,
+.tile:focus-within .cogBtn,
+.favActive {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.favActive {
+  color: #fbbf24;
+}
+
+.cogBtn:hover {
+  background: var(--accent);
+  color: #0a0c10;
+}
+
+/* The insertion point while aiming is a line, not a live reflow of the
+   grid - reflowing while you're still choosing where to drop makes the
+   tile you're pointing at keep moving (the old app hit this exact problem
+   and deliberately reverted it, index.html:1007-1009). The array only
+   actually reorders once, on drop - see GamesView's commit. */
+.drop-before::before,
+.drop-after::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 3px;
+  border-radius: 3px;
+  background: var(--accent);
+  box-shadow: 0 0 12px var(--accent);
+  z-index: 5;
+}
+
+.drop-before::before {
+  left: -9px;
+}
+
+.drop-after::after {
+  right: -9px;
+}

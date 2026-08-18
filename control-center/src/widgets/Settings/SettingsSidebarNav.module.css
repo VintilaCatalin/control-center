@@ -1,0 +1,115 @@
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 100%;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 2px var(--space-2) var(--space-4);
+}
+
+.brandGlyph {
+  display: grid;
+  place-items: center;
+  color: var(--accent);
+}
+
+.brandLabel {
+  composes: headline from '../../tokens/typography.module.css';
+  font-weight: 650;
+  color: var(--text-primary);
+  letter-spacing: 0.01em;
+}
+
+.item {
+  composes: callout from '../../tokens/typography.module.css';
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  height: 40px;
+  padding: 0 var(--space-3);
+  border: none;
+  border-radius: 10px;
+  background: none;
+  color: var(--text-secondary);
+  font-weight: 560;
+  font-size: 0.95em;
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease);
+}
+
+.item:hover {
+  color: var(--text-primary);
+  background: rgba(var(--overlay-tint), 0.06);
+}
+
+.itemActive {
+  color: var(--text-primary);
+  background: color-mix(in oklab, var(--accent) 18%, transparent);
+}
+
+.icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 19px;
+  color: inherit;
+}
+
+.itemActive .icon {
+  color: var(--accent);
+}
+
+.label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+}
+
+.footer {
+  margin-top: auto;
+  padding: var(--space-3) var(--space-2) 0;
+}
+
+.statusChip {
+  composes: caption from '../../tokens/typography.module.css';
+  font-weight: 600;
+}
+
+.status_saving {
+  color: var(--text-tertiary);
+}
+
+.status_saved {
+  color: var(--good);
+}
+
+.status_error {
+  color: var(--warn);
+}
+
+.nav[data-collapsed] .item {
+  justify-content: center;
+  padding: 0;
+}
+
+.nav[data-collapsed] .brand {
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.nav[data-collapsed] .brandLabel,
+.nav[data-collapsed] .label {
+  display: none;
+}

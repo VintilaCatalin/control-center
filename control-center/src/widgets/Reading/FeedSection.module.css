@@ -1,0 +1,35 @@
+.section + .section {
+  margin-top: var(--space-2);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--rim);
+}
+
+.heading {
+  composes: title2 from '../../tokens/typography.module.css';
+  color: var(--text-primary);
+  font-weight: 650;
+  margin: 0 0 var(--space-4);
+}
+
+/* Real masonry via CSS multi-column, not a row-locked grid - image
+   cards and text cards have genuinely different natural heights now
+   (see FeedCard), so forcing them into equal-height grid rows was
+   exactly what made the feed feel flat and uniform. column-gap only
+   handles the gap between columns; each card supplies its own
+   margin-bottom for the gap within a column.
+
+   column-width (the `columns: 220px` shorthand), not a fixed
+   column-count - the browser fits as many ~220px columns as the
+   container actually has room for. This is what makes the grid react to
+   the PANEL's own width once this sits inside a resizable PanelGrid
+   panel (see ForYouBody): a column-count tied to viewport breakpoints
+   never changes when only the panel narrows, so cards just got squeezed
+   thinner instead of the column count dropping. */
+.list {
+  columns: 220px;
+  column-gap: var(--space-4);
+}
+
+.list > * {
+  margin-bottom: var(--space-4);
+}
