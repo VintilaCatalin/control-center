@@ -57,18 +57,19 @@
      too diluted to read as a colour at all. Aliasing straight to Card's
      tokens removes that degree of freedom entirely, instead of tuning
      the percentage again and re-introducing some other drift. */
-  /* Fully solid now - not a color-mix/translucency tuning exercise any
-     more (45% -> 62% -> 86% ink, then 92% raise all still read as "losing
-     itself in the background" per direct feedback). Flat --raise
-     (#1b1f28), zero transparency: a modal is a distinct panel sitting
-     ABOVE the dimmed page, not a pane of glass over it, and "everything
-     opaque" was the explicit ask. --raise is also visibly lighter than
-     --ink, which is what --popup-scrim is built from (a near-black
-     rgba(4,6,9,...)) - a solid modal in one tone next to a translucent
-     dark scrim in a different, near-black tone can't blend into each
-     other the way two near-identical near-black translucent layers did.
-     --popup-border upgraded to the brighter --rim-lit for a real edge. */
-  --popup-bg: var(--raise);
+  /* Fully solid (no color-mix/translucency tuning - 45% -> 62% -> 86% ink,
+     then 92% raise, all still read as "losing itself in the background"),
+     and now tinted from the live --accent (the colour Atmosphere already
+     samples off the current wallpaper) instead of a generic neutral grey
+     - a dark SHADE of whatever the app's own accent currently is, the
+     same relationship a design tool's "darken 80%" swatch has to its
+     base colour: #0E8C07 accent -> roughly #112F10 modal, #6937F0 accent
+     -> roughly #1A0C3F modal. oklab keeps that hue recognisable at low
+     lightness instead of just crushing toward grey the way an sRGB mix
+     would. Black, not --ink, as the other end of the mix - --ink still
+     has its own faint hue, which fights the accent's at this low a
+     lightness; true black lets the accent be the only colour present. */
+  --popup-bg: color-mix(in oklab, var(--accent) 26%, black);
   --popup-border: var(--rim-lit);
   --popup-shadow: var(--lift), var(--inner);
   --popup-blur: blur(40px) saturate(160%);
