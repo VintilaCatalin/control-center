@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-wallhaven.py - Windows virtual-desktop wallpaper recovery.
+wallpaper_desktops.py - Windows virtual-desktop wallpaper recovery.
 
 The browse/search/apply Wallhaven window this used to open is retired -
 Control Center's Scene view (WallhavenLibrary) replaced it, with its own
@@ -14,10 +14,10 @@ per-virtual-desktop wallpaper registered after a monitor/resolution change,
 and this is the fix - force-flush the registry values and restart
 Explorer. Control Center's own "Fix desktop wallpapers..." action (Scene's
 overflow menu) still calls this exact function the same way it always did,
-via `wallhaven.py --fix-desktops` as a detached subprocess.
+via `wallpaper_desktops.py --fix-desktops` as a detached subprocess.
 
 Usage:
-    wallhaven.py --fix-desktops
+    wallpaper_desktops.py --fix-desktops
 """
 
 import os
@@ -54,7 +54,7 @@ if __name__ == "__main__":
     if "--fix-desktops" in sys.argv:
         fix_desktops()
     else:
-        print("wallhaven.py's browser window has been retired - use Control Center's Scene view "
+        print("wallpaper_desktops.py's browser window has been retired - use Control Center's Scene view "
               "instead (python control_center.py --view scene), or pass --fix-desktops for the "
               "registry-recovery action.")
     sys.exit(0)

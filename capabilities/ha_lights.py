@@ -1,27 +1,37 @@
 #!/usr/bin/env python
 """
-lights.py - swatch picker for Home Assistant, Windows edition.
+ha_lights.py - wallpaper-driven Home Assistant light sync, Windows edition.
 
-The Windows counterpart to light_picker.py. Pulls a palette out of the
-current wallpaper, shows it as actual swatches, pushes the choice to Home
-Assistant. No OpenRGB here - everything on this machine goes through HA.
+Pulls a palette out of the current wallpaper, shows it as actual swatches,
+pushes the choice to Home Assistant. Optionally also hands the same colour
+off to an external "painter" script (paint_path/chroma_path settings) for
+non-HA lighting (e.g. OpenRGB, a Razer keyboard) - unset by default, since
+that hardware varies per machine; see this repo's capabilities/ scripts are
+generic, but nothing here assumes any particular lighting hardware exists.
 
 Usage:
-    lights.py                    # the picker window
-    lights.py --image path.png   # picker, palette from a specific image
-    lights.py --auto [IMAGE]     # no window: dominant colour, boosted
-    lights.py --colorful         # no window: palette across every light
-    lights.py --color 3ba4d9     # no window: apply a hex directly
-    lights.py --white            # work mode: everything white
-    lights.py --bias             # everything off except the monitor bars
-    lights.py --off              # everything off
-    lights.py --video            # everything off (for Hue Sync)
-    lights.py --game             # room/PC off, keyboard stays on (for Hue Sync)
-    lights.py --entities         # what the groups expand to, + segments
-    lights.py --test ff0000      # send one colour to every light, verbatim
+    ha_lights.py                    # the picker window
+    ha_lights.py --image path.png   # picker, palette from a specific image
+    ha_lights.py --auto [IMAGE]     # no window: dominant colour, boosted
+    ha_lights.py --colorful         # no window: palette across every light
+    ha_lights.py --color 3ba4d9     # no window: apply a hex directly
+    ha_lights.py --white            # work mode: everything white
+    ha_lights.py --bias             # everything off except the monitor bars
+    ha_lights.py --off              # everything off
+    ha_lights.py --video            # everything off (for Hue Sync)
+    ha_lights.py --game             # room/PC off, keyboard stays on (for Hue Sync)
+    ha_lights.py --entities         # what the groups expand to, + segments
+    ha_lights.py --test ff0000      # send one colour to every light, verbatim
 
-Config:  %USERPROFILE%\\.config\\lightsync\\token
-         %USERPROFILE%\\.config\\lightsync\\config.ini   (optional overrides)
+Config, shared with Control Center's backend:
+    %USERPROFILE%\\.config\\control-center\\token
+    %USERPROFILE%\\.config\\control-center\\config.ini   (optional overrides)
+
+This script runs as a standalone subprocess (invoked by backend/routes and
+backend/collectors under capabilities/), so it can't import backend.core
+directly - it relies on the backend having already migrated the old
+.config\\lightsync folder (if any) to .config\\control-center before ever
+shelling out to this script. See backend/core.py's _migrate_config_dir().
 """
 
 import argparse
@@ -47,21 +57,23 @@ import requests
 from PIL import Image, ImageFilter
 
 HERE = Path(__file__).resolve().parent
-CONFIG_DIR = Path.home() / ".config" / "lightsync"
+CONFIG_DIR = Path.home() / ".config" / "control-center"
 TOKEN_FILE = CONFIG_DIR / "token"
 CONFIG_FILE = CONFIG_DIR / "config.ini"
 STATE_FILE = CONFIG_DIR / "state.json"
 
 DEFAULTS = {
-    "ha_url": "http://192.168.1.53:8123",
-    "lights": "light.office_ambient_lights",
-    "pc_lights": "light.office_pc_lights",
-    "keep_lights": "light.left_monitor,light.right_monitor",
+    "ha_url": "",
+    "lights": "",
+    "pc_lights": "",
+    "keep_lights": "",
 
-    # Siblings in the same folder, not a hardcoded absolute path - stays
-    # correct regardless of where this folder lives on disk.
-    "paint_path": str(HERE / "rgb_paint_win.py"),
-    "chroma_path": str(HERE / "chroma_paint.py"),
+    # Optional external painter scripts (e.g. Vinti-PC-Tools/lighting's
+    # rgb_paint_win.py/chroma_paint.py, or anything with the same --image/
+    # --color/--off CLI) - blank by default, since no lighting hardware is
+    # assumed. Set these in config.ini to point at a script on this machine.
+    "paint_path": "",
+    "chroma_path": "",
     "palette_size": "6",
     "boost_count": "3",
     "transition": "1.5",
@@ -761,7 +773,7 @@ def main():
     # saturation controls, live-wired to the same backend. Every flag
     # above is still real and still used (Control Center's backend calls
     # --colorful; shortcuts.ahk's Hue Sync automation calls --video/--game).
-    print("lights.py's picker window has been retired - use Control Center's Scene view instead "
+    print("ha_lights.py's picker window has been retired - use Control Center's Scene view instead "
           "(python control_center.py --view scene), or pass a flag for a headless action "
           "(--auto/--color/--colorful/--white/--bias/--off).")
 

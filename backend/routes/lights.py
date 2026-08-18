@@ -30,9 +30,9 @@ def handle_post(handler, path, snapshot):
         length = int(handler.headers.get("Content-Length") or 0)
         try: body = json.loads(handler.rfile.read(length) or b"{}")
         except Exception: body = {}
-        script = HERE.parent / "system" / "lights.py"
+        script = HERE.parent / "capabilities" / "ha_lights.py"
         if not script.is_file():
-            handler._send(json.dumps({"ok": False, "error": "lights.py not found"}), code=404)
+            handler._send(json.dumps({"ok": False, "error": "ha_lights.py not found"}), code=404)
             return True
         colour = str(body.get("color") or "").lstrip("#")
         if colour:

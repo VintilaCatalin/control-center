@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-spanwall.py v3 - Simplified spanned wallpaper builder.
+wallpaper_span.py v3 - Simplified spanned wallpaper builder.
 
 Since all monitors now run at native 100% scaling, Windows handles the physical
 mapping perfectly. This script simply grabs the total virtual desktop bounds,

@@ -95,7 +95,7 @@ def wallhaven_search(cfg, sorting="toplist", page=1, query="", top_range="1M", p
     return {"items": [{"id": item["id"], "thumb": (item.get("thumbs") or {}).get("small"), "full": item["path"], "w": item["dimension_x"], "h": item["dimension_y"], "favourites": item.get("favorites")} for item in data.get("data", [])], "last_page": (data.get("meta") or {}).get("last_page")}
 
 def set_wallpaper(cfg, path):
-    script = HERE.parent / "system" / "wallpicker.py"
+    script = HERE.parent / "capabilities" / "wallpaper.py"
     if not script.is_file() or not Path(path).is_file(): return False
     try:
         subprocess.Popen([sys.executable, str(script), "--set", str(path)],

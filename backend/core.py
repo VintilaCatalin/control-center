@@ -12,6 +12,7 @@ import hashlib
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import threading
@@ -32,7 +33,42 @@ _STATIC_MIME = {".css": "text/css", ".js": "text/javascript", ".mjs": "text/java
                  ".svg": "image/svg+xml", ".woff2": "font/woff2", ".woff": "font/woff",
                  ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
                  ".ico": "image/x-icon", ".json": "application/json"}
-CONFIG_DIR = Path.home() / ".config" / "lightsync"
+def _migrate_config_dir(old_dir, new_dir):
+    """One-time, one-way copy of the settings folder from its old name
+    (.config/lightsync, this product's original name) to its current one
+    (.config/control-center). Copy, not move: this is the only copy of the
+    user's real HA token / notes cache / reading state at the moment this
+    first runs, so leaving the old folder in place costs a few KB of disk
+    and buys a trivial manual rollback if anything here is ever wrong.
+    Never raises - same philosophy as load_store() elsewhere in this file:
+    a settings-migration hiccup should never be why the app won't start.
+    """
+    try:
+        if new_dir.is_dir() and any(new_dir.iterdir()):
+            return  # already migrated (or already a fresh install here)
+        if not old_dir.is_dir():
+            return  # genuinely fresh install, nothing to migrate
+        new_dir.mkdir(parents=True, exist_ok=True)
+        for name in ("config.ini", "panel-store.json", "state.json", "token"):
+            src = old_dir / name
+            if src.is_file():
+                shutil.copy2(src, new_dir / name)
+        for name in ("covers", "articles"):
+            src = old_dir / name
+            if src.is_dir():
+                shutil.copytree(src, new_dir / name, dirs_exist_ok=True)
+        (new_dir / "MIGRATED_FROM_LIGHTSYNC.txt").write_text(
+            f"Copied from {old_dir} on {time.strftime('%Y-%m-%d %H:%M:%S')}.\n"
+            f"That folder was left untouched - this was a copy, not a move.\n",
+            encoding="utf-8")
+    except Exception as e:
+        print(f"config migration skipped (non-fatal): {type(e).__name__}: {e}")
+
+
+_OLD_CONFIG_DIR = Path.home() / ".config" / "lightsync"
+CONFIG_DIR = Path.home() / ".config" / "control-center"
+_migrate_config_dir(_OLD_CONFIG_DIR, CONFIG_DIR)
+
 CONFIG_FILE = CONFIG_DIR / "config.ini"
 TOKEN_FILE = CONFIG_DIR / "token"
 STATE_FILE = CONFIG_DIR / "state.json"

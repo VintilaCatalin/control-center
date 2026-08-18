@@ -36,15 +36,16 @@ def collect_lights(cfg, _shared):
     return {"configured": True, "lights": out}
 
 def _rerun_colorful_background():
-    # OpenRGB/Chroma have no live-adjust path (rgb_paint_win.py has no
-    # persistent daemon like chroma_paint.py's - every paint re-connects to
-    # OpenRGB, re-samples the wallpaper and rewrites every device, which is
-    # most of where the old 10-20s slider lag came from). Catching them up
-    # still means re-running lights.py --colorful, but firing it detached
-    # (Popen never blocks this request) means it no longer gates the HA
-    # response below - the room lights react immediately, the PC/keyboard
-    # catch up a couple of seconds later in the background.
-    script = HERE.parent / "system" / "lights.py"
+    # An optional external painter script (paint_path/chroma_path settings,
+    # e.g. OpenRGB or a Razer keyboard daemon on machines that have one) has
+    # no live-adjust path of its own - every paint re-samples the wallpaper
+    # and rewrites the device from scratch, which is most of where the old
+    # 10-20s slider lag came from. Catching it up still means re-running
+    # ha_lights.py --colorful, but firing it detached (Popen never blocks
+    # this request) means it no longer gates the HA response below - the
+    # room lights react immediately, any external painter catches up a
+    # couple of seconds later in the background.
+    script = HERE.parent / "capabilities" / "ha_lights.py"
     if not script.is_file(): return False
     # DETACHED_PROCESS alone only stops the child from inheriting this
     # process's console - sys.executable is still the console-subsystem

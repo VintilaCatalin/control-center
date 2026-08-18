@@ -127,13 +127,13 @@ def handle_post(handler, path, snapshot):
         handler._send(json.dumps({"ok": True}))
         return True
     if path == "/api/wallpaper/fix-desktops":
-        # wallhaven.py's own recovery action (registry flush +
+        # wallpaper_desktops.py's own recovery action (registry flush +
         # Explorer restart) for the rare per-virtual-desktop
         # wallpaper desync - manual only, the UI requires its own
         # confirmation before ever posting here.
-        script = HERE.parent / "system" / "wallhaven.py"
+        script = HERE.parent / "capabilities" / "wallpaper_desktops.py"
         if not script.is_file():
-            handler._send(json.dumps({"ok": False, "error": "wallhaven.py not found"}), code=404)
+            handler._send(json.dumps({"ok": False, "error": "wallpaper_desktops.py not found"}), code=404)
             return True
         subprocess.Popen([sys.executable, str(script), "--fix-desktops"],
                          creationflags=getattr(subprocess, "DETACHED_PROCESS", 0) | getattr(subprocess, "CREATE_NO_WINDOW", 0))
