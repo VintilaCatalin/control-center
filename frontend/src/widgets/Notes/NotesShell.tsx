@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { deleteNote, fetchNote, pinNote, saveNote } from '../../api/actions/notes';
 import { useSnapshotData } from '../../api/SnapshotProvider';
+import { FolderSetup } from '../../primitives/FolderSetup/FolderSetup';
 import { Menu, type MenuItem } from '../../primitives/Menu/Menu';
 import { useMenu } from '../../primitives/Menu/useMenu';
 import { Sheet } from '../../primitives/Sheet/Sheet';
@@ -32,7 +33,7 @@ export function NotesShell() {
   const notes = snapshot?.notes?.notes ?? [];
   const folders = snapshot?.notes?.folders ?? [];
   const notesConfigured = snapshot?.notes?.configured;
-  const notesError = notesConfigured === false ? 'Choose a notes folder in Settings to get started.' : snapshot?.notes?.error;
+  const notesError = snapshot?.notes?.error;
 
   const [selectedRel, setSelectedRel] = useState<string | null>(null);
   const [noteText, setNoteText] = useState('');
@@ -132,7 +133,13 @@ export function NotesShell() {
 
   return (
     <div className={styles.main}>
-      {notesError ? (
+      {notesConfigured === false ? (
+        <FolderSetup
+          settingKey="notes_dir"
+          title="Choose your notes folder"
+          description="Control Center reads plain Markdown (.md) files straight from a folder you pick — no Obsidian required. If you already use Obsidian, point it at the same folder and both apps stay in sync."
+        />
+      ) : notesError ? (
         <div className={styles.state}>{notesError}</div>
       ) : !selected ? (
         <div className={styles.empty}>

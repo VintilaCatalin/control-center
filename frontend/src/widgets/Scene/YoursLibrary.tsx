@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { applyLocalWallpaper, favoriteWallpaper, fixDesktopWallpapers, matchLightsToWallpaper, wallImageUrl } from '../../api/actions/scene';
 import { useSnapshotData } from '../../api/SnapshotProvider';
+import { FolderSetup } from '../../primitives/FolderSetup/FolderSetup';
 import { Menu, type MenuItem } from '../../primitives/Menu/Menu';
 import { useMenu } from '../../primitives/Menu/useMenu';
 import { Sheet } from '../../primitives/Sheet/Sheet';
@@ -100,7 +101,14 @@ export function YoursLibrary() {
   }
 
   if (!snapshot && loading) return <SkeletonGrid />;
-  if (configured === false) return <div className={styles.message}>Choose a wallpaper folder in Settings to see it here.</div>;
+  if (configured === false)
+    return (
+      <FolderSetup
+        settingKey="wallpaper_dir"
+        title="Choose your wallpaper folder"
+        description="Pick a folder of images to browse, favorite and apply as your desktop background."
+      />
+    );
   if (wallsError) return <div className={styles.message}>{wallsError}</div>;
   if (walls.length === 0) return <div className={styles.message}>No wallpapers found in this folder.</div>;
 

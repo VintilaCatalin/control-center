@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { pickPath } from '../../api/actions/filePicker';
 import type { SettingsFieldSchema } from '../../api/types';
 import styles from './SettingsField.module.css';
 
@@ -19,6 +20,11 @@ export function SettingsField({ field, value, isSecret, origin, onChange }: Sett
   const [editingSecret, setEditingSecret] = useState(false);
 
   const overridden = origin === 'panel';
+
+  async function handleBrowse() {
+    const r = await pickPath('folder');
+    if (r.path) onChange(r.path, { immediate: true });
+  }
 
   return (
     <div className={styles.field}>
@@ -49,6 +55,19 @@ export function SettingsField({ field, value, isSecret, origin, onChange }: Sett
             </option>
           ))}
         </select>
+      ) : field.type === 'folder' ? (
+        <div className={styles.folderRow}>
+          <input
+            className={styles.input}
+            type="text"
+            value={value}
+            placeholder={field.hint}
+            onChange={(e) => onChange(e.target.value)}
+          />
+          <button type="button" className={styles.browseBtn} onClick={handleBrowse}>
+            Browse…
+          </button>
+        </div>
       ) : field.type === 'lines' ? (
         <textarea
           className={styles.textarea}

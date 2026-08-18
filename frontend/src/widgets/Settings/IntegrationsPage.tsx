@@ -62,8 +62,8 @@ export function IntegrationsPage({ data, getValue, isSecret, origin, onChange }:
       <div className={styles.cardList}>{networkIntegrations.map(renderCard)}</div>
 
       <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Local game libraries</h2>
-        <p className={styles.sectionSub}>Scanned straight off disk for Games - no network connection to test, just whether anything was actually found there.</p>
+        <h2 className={styles.sectionTitle}>Local folders</h2>
+        <p className={styles.sectionSub}>Read straight off disk - no network connection to test, just whether anything was actually found there. Notes and Wallpapers also offer this same folder picker directly from their own empty state on first use.</p>
         <div className={styles.cardList}>{localIntegrations.map(renderCard)}</div>
       </section>
 

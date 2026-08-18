@@ -219,6 +219,24 @@ export const INTEGRATIONS: IntegrationDef[] = [
     errorText: (s) => (gameCount(s, 'riot') === 0 ? 'Enabled, but no Riot games were found in that folder.' : undefined),
     local: true,
   },
+  {
+    id: 'notes-folder',
+    name: 'Notes',
+    blurb: 'The folder of Markdown files Notes reads and writes.',
+    keys: ['notes_dir'],
+    status: (s) => (!s?.notes?.configured ? 'not_connected' : s.notes.error ? 'error' : 'connected'),
+    errorText: (s) => s?.notes?.error,
+    local: true,
+  },
+  {
+    id: 'wallpapers-folder',
+    name: 'Wallpapers',
+    blurb: 'The folder Scene\'s Yours library browses and applies from.',
+    keys: ['wallpaper_dir'],
+    status: (s) => (!s?.wallpapers?.configured ? 'not_connected' : s.wallpapers.error ? 'error' : 'connected'),
+    errorText: (s) => s?.wallpapers?.error,
+    local: true,
+  },
 ];
 
 // AdGuard Home / Nginx Proxy Manager have no dedicated API integration in
