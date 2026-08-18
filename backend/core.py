@@ -33,6 +33,8 @@ _STATIC_MIME = {".css": "text/css", ".js": "text/javascript", ".mjs": "text/java
                  ".svg": "image/svg+xml", ".woff2": "font/woff2", ".woff": "font/woff",
                  ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
                  ".ico": "image/x-icon", ".json": "application/json"}
+
+
 def _migrate_config_dir(old_dir, new_dir):
     """One-time, one-way copy of the settings folder from its old name
     (.config/lightsync, this product's original name) to its current one
@@ -40,8 +42,12 @@ def _migrate_config_dir(old_dir, new_dir):
     user's real HA token / notes cache / reading state at the moment this
     first runs, so leaving the old folder in place costs a few KB of disk
     and buys a trivial manual rollback if anything here is ever wrong.
-    Never raises - same philosophy as load_store() elsewhere in this file:
-    a settings-migration hiccup should never be why the app won't start.
+    Copies everything found (config.ini, panel-store.json, state.json,
+    token, covers/, articles/, and any other cache file this module has
+    grown since - deliberately not a fixed whitelist, so a forgotten cache
+    file doesn't silently stay behind). Never raises - same philosophy as
+    load_store() elsewhere in this file: a settings-migration hiccup
+    should never be why the app won't start.
     """
     try:
         if new_dir.is_dir() and any(new_dir.iterdir()):
@@ -49,14 +55,12 @@ def _migrate_config_dir(old_dir, new_dir):
         if not old_dir.is_dir():
             return  # genuinely fresh install, nothing to migrate
         new_dir.mkdir(parents=True, exist_ok=True)
-        for name in ("config.ini", "panel-store.json", "state.json", "token"):
-            src = old_dir / name
-            if src.is_file():
-                shutil.copy2(src, new_dir / name)
-        for name in ("covers", "articles"):
-            src = old_dir / name
+        for src in old_dir.iterdir():
+            dst = new_dir / src.name
             if src.is_dir():
-                shutil.copytree(src, new_dir / name, dirs_exist_ok=True)
+                shutil.copytree(src, dst, dirs_exist_ok=True)
+            else:
+                shutil.copy2(src, dst)
         (new_dir / "MIGRATED_FROM_LIGHTSYNC.txt").write_text(
             f"Copied from {old_dir} on {time.strftime('%Y-%m-%d %H:%M:%S')}.\n"
             f"That folder was left untouched - this was a copy, not a move.\n",
