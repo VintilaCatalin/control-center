@@ -27,9 +27,8 @@ RELEASE = ROOT / "release" / "ControlCenter"
 
 # Root-level files the product runtime actually needs alongside
 # control_center.py. control_center_tray.py is the product's own tray
-# launcher; VirtualDesktopAccessor.dll is the third-party binary
-# backend/collectors/desktops.py loads directly.
-ROOT_FILES = ["control_center.py", "control_center_tray.py", "VirtualDesktopAccessor.dll"]
+# launcher.
+ROOT_FILES = ["control_center.py", "control_center_tray.py"]
 
 
 def run_frontend_build():

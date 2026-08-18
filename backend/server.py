@@ -31,7 +31,6 @@ from backend.core import CONFIG_FILE, CONFIG_ORIGIN, HERE, REACT_DIST, SECRET_KE
 
 from backend.collectors.accent import collect_accent
 from backend.collectors.calendar import collect_calendar
-from backend.collectors.desktops import collect_desktops
 from backend.collectors.downloads import collect_downloads
 from backend.collectors.files import collect_files
 from backend.collectors.games import collect_apps, collect_games, collect_ui
@@ -49,7 +48,6 @@ from backend.collectors.weather import collect_weather
 
 from backend.routes import (
     core as routes_core,
-    desktops as routes_desktops,
     files as routes_files,
     games as routes_games,
     lights as routes_lights,
@@ -67,7 +65,7 @@ INTERVALS = {
     "media": 2, "hardware": 4, "lights": 10, "plex": 30,
     "weather": 900, "games": 600, "wallpapers": 60, "feeds": 900,
     "homelab": 15, "downloads": 8, "upcoming": 900, "notes": 20, "ui": 5, "tasks": 10,
-    "photo": 20, "popular": 1800, "audio": 15, "desktops": 3, "calendar": 900,
+    "photo": 20, "popular": 1800, "audio": 15, "calendar": 900,
     "files": 20, "reading": 900,
 }
 
@@ -78,7 +76,7 @@ COLLECTORS = {
     "homelab": collect_homelab, "downloads": collect_downloads,
     "upcoming": collect_upcoming, "notes": collect_notes, "tasks": collect_tasks, "apps": collect_apps,
     "photo": collect_photo, "popular": collect_popular,
-    "ui": collect_ui, "audio": collect_audio, "desktops": collect_desktops,
+    "ui": collect_ui, "audio": collect_audio,
     "calendar": collect_calendar, "files": collect_files, "reading": collect_reading,
 }
 
@@ -226,7 +224,6 @@ def make_handler(snapshot):
             if routes_files.handle_post(self, route.path, snapshot) is not None: return
             if routes_wallpapers.handle_post(self, route.path, snapshot) is not None: return
             if routes_lights.handle_post(self, route.path, snapshot) is not None: return
-            if routes_desktops.handle_post(self, route.path, snapshot) is not None: return
             if routes_media_extras.handle_post(self, route.path, snapshot) is not None: return
             if routes_media.handle_post(self, route.path, snapshot) is not None: return
             return self._send("not found", "text/plain", 404)

@@ -130,9 +130,10 @@ details of the things below, not the architecture itself.
 
 Release packaging (`scripts/build_release.py`) only ever bundles
 `backend/`, `frontend/dist/`, `capabilities/`, `control_center.py`,
-`control_center_tray.py`, `VirtualDesktopAccessor.dll`, `requirements.txt`,
-and `README.md` - `scripts/`, `legacy/`, and anything from the personal
-tools repo are never copied into the release folder.
+`control_center_tray.py`, `requirements.txt`, and `README.md` - `scripts/`,
+`legacy/`, and anything from the personal tools repo (including
+`VirtualDesktopAccessor.dll`, which Control Center has no dependency on at
+all) are never copied into the release folder.
 
 ---
 

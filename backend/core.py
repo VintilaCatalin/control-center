@@ -126,9 +126,6 @@ DEFAULTS = {
     # TCP-probe service grid, both are optional (Homelab degrades to
     # probe-only data if left empty).
     "netdata_url": "", "portainer_url": "", "portainer_token": "", "portainer_endpoint_id": "",
-    # Repo-root relative (not a hardcoded absolute path) so this default
-    # stays correct regardless of where the repo itself lives on disk.
-    "vda_dll": str(HERE.parent / "VirtualDesktopAccessor.dll"),
     "calendar_ics": "",
     "screenshots_dir": str(Path.home() / "Pictures" / "Screenshots"),
     "downloads_dir": str(Path.home() / "Downloads"),
@@ -256,8 +253,6 @@ SETTINGS_SCHEMA = [
     {"group": "Machine", "keys": [
         {"key": "lhm_url", "label": "LibreHardwareMonitor", "type": "text",
          "hint": "The only way to read CPU temperature on Windows"},
-        {"key": "vda_dll", "label": "VirtualDesktopAccessor.dll", "type": "text",
-         "hint": "Powers the virtual desktop switcher"},
     ]},
     {"group": "Files", "keys": [
         {"key": "screenshots_dir", "label": "Screenshots folder", "type": "folder"},
