@@ -252,13 +252,6 @@
   border-radius: 8px !important;
 }
 
-.tickerFallback {
-  flex-shrink: 0;
-  width: 48px;
-  height: 48px;
-  border-radius: 8px;
-  background: linear-gradient(135deg, hsl(9 70% 28%), hsl(9 50% 14%));
-}
 
 .tickerText {
   display: flex;

@@ -56,7 +56,6 @@ export function Reading({ initialSection, onInitialSectionApplied }: ReadingProp
       () =>
         data ? (
           <ReadingSidebarNav
-            sources={data.sources}
             items={data.items}
             books={data.books}
             bookmarks={data.bookmarks}
@@ -69,7 +68,7 @@ export function Reading({ initialSection, onInitialSectionApplied }: ReadingProp
           />
         ) : null,
       // eslint-disable-next-line react-hooks/exhaustive-deps
-      [data?.sources, data?.items, data?.books, data?.bookmarks, data?.topics, activeKey, collapsed],
+      [data?.items, data?.books, data?.bookmarks, data?.topics, activeKey, collapsed],
     ),
   );
 

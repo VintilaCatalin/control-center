@@ -57,13 +57,6 @@
   transform: scale(1.03);
 }
 
-.artFallback {
-  display: block;
-  width: 100%;
-  aspect-ratio: 16 / 10;
-  background: linear-gradient(135deg, rgba(var(--overlay-tint), 0.08), rgba(var(--overlay-tint), 0.02));
-}
-
 .body {
   position: relative;
   padding: var(--space-4);

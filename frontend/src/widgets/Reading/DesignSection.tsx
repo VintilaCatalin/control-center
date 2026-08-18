@@ -29,13 +29,11 @@ export function DesignSection({ heading, items, onOpen, onToggleSave, onDismiss 
       <div className={styles.grid}>
         {items.map((item) => (
           <article key={item.id} className={styles.card}>
-            <button type="button" className={styles.media} onClick={() => onOpen(item)}>
-              {item.thumb ? (
+            {item.thumb && (
+              <button type="button" className={styles.media} onClick={() => onOpen(item)}>
                 <ArtTile aspect="landscape" src={readingThumbUrl(item.thumb)} alt={item.title} fallback={null} className={styles.art} />
-              ) : (
-                <span className={styles.artFallback} />
-              )}
-            </button>
+              </button>
+            )}
             <div className={styles.body}>
               <button type="button" className={styles.textBtn} onClick={() => onOpen(item)}>
                 <span className={styles.title}>{item.title}</span>

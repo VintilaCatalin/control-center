@@ -278,33 +278,20 @@ function AddSourceForm({ topics }: { topics: TopicDef[] }) {
   );
 }
 
-// Create/remove the topic vocabulary itself. "interesting" is the one
-// entry with no Remove control - it's the fallback every invalid/removed
-// topic reassigns to (see reading_remove_topic()), so it must always
-// exist. Removing a topic in use reassigns its sources/bookmarks to
+// Remove the topic vocabulary itself - creation lives directly in
+// Reading's sidebar now (the "Add topic" row right under the topic list,
+// see ReadingSidebarNav), so a topic exists the instant you make it
+// instead of needing this sheet first. "interesting" is the one entry
+// with no Remove control - it's the fallback every invalid/removed topic
+// reassigns to (see reading_remove_topic()), so it must always exist.
+// Removing a topic in use reassigns its sources/bookmarks to
 // "interesting" automatically - shown here so it isn't a silent surprise.
 function TopicManager({ topics, sources }: { topics: TopicDef[]; sources: ReadingSource[] }) {
-  const [label, setLabel] = useState('');
-  const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [removingId, setRemovingId] = useState<string | null>(null);
 
   function usageCount(id: string) {
     return sources.filter((s) => s.topic === id).length;
-  }
-
-  async function handleCreate() {
-    const trimmed = label.trim();
-    if (!trimmed) return;
-    setBusy(true);
-    setStatus(null);
-    const res = await addTopic(trimmed).catch(() => ({ ok: false as const, error: 'Failed to add' }));
-    setBusy(false);
-    if (res.ok) {
-      setLabel('');
-    } else {
-      setStatus(('error' in res && res.error) || 'Failed to add');
-    }
   }
 
   async function handleRemove(id: string) {
@@ -317,20 +304,7 @@ function TopicManager({ topics, sources }: { topics: TopicDef[]; sources: Readin
 
   return (
     <div className={styles.addForm}>
-      <p className={styles.hint}>Topics tag your sources so Reading/Overview can group and filter by them. Create as many as you like.</p>
-      <div className={styles.field}>
-        <input
-          type="text"
-          className={styles.input}
-          placeholder="New topic name"
-          value={label}
-          onChange={(e) => setLabel(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
-        />
-      </div>
-      <button type="button" className={styles.primaryBtn} onClick={handleCreate} disabled={busy || !label.trim()}>
-        {busy ? 'Adding…' : 'Add topic'}
-      </button>
+      <p className={styles.hint}>Remove a topic here - to add one, use "Add topic" right under the topic list in Reading's sidebar.</p>
       {status && <span className={styles.hint}>{status}</span>}
 
       <div className={styles.list}>

@@ -70,9 +70,8 @@
 }
 
 .cardCenter {
-  width: 100%;
-  max-width: 640px;
-  max-height: 72vh;
+  width: min(760px, 88vw);
+  max-height: 82vh;
 }
 
 .cardDrawer {

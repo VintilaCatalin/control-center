@@ -10,6 +10,30 @@ const fade = {
   exit: { opacity: 0, y: -6 },
 };
 
+function DropletIcon() {
+  return (
+    <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 3s6.5 7.1 6.5 11.5a6.5 6.5 0 0 1-13 0C5.5 10.1 12 3 12 3Z" />
+    </svg>
+  );
+}
+
+function WindIcon() {
+  return (
+    <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3 8h11.5a2.75 2.75 0 1 0-2.6-3.7M3 12.5h14.5a2.75 2.75 0 1 1-2.6 3.7M3 17h9.5a2.25 2.25 0 1 1-2.1 3" />
+    </svg>
+  );
+}
+
+function FeelsIcon() {
+  return (
+    <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 14.76V4.5a2.5 2.5 0 0 0-5 0v10.26a4.5 4.5 0 1 0 5 0Z" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export function Weather() {
   const { snapshot, loading, error } = useSnapshotData();
 
@@ -45,14 +69,29 @@ export function Weather() {
         transition={{ duration: duration.slow, ease }}
       >
         <div className={styles.now}>
-          <div className={styles.temp}>
-            {w.temp}
-            <sup>°{w.unit}</sup>
+          <span className={styles.place}>{w.place}</span>
+          <div className={styles.tempRow}>
+            <div className={styles.temp}>
+              {w.temp}
+              <sup>°{w.unit}</sup>
+            </div>
+            <div className={styles.condition}>
+              <WeatherIcon icon={w.icon} isDay={w.is_day} size={26} />
+              <span className={styles.conditionLabel}>{w.label}</span>
+            </div>
           </div>
-          <div className={styles.meta}>
-            <WeatherIcon icon={w.icon} isDay={w.is_day} size={14} />
-            <span>
-              {w.label} · feels {w.feels}° · {w.place}
+          <div className={styles.stats}>
+            <span className={styles.stat}>
+              <FeelsIcon />
+              Feels {w.feels}°
+            </span>
+            <span className={styles.stat}>
+              <DropletIcon />
+              {w.humidity}%
+            </span>
+            <span className={styles.stat}>
+              <WindIcon />
+              {w.wind} km/h
             </span>
           </div>
         </div>

@@ -75,10 +75,11 @@
   --popup-shadow: var(--lift), var(--inner);
   --popup-blur: blur(22px) saturate(160%);
   /* One scrim strength for every popup that has one (Sheet, Overlay) -
-     dimmed enough to focus attention on the popup, light enough that
-     the popup's own glass still picks up real colour from what's behind
-     it instead of blurring an almost-opaque black layer into flat grey. */
-  --popup-scrim: rgba(4, 6, 9, 0.5);
+     0.8, not the ~0.5 this used to be: a modal reading against whatever
+     busy panel/wallpaper is still faintly visible behind it was hard to
+     read text over, and a modal deserves to genuinely take over the
+     screen while it's up, not half-share it with the page underneath. */
+  --popup-scrim: rgba(4, 6, 9, 0.8);
   --popup-scrim-blur: blur(10px);
 
   /* New: the old app had no semantic status color, every widget just went

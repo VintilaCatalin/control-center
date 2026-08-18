@@ -74,11 +74,7 @@ export function SportSection({ heading, items, onOpen, onToggleSave, onDismiss }
           {ticker.map((item, i) => (
             <button type="button" key={item.id} className={styles.tickerCard} onClick={() => onOpen(item)}>
               <span className={styles.tickerRank}>{i + 3}</span>
-              {item.thumb ? (
-                <ArtTile aspect="square" src={readingThumbUrl(item.thumb)} alt="" fallback={null} className={styles.tickerArt} />
-              ) : (
-                <span className={styles.tickerFallback} />
-              )}
+              {item.thumb && <ArtTile aspect="square" src={readingThumbUrl(item.thumb)} alt="" fallback={null} className={styles.tickerArt} />}
               <span className={styles.tickerText}>
                 <span className={styles.tickerCategory}>{categoryLabel(item)}</span>
                 <span className={styles.tickerTitle}>{item.title}</span>

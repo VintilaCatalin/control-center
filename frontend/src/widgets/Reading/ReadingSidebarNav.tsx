@@ -1,5 +1,6 @@
-import { useMemo } from 'react';
-import type { Book, ReadingItem, ReadingSource } from '../../api/types';
+import { useMemo, useState } from 'react';
+import { addTopic } from '../../api/actions/reading';
+import type { Book, ReadingItem } from '../../api/types';
 import { GearIcon, ReadingIcon } from '../../shell/icons';
 import { BookIcon, BookmarkIcon, LinkIcon, PlayGlyphIcon, PlusIcon, TagIcon } from './icons';
 import { REGULAR_TOPICS, type ReadingSection, type TopicDef, topicLabel } from './topics';
@@ -8,7 +9,6 @@ import styles from './ReadingSidebarNav.module.css';
 export type { ReadingSection };
 
 interface ReadingSidebarNavProps {
-  sources: ReadingSource[];
   items: ReadingItem[];
   books: Book[];
   bookmarks: ReadingItem[];
@@ -21,12 +21,13 @@ interface ReadingSidebarNavProps {
 }
 
 // Reading's own sidebar content - branding-led like Plex's (see
-// PlexSidebarNav), not Notes' dense text-row list. Topic sections only
-// appear once an enabled source is actually tagged with them, so an
-// unused taxonomy slot ("Interesting" with nothing curated into it yet)
-// doesn't sit in the nav as a dead destination.
+// PlexSidebarNav), not Notes' dense text-row list. Every real topic shows
+// here now (not just ones an enabled source happens to be tagged with) -
+// topics are directly created from the "+ Add topic" row right below the
+// list, so a topic you just made needs to appear immediately, with a
+// real (possibly zero) count, rather than staying invisible until you
+// separately go tag a source with it in Manage Sources.
 export function ReadingSidebarNav({
-  sources,
   items,
   books,
   bookmarks,
@@ -37,20 +38,32 @@ export function ReadingSidebarNav({
   onAddBookmark,
   collapsed,
 }: ReadingSidebarNavProps) {
-  const presentTopics = useMemo(
-    () => new Set(sources.filter((s) => s.enabled).map((s) => s.topic)),
-    [sources],
-  );
   // The original 9 first (stable, familiar order), then any custom
-  // topics the user's created - both filtered to "actually has an
-  // enabled source", same as before, just no longer capped at the fixed
-  // set (see topics.ts's ReadingSection comment on why this is possible
-  // without special-casing every consumer).
+  // topics the user's created - see topics.ts's ReadingSection comment on
+  // why arbitrary topic ids can flow through here without special-casing.
   const orderedTopics = useMemo(() => {
-    const known = REGULAR_TOPICS.filter((t) => presentTopics.has(t));
-    const extra = topics.map((t) => t.id).filter((id) => id !== 'youtube' && presentTopics.has(id) && !REGULAR_TOPICS.includes(id as (typeof REGULAR_TOPICS)[number]));
+    const ids = topics.map((t) => t.id).filter((id) => id !== 'youtube');
+    const known = REGULAR_TOPICS.filter((t) => ids.includes(t));
+    const extra = ids.filter((id) => !REGULAR_TOPICS.includes(id as (typeof REGULAR_TOPICS)[number]));
     return [...known, ...extra];
-  }, [presentTopics, topics]);
+  }, [topics]);
+  const [addingTopic, setAddingTopic] = useState(false);
+  const [newTopicLabel, setNewTopicLabel] = useState('');
+  const [addBusy, setAddBusy] = useState(false);
+
+  async function handleCreateTopic() {
+    const trimmed = newTopicLabel.trim();
+    if (!trimmed) return;
+    setAddBusy(true);
+    const res = await addTopic(trimmed).catch(() => ({ ok: false as const, id: undefined as string | undefined }));
+    setAddBusy(false);
+    if (res.ok) {
+      setNewTopicLabel('');
+      setAddingTopic(false);
+      if (res.id) onSelect(res.id);
+    }
+  }
+
   const counts = useMemo(() => {
     const byTopic = new Map<string, number>();
     let videoCount = 0;
@@ -101,6 +114,36 @@ export function ReadingSidebarNav({
           <span className={styles.count}>{counts.byTopic.get(topic) ?? 0}</span>
         </button>
       ))}
+
+      {addingTopic ? (
+        <div className={styles.addTopicRow}>
+          <input
+            type="text"
+            className={styles.addTopicInput}
+            placeholder="Topic name"
+            value={newTopicLabel}
+            onChange={(e) => setNewTopicLabel(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleCreateTopic();
+              if (e.key === 'Escape') setAddingTopic(false);
+            }}
+            autoFocus
+          />
+          <button type="button" className={styles.addTopicConfirm} onClick={handleCreateTopic} disabled={addBusy || !newTopicLabel.trim()}>
+            {addBusy ? '…' : 'Add'}
+          </button>
+        </div>
+      ) : (
+        !collapsed && (
+          <button type="button" className={styles.item} onClick={() => setAddingTopic(true)}>
+            <span className={styles.icon}>
+              <PlusIcon />
+            </span>
+            <span className={styles.label}>Add topic</span>
+          </button>
+        )
+      )}
+
       {/* Gated on real video content existing, not a topic tag - see
           topics.ts's REGULAR_TOPICS comment. */}
       {counts.videoCount > 0 && (
