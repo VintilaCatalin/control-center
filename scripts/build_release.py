@@ -5,10 +5,11 @@ Builds the React frontend (needs Node, but only on THIS machine - the
 resulting release folder needs nothing but Python + a Chromium browser to
 run), then copies exactly what control_center.py/server.py need at runtime
 into release/ControlCenter/: the launcher(s), the backend package, the
-built frontend, the legacy reference UI, the Windows integration tooling
-server.py subprocess-invokes by relative path (system/lights.py etc.),
-and a plain-language README - not a git clone, not node_modules, not
-source .tsx.
+built frontend, and the generic capability scripts server.py
+subprocess-invokes by relative path (capabilities/ha_lights.py etc.) - not
+a git clone, not node_modules, not source .tsx, not the legacy/ reference
+UI or any personal Windows tooling (that lives in a separate sibling repo,
+never copied here).
 
     python scripts/build_release.py
 
@@ -63,11 +64,8 @@ def main():
     print("-> copying built frontend (frontend/dist/)...")
     copy_tree(dist, RELEASE / "frontend" / "dist")
 
-    print("-> copying legacy reference UI (legacy/)...")
-    copy_tree(ROOT / "legacy", RELEASE / "legacy")
-
-    print("-> copying Windows integration tooling (system/)...")
-    copy_tree(ROOT / "system", RELEASE / "system", ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+    print("-> copying generic capability scripts (capabilities/)...")
+    copy_tree(ROOT / "capabilities", RELEASE / "capabilities", ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
 
     print("-> copying root launcher(s) and runtime binary...")
     for name in ROOT_FILES:

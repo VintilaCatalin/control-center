@@ -81,10 +81,11 @@ Do not create a second backend.
 
 The mental model a new developer (or the release package) should have:
 
-**Control Center → backend + frontend + optional system helpers/integrations.**
+**Control Center → backend + frontend + optional capability scripts.**
+**Personal Windows automation lives in a separate sibling repo, never here.**
 
 Not "panel.py / server.py / tray.py / scripts / Vite" - those are implementation
-details of the four things above, not the architecture itself.
+details of the things below, not the architecture itself.
 
 - **`backend/`** - the actual Control Center Python backend: `core.py`
   (shared infra/settings schema), `collectors/` (one module per data
@@ -93,71 +94,74 @@ details of the four things above, not the architecture itself.
 - **`frontend/`** - the React/TypeScript/Vite UI. Also the product's own
   code. `frontend/dist/` (built, not committed) is what `backend/server.py`
   serves at `/`.
-- **`system/`** - Windows/system helper tooling Control Center calls into
-  (`lights.py`, `wallpicker.py`, `wallhaven.py`, `chroma_paint.py`,
-  `rgb_paint_win.py`, `spanwall.py`) or that's retained personal automation
-  living alongside it (`shortcuts.ahk`, `tray.py`). **Not the backend** -
-  these are separate processes the backend subprocess-invokes by relative
-  path, several of which also work standalone via hotkeys, independent of
-  whether Control Center is even running. Do not fold their logic into
-  `backend/`.
+- **`capabilities/`** - generic Windows helper scripts the backend calls
+  into by relative path (`ha_lights.py`, `wallpaper.py`,
+  `wallpaper_desktops.py`, `wallpaper_span.py`). **Not the backend** -
+  these are separate processes, invoked detached/fire-and-forget from
+  `backend/routes` and `backend/collectors`. Every hardcoded personal
+  default (Home Assistant URL/entities, wallpaper folder) has been removed
+  from these - they run fine unconfigured and read the real values from
+  Control Center's own settings store. Do not fold their logic into
+  `backend/`, and do not add anything here that assumes specific personal
+  hardware (Razer, OpenRGB, a particular monitor layout, etc.) - that
+  belongs in the separate personal-tools repo below.
 - **`scripts/`** - development/build tooling only (`build_release.py`).
   Not runtime application code. An end user never needs anything in this
   folder - it's how a maintainer produces the release package, not part of
   what ships in it.
 - **`control_center.py`** - the actual application entry point. Starts the
-  backend, ensures required background helpers are running (currently:
-  the Chroma keyboard daemon - see its own "Background helpers" section),
-  opens/focuses the UI window. This is the one thing a Windows Startup
-  shortcut should point at.
+  backend, opens/focuses the UI window. This is the one thing a Windows
+  Startup shortcut should point at. It starts no personal background
+  services - Control Center itself has zero dependency on any personal
+  tooling, ever.
 - **`control_center_tray.py`** - an *optional* convenience utility, not
-  the application itself and not required for Control Center to run.
-  Audited against "is this still necessary now that control_center.py
-  manages its own startup/runtime": it isn't redundant - it's the only way
-  to get Open/Stop/Restart without a terminal, plus a visible tray icon -
-  but it's also not load-bearing. Keep it clearly optional: never make it
-  a dependency of the core launch path, never assume it's running.
-  `system/tray.py` is a *different*, separate, personal-only tray
-  (lighting controls) - the two must never be merged back together.
+  the application itself and not required for Control Center to run. It's
+  the only way to get Open/Stop/Restart without a terminal, plus a visible
+  tray icon - but it's also not load-bearing. Keep it clearly optional:
+  never make it a dependency of the core launch path, never assume it's
+  running.
+- **Personal Windows automation** (AHK hotkeys, a Razer Chroma keyboard
+  daemon, OpenRGB painting, a personal lighting tray) lives in a separate
+  sibling repo, `Vinti-PC-Tools/`, cloned next to this one - never inside
+  Control Center, never required by it. That repo is allowed to call into
+  this one (its `capabilities/` scripts, `control_center.py` itself); this
+  repo must never call into it or assume it exists. Someone running only
+  `Control Center/` on a clean machine gets a fully working app.
 
 Release packaging (`scripts/build_release.py`) only ever bundles
-`backend/`, `frontend/dist/`, `legacy/`, `system/`, `control_center.py`,
-`control_center_tray.py`, `requirements.txt`, and `README.md` - `scripts/`
-itself is never copied into the release folder.
+`backend/`, `frontend/dist/`, `capabilities/`, `control_center.py`,
+`control_center_tray.py`, `VirtualDesktopAccessor.dll`, `requirements.txt`,
+and `README.md` - `scripts/`, `legacy/`, and anything from the personal
+tools repo are never copied into the release folder.
 
 ---
 
 ## Existing Engines
 
-These scripts already contain working, tested functionality. `system/` holds
-Windows integration tooling that predates Control Center and isn't owned by
-it - the backend subprocess-invokes some of these, but their logic lives
-here, not in the backend package:
+These scripts already contain working, tested functionality. `capabilities/`
+holds generic Windows integration tooling the backend subprocess-invokes by
+relative path - their logic lives here, not in the backend package:
 
-- `system/lights.py`
-- `system/rgb_paint_win.py`
-- `system/chroma_paint.py`
-- `system/wallpicker.py`
-- `system/wallhaven.py`
-- `system/spanwall.py`
-- `system/shortcuts.ahk`
-- `system/tray.py` — personal lighting tray only, not part of the product (see `control_center_tray.py`)
+- `capabilities/ha_lights.py` - wallpaper-driven Home Assistant light sync
+- `capabilities/wallpaper.py` - apply/pick a wallpaper from the configured folder
+- `capabilities/wallpaper_desktops.py` - Windows per-virtual-desktop wallpaper recovery
+- `capabilities/wallpaper_span.py` - build a spanned wallpaper across all monitors
 - `control_center.py` — the application entry point
-- `control_center_tray.py` — Control Center's own tray launcher, deliberately separate from `system/tray.py`
+- `control_center_tray.py` — Control Center's own tray launcher
 
 Do not reimplement their internal logic in React.
 
 React should call the existing backend/actions.
 
-Do not duplicate automation already handled by AHK/scripts.
+Personal automation (AHK hotkeys, Razer Chroma, OpenRGB, a personal tray)
+lives entirely in the separate `Vinti-PC-Tools` repo - do not recreate it
+here and do not have Control Center call into it.
 
 Especially do not recreate:
 - fullscreen detection
 - Hue Sync automatic Game/Video switching
 - automatic lighting triggers
 - wallpaper application internals
-- OpenRGB logic
-- Chroma logic
 
 ---
 
@@ -246,7 +250,7 @@ Scene should continue to evolve visually rather than simply reproduce the old im
 
 ## Wallpaper Recovery
 
-`system/wallhaven.py` contains the existing `fix_desktops()` recovery mechanism for Windows virtual-desktop wallpaper problems.
+`capabilities/wallpaper_desktops.py` contains the existing `fix_desktops()` recovery mechanism for Windows virtual-desktop wallpaper problems.
 
 Reuse it.
 

@@ -27,5 +27,5 @@ they're never required.
 
 ## Notes
 
-- Your settings live outside this folder, under `%USERPROFILE%\.config\lightsync\` - deleting it resets the app to a fresh install.
+- Your settings live outside this folder, under `%USERPROFILE%\.config\control-center\` - deleting it resets the app to a fresh install. (Upgrading from an older install that used `%USERPROFILE%\.config\lightsync\`? Your settings are copied forward automatically the first time you run the new version - nothing is deleted.)
 - `python control_center.py --stop` stops it; `--server-only` runs just the backend.

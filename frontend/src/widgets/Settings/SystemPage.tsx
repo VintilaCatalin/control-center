@@ -34,25 +34,6 @@ const REFRESH_RATES: { label: string; seconds: number }[] = [
   { label: 'Top Wanted (Overseerr)', seconds: 1800 },
 ];
 
-// The real hotkeys shortcuts.ahk registers - listed here for reference,
-// not editable (that's a separate AutoHotkey script this app doesn't
-// control), same spirit as Data Refresh above.
-const SHORTCUTS: { label: string; keys: string[] }[] = [
-  { label: 'New Brave window', keys: ['Win', 'B'] },
-  { label: 'Terminal', keys: ['Win', 'T'] },
-  { label: 'File Explorer', keys: ['Win', 'E'] },
-  { label: 'Close window', keys: ['Win', 'Q'] },
-  { label: 'Maximize / restore', keys: ['Win', 'F'] },
-  { label: 'Center window', keys: ['Win', 'C'] },
-  { label: 'Move window', keys: ['Win', 'Drag'] },
-  { label: 'Resize window', keys: ['Win', 'Right-drag'] },
-  { label: 'Switch virtual desktop 1-4', keys: ['Win', '1-4'] },
-  { label: 'Move window to desktop 1-4', keys: ['Win', 'Shift', '1-4'] },
-  { label: 'Open wallpaper picker', keys: ['Ctrl', 'Shift', 'W'] },
-  { label: 'Open Wallhaven browser', keys: ['Ctrl', 'Shift', 'A'] },
-  { label: 'Open lights control', keys: ['Ctrl', 'Shift', 'L'] },
-];
-
 const APP_LABELS: Record<string, string> = {
   overview: 'Overview',
   games: 'Games',
@@ -127,7 +108,7 @@ export function SystemPage({ data, getValue, isSecret, origin, onChange, setLoca
             </span>
           </div>
           <div className={styles.noteCard}>
-            Control Center doesn't register itself to launch on sign-in automatically. Add a shortcut to <code className={styles.code}>tray.py</code> in your{' '}
+            Control Center doesn't register itself to launch on sign-in automatically. Add a shortcut to <code className={styles.code}>control_center_tray.py</code> in your{' '}
             <code className={styles.code}>shell:startup</code> folder to have it running before you sit down.
           </div>
         </div>
@@ -142,27 +123,6 @@ export function SystemPage({ data, getValue, isSecret, origin, onChange, setLoca
               <div className={styles.infoRow} key={r.label}>
                 <span className={styles.infoLabel}>{r.label}</span>
                 <span className={styles.infoValue}>every {formatSeconds(r.seconds)}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Keyboard shortcuts</h2>
-        <p className={styles.sectionSub}>Global hotkeys from shortcuts.ahk - system-wide, not specific to this window.</p>
-        <div className={styles.card}>
-          <div className={styles.infoList}>
-            {SHORTCUTS.map((s) => (
-              <div className={styles.kbdRow} key={s.label}>
-                <span className={styles.kbdLabel}>{s.label}</span>
-                <span className={styles.kbdKeys}>
-                  {s.keys.map((k, i) => (
-                    <span className={styles.kbd} key={i}>
-                      {k}
-                    </span>
-                  ))}
-                </span>
               </div>
             ))}
           </div>

@@ -5,14 +5,15 @@ control_center.py - launch Control Center.
 Starts the backend if it isn't already running, then opens the dashboard as
 a borderless Chromium app window positioned on your secondary display. No
 tabs, no address bar, no browser chrome - it just looks like a display.
-Also makes sure the Chroma keyboard daemon (system/chroma_paint.py
---daemon) is running - see start_chroma_daemon() - so there's nothing left
-to separately keep in shell:startup.
 
-    control_center.py                  # backend + keyboard daemon + window on the secondary monitor
+Control Center itself starts no personal background services - if you use
+optional external tooling (e.g. a keyboard-lighting daemon), keep that in
+its own separate startup entry.
+
+    control_center.py                  # backend + window on the secondary monitor
     control_center.py --monitor 0      # force a specific monitor
     control_center.py --windowed       # normal window, handy while redesigning
-    control_center.py --server-only    # backend + keyboard daemon only, no window
+    control_center.py --server-only    # backend only, no window
     control_center.py --stop           # close the window and stop the backend
 
 The browser runs on its own profile directory, so this never disturbs your
@@ -32,8 +33,8 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 BACKEND_DIR = HERE / "backend"
 SERVER = BACKEND_DIR / "server.py"
-SYSTEM_DIR = HERE / "system"
-PROFILE = Path(os.environ.get("LOCALAPPDATA", Path.home())) / "lightsync" / "panel-profile"
+CAPABILITIES_DIR = HERE / "capabilities"
+PROFILE = Path(os.environ.get("LOCALAPPDATA", Path.home())) / "control-center" / "panel-profile"
 PORT = 8770
 
 BROWSERS = [
@@ -138,79 +139,6 @@ def start_server(port=PORT):
     print("backend did not come up - run it directly to see why:")
     print(f"  python \"{SERVER}\"")
     return False
-
-
-# ──────────────────────────────────────────────
-#  BACKGROUND HELPERS
-#
-# Of everything in system/, only the Chroma keyboard daemon is a genuine
-# "must be running in the background" service - Razer's Chroma SDK hands
-# control back to Synapse if nothing holds its session open for 15s (see
-# chroma_paint.py's own docstring). Everything else there (lights.py,
-# wallpicker.py, wallhaven.py, rgb_paint_win.py, spanwall.py) is one-shot:
-# invoked per-action by the backend or a hotkey, does its thing, exits -
-# nothing to manage, so nothing else gets auto-started here. This used to
-# be a separate manual shell:startup shortcut for chroma_paint.py; folding
-# it in here means there's exactly one thing to keep running (Control
-# Center itself) instead of two independent startup entries that can
-# silently drift out of sync (which is exactly what broke last time - the
-# shortcut ran the script bare, without --daemon).
-# ──────────────────────────────────────────────
-
-CHROMA_SCRIPT = SYSTEM_DIR / "chroma_paint.py"
-# Same path chroma_paint.py's own PID_FILE constant resolves to - not
-# imported from there directly (that module also pulls in requests/PIL/
-# rgb_paint_win, real dependencies this lightweight launcher shouldn't
-# need just to ask "is it alive"), but it must stay in lockstep with it -
-# see chroma_paint.py's own daemon_alive()/run_daemon() if this ever moves.
-CHROMA_PID_FILE = Path(os.environ.get("LOCALAPPDATA", Path.home())) / "lightsync" / "chroma.pid"
-
-
-def chroma_alive():
-    """Mirrors chroma_paint.py's own daemon_alive() exactly: a PID file plus
-    a liveness probe, not just "the file exists" - a stale PID left behind
-    by a crashed or killed daemon must read as not-alive, not falsely block
-    a real restart."""
-    try:
-        pid = int(CHROMA_PID_FILE.read_text().strip())
-    except Exception:
-        return None
-    try:
-        handle = ctypes.windll.kernel32.OpenProcess(0x1000, False, pid)
-        if handle:
-            ctypes.windll.kernel32.CloseHandle(handle)
-            return pid
-    except Exception:
-        pass
-    return None
-
-
-def start_chroma_daemon():
-    """Best-effort: the keyboard daemon is a nice-to-have, not something
-    Control Center's own UI depends on, so any failure here is logged and
-    swallowed - it must never take the backend/window down with it."""
-    if not CHROMA_SCRIPT.is_file():
-        print(f"system/chroma_paint.py not found at {CHROMA_SCRIPT} - skipping the keyboard daemon.")
-        return
-    if chroma_alive():
-        return  # already running - chroma_paint.py's own run_daemon() would refuse a second one anyway
-
-    try:
-        subprocess.Popen([pythonw(), str(CHROMA_SCRIPT), "--daemon"],
-                         cwd=str(SYSTEM_DIR),
-                         creationflags=getattr(subprocess, "DETACHED_PROCESS", 0))
-    except Exception as e:
-        print(f"could not launch the Chroma keyboard daemon: {e}")
-        return
-
-    for _ in range(10):
-        time.sleep(0.3)
-        if chroma_alive():
-            print("Chroma keyboard daemon started.")
-            return
-    print("Chroma keyboard daemon did not come up within 3s - Razer Synapse "
-          "may not be running, or the Chroma SDK service isn't reachable. "
-          "Keyboard colour sync won't work until it does; nothing else is affected.")
 
 
 def find_browser():
@@ -373,8 +301,6 @@ def main():
 
     if not start_server(args.port):
         return
-
-    start_chroma_daemon()
 
     if args.server_only:
         print(f"backend running on http://127.0.0.1:{args.port}")
