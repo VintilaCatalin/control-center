@@ -64,6 +64,7 @@ export function AddAppSheet({ open, onClose }: AddAppSheetProps) {
     <Sheet
       open={open}
       onClose={handleClose}
+      size="standard"
       title="Add an app"
       subtitle="Pins a quick-launch tile to the Launchpad."
       actions={

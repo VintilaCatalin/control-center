@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { duration, ease } from '../../tokens/motion';
 import styles from './Overlay.module.css';
@@ -29,15 +29,48 @@ interface OverlayProps {
   footer?: ReactNode;
 }
 
+const FOCUSABLE = 'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])';
+
 export function Overlay({ open, onClose, title, icon, variant = 'center', width, children, footer }: OverlayProps) {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const restoreFocusRef = useRef<HTMLElement | null>(null);
+  const onCloseRef = useRef(onClose);
+
+  useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
+
   useEffect(() => {
     if (!open) return;
+    restoreFocusRef.current = document.activeElement as HTMLElement | null;
+    const focusTimer = setTimeout(() => {
+      const preferred = cardRef.current?.querySelector<HTMLElement>('[autofocus]');
+      const first = cardRef.current?.querySelector<HTMLElement>(FOCUSABLE);
+      (preferred ?? first ?? cardRef.current)?.focus();
+    }, 0);
     function handleKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') {
+        onCloseRef.current();
+        return;
+      }
+      if (e.key !== 'Tab' || !cardRef.current) return;
+      const focusable = Array.from(cardRef.current.querySelectorAll<HTMLElement>(FOCUSABLE));
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
     }
     document.addEventListener('keydown', handleKey);
-    return () => document.removeEventListener('keydown', handleKey);
-  }, [open, onClose]);
+    return () => {
+      clearTimeout(focusTimer);
+      document.removeEventListener('keydown', handleKey);
+      restoreFocusRef.current?.focus?.();
+    };
+  }, [open]);
 
   const isDrawer = variant === 'drawer';
 
@@ -55,8 +88,13 @@ export function Overlay({ open, onClose, title, icon, variant = 'center', width,
           />
           <div className={isDrawer ? styles.drawerWrap : styles.centerWrap}>
             <motion.div
+              ref={cardRef}
               className={[styles.card, isDrawer ? styles.cardDrawer : styles.cardCenter].join(' ')}
               style={width ? { maxWidth: width } : undefined}
+              role="dialog"
+              aria-modal="true"
+              aria-label={title}
+              tabIndex={-1}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}

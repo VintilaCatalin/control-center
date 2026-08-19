@@ -13,7 +13,7 @@
 .backdrop {
   position: relative;
   min-height: 100%;
-  background: linear-gradient(160deg, var(--raise), var(--slate));
+  background: linear-gradient(160deg, var(--graphite-raised), var(--graphite));
 }
 
 .backdropImg {

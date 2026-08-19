@@ -402,6 +402,7 @@ def collect_ui(cfg, _shared):
             # everywhere, not just next time Settings happens to be open.
             "prefs": {"reduced_motion": truthy(cfg.get("reduced_motion")),
                       "sidebar_default_collapsed": truthy(cfg.get("sidebar_default_collapsed")),
+                      "material_style": str(cfg.get("material_style") or "liquid_glass"),
                       "default_app": str(cfg.get("default_app") or "overview"),
                       "background_mode": str(cfg.get("background_mode") or "wallpaper"),
                       "background_color": str(cfg.get("background_color") or ""),

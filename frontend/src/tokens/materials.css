@@ -1,0 +1,139 @@
+/* Product-wide material modes. Blur Cyberpunk is still defined by the
+   original colors.css tokens; this file only supplies compatibility aliases
+   for newer surfaces. Liquid Glass deliberately overrides the shared
+   semantic tokens so every app, persistent rail and portal uses one material
+   language instead of Tasks carrying a private skin. */
+:root {
+  --material-canvas: var(--glass);
+  --material-nav: var(--glass);
+  --material-inspector: var(--glass-up);
+  --material-raised: var(--glass-up);
+  --material-control: rgba(var(--overlay-tint), .055);
+  --material-hover: rgba(var(--overlay-tint), .085);
+  --material-line: var(--rim);
+  --material-line-strong: var(--rim-lit);
+  --material-shadow: var(--lift);
+  --material-inner: var(--inner);
+
+  /* Tasks adopted these names while it was the visual laboratory. Keep the
+     aliases so its layout stays stable, but source them from the same global
+     material contract every other application now uses. */
+  --tasks-canvas: var(--material-canvas);
+  --tasks-nav: var(--material-nav);
+  --tasks-inspector: var(--material-inspector);
+  --tasks-raised: var(--material-raised);
+  --tasks-control: var(--material-control);
+  --tasks-hover: var(--material-hover);
+  --tasks-line: var(--material-line);
+  --tasks-line-strong: var(--material-line-strong);
+  --tasks-shadow: var(--material-shadow);
+  --tasks-inner: var(--material-inner);
+
+  --popup-radius-menu: 15px;
+  --popup-radius-picker: 19px;
+  --popup-radius-dialog: 22px;
+  --popup-radius-sheet: 24px;
+  --native-popup-bg: var(--graphite);
+}
+
+:root[data-material='liquid'] {
+  /* Large materials retain a trace of the environment. Small controls stay
+     close to neutral graphite so a warm wallpaper cannot make them brown and
+     a cool wallpaper cannot turn them blue. */
+  --material-canvas: color-mix(in oklab, oklch(.19 0 0) 96%, var(--accent));
+  --material-nav: color-mix(in oklab, oklch(.175 0 0) 95%, var(--accent));
+  --material-inspector: color-mix(in oklab, oklch(.215 0 0) 98%, var(--accent));
+  --material-raised: color-mix(in oklab, oklch(.255 0 0) 98.5%, var(--accent));
+  --material-control: rgba(var(--overlay-tint), .04);
+  --material-hover: rgba(var(--overlay-tint), .075);
+  --material-line: rgba(255, 255, 255, .105);
+  --material-line-strong: rgba(255, 255, 255, .17);
+  --material-shadow: 0 22px 58px rgba(0, 0, 0, .3), 0 3px 12px rgba(0, 0, 0, .18);
+  --material-inner: inset 0 1px 0 rgba(255, 255, 255, .11), inset 0 -1px 0 rgba(0, 0, 0, .22);
+
+  --glass: color-mix(in oklab, var(--material-nav) 94%, transparent);
+  --glass-up: color-mix(in oklab, var(--material-raised) 96%, transparent);
+  /* These surfaces are already 94-96% opaque. A 28px live backdrop blur
+     was almost visually imperceptible but expensive across a 4K grid of
+     panels; this keeps the material softness without the oversized filter. */
+  --blur: blur(16px) saturate(124%);
+  --rim: var(--material-line);
+  --rim-lit: var(--material-line-strong);
+  --inner: var(--material-inner);
+  --lift: var(--material-shadow);
+
+  --native-popup-bg: oklch(.205 0 0);
+
+  --text-primary: #f5f7fa;
+  --text-secondary: #bcc3ce;
+  --text-tertiary: #8993a2;
+  --fs-callout: 1rem;
+  --fs-subhead: .9375rem;
+  --fs-footnote: .875rem;
+  --fs-caption: .8125rem;
+  --lh-callout: 1.42;
+  --lh-footnote: 1.4;
+  --lh-caption: 1.35;
+}
+
+:root[data-material='blur'][data-theme='light'] {
+  --native-popup-bg: #f6f7fa;
+}
+
+:root[data-material='liquid'][data-theme='light'] {
+  --material-canvas: color-mix(in oklab, #f3f5f8 96%, var(--accent));
+  --material-nav: color-mix(in oklab, #e9edf2 94%, var(--accent));
+  --material-inspector: color-mix(in oklab, #f7f8fa 96%, var(--accent));
+  --material-raised: #fff;
+  --material-line: rgba(20, 25, 34, .12);
+  --material-line-strong: rgba(20, 25, 34, .19);
+  --material-shadow: 0 20px 55px rgba(38, 45, 58, .15), 0 2px 8px rgba(38,45,58,.08);
+  --material-inner: inset 0 1px 0 rgba(255,255,255,.85), inset 0 -1px 0 rgba(30,38,50,.06);
+  --native-popup-bg: #f8f9fb;
+  --text-primary: #151922;
+  --text-secondary: #4f5968;
+  --text-tertiary: #737e8d;
+}
+
+:root[data-material='liquid'] ::selection {
+  background: color-mix(in oklab, var(--accent) 38%, transparent);
+}
+
+:root[data-material='liquid'] * {
+  scrollbar-color: color-mix(in oklab, var(--text-tertiary) 38%, transparent) transparent;
+}
+
+/* Transient UI is made from the same material as a normal Control Center
+   panel. Dialogs used to maintain a second, deliberately graphite palette;
+   that made them look pasted over the application and could turn oddly
+   blue/brown beside an atmospheric panel. Keep elevation and interaction
+   semantics, but source every surface, edge and reflection from the shared
+   Card contract. */
+:root {
+  --form-bg: rgba(var(--overlay-tint), .035);
+  --form-bg-hover: rgba(var(--overlay-tint), .052);
+  --form-bg-active: rgba(var(--overlay-tint), .072);
+  --form-border: var(--rim);
+  --form-border-hover: var(--rim-lit);
+  --form-focus: color-mix(in oklab, var(--accent) 42%, var(--rim));
+  --form-ring: 0 0 0 3px color-mix(in oklab, var(--accent) 8%, transparent);
+  --material-control: var(--form-bg);
+  --material-hover: var(--form-bg-active);
+  --popup-bg: var(--glass);
+  --popup-bg-elevated: var(--glass-up);
+  --popup-control: var(--form-bg);
+  --popup-hover: var(--form-bg-active);
+  --popup-border: var(--rim);
+  --popup-divider: var(--rim);
+  --popup-footer: rgba(var(--overlay-tint), .025);
+  --popup-highlight: rgba(var(--overlay-tint), .055);
+  --popup-atmosphere: color-mix(in oklab, var(--accent) 5%, transparent);
+  --popup-shadow: var(--lift), var(--inner);
+  --popup-blur: var(--blur);
+  --popup-scrim: rgba(3, 5, 8, .66);
+  --popup-scrim-blur: blur(5px) saturate(108%);
+}
+
+:root[data-theme='light'] {
+  --popup-scrim: rgba(28, 33, 43, .3);
+}

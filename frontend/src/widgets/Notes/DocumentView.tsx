@@ -90,7 +90,7 @@ export function DocumentView({ note, text, loading, saving, onTextChange, onTogg
         <div className={styles.column}>
           <div className={styles.surface}>
             <div className={styles.head}>
-              <div className={styles.breadcrumb}>{note.folder || 'Vault root'}</div>
+              {note.folder && <div className={styles.breadcrumb}>{note.folder}</div>}
               <div className={styles.titleRow}>
                 <h1 className={styles.title}>
                   <span className={styles.titleIcon}>

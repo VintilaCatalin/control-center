@@ -83,7 +83,7 @@
   width: 28px;
   height: 40px;
   border-radius: 6px;
-  background-color: var(--raise);
+  background-color: var(--graphite-raised);
   background-position: center;
   background-size: cover;
   flex-shrink: 0;

@@ -37,7 +37,7 @@
 }
 
 select.input option {
-  background: var(--slate);
+  background: var(--native-popup-bg);
   color: var(--text-primary);
 }
 

@@ -30,7 +30,7 @@ export function SourceManagerSheet({ open, onClose, sources, topics }: SourceMan
   }, [open]);
 
   return (
-    <Sheet open={open} onClose={onClose} title="Manage sources" subtitle="What feeds into your Reading page, and how it's tagged.">
+    <Sheet open={open} onClose={onClose} title="Manage sources" subtitle="What feeds into your Reading page, and how it's tagged." size="standard">
       <div className={styles.tabs}>
         <button type="button" className={[styles.tab, tab === 'sources' ? styles.tabActive : ''].join(' ')} onClick={() => setTab('sources')}>
           Your sources

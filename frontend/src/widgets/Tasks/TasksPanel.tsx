@@ -1,86 +1,48 @@
-import { AnimatePresence } from 'framer-motion';
-import { useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
-import { addTask, deleteTask } from '../../api/actions/tasks';
+import { AnimatePresence, motion } from 'framer-motion';
+import { useState, type KeyboardEvent } from 'react';
+import { addTask, toggleTask } from '../../api/actions/tasks';
 import type { AreaEntry, ProjectEntry, TaskEntry } from '../../api/types';
-import { TaskEditRow, TaskRow } from './TaskRow';
-import { homeLabel, tasksForSmartView } from './taskViews';
+import { useToast } from '../../primitives/Toast/ToastProvider';
+import { tasksForSmartView } from './taskViews';
+import { CheckIcon } from './TaskRow';
 import styles from './TasksPanel.module.css';
 
-interface TasksPanelProps {
-  tasks: TaskEntry[];
-  areas: AreaEntry[];
-  projects: ProjectEntry[];
-}
+interface Props { tasks: TaskEntry[]; areas: AreaEntry[]; projects: ProjectEntry[] }
 
-// The global Quick Tasks popover's content - title-only capture that
-// always lands in Inbox (Things' own "Magic Add": zero decisions at
-// capture time, priority/notes/filing/dates all happen later in the real
-// Tasks section via TaskListView, not here). Shows the current Inbox as a
-// short list underneath so capturing still feels like it went somewhere,
-// not a text field into a void.
-export function TasksPanel({ tasks, areas, projects }: TasksPanelProps) {
+export function TasksPanel({ tasks }: Props) {
   const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const { push } = useToast();
+  const [hidden, setHidden] = useState<Set<string>>(new Set());
+  const inbox = tasksForSmartView('inbox', tasks).filter((task) => !hidden.has(task.id));
 
-  const inbox = tasksForSmartView('inbox', tasks);
-
-  async function handleAdd() {
-    const text = draft.trim();
-    if (!text || busy) return;
-    setBusy(true);
+  async function create() {
+    const title = draft.trim(); if (!title || busy) return;
+    setBusy(true); setError(null);
     try {
-      const res = await addTask(text);
-      if (res.ok) setDraft('');
-    } finally {
-      setBusy(false);
-    }
+      const result = await addTask(title);
+      if (!result.ok) throw new Error(result.error || 'Task could not be created');
+      setDraft('');
+    } catch (cause) {
+      const message = cause instanceof Error ? cause.message : 'Task could not be created';
+      setError(message); push(message, 'error');
+    } finally { setBusy(false); }
   }
 
-  function handleKeyDown(e: ReactKeyboardEvent<HTMLInputElement>) {
-    if (e.key === 'Enter') handleAdd();
+  async function complete(task: TaskEntry) {
+    setHidden((value) => new Set(value).add(task.id));
+    const result = await toggleTask(task.id, true);
+    if (!result.ok) setHidden((value) => { const next = new Set(value); next.delete(task.id); return next; });
   }
 
-  return (
-    <div className={styles.panel}>
-      <div className={styles.addRow}>
-        <input
-          type="text"
-          className={styles.input}
-          placeholder="Add to Inbox…"
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={handleKeyDown}
-          autoFocus
-        />
-        <button type="button" className={styles.addBtn} onClick={handleAdd} disabled={!draft.trim() || busy}>
-          Add
-        </button>
-      </div>
-
-      {inbox.length === 0 ? (
-        <div className={styles.empty}>Inbox is empty - capture something and file it later in Tasks.</div>
-      ) : (
-        <div className={styles.scroll}>
-          <AnimatePresence initial={false}>
-            {inbox.map((t) =>
-              editingId === t.id ? (
-                <TaskEditRow
-                  key={t.id}
-                  task={t}
-                  onDone={() => setEditingId(null)}
-                  onDelete={async () => {
-                    await deleteTask(t.id);
-                    setEditingId(null);
-                  }}
-                />
-              ) : (
-                <TaskRow key={t.id} task={t} onEdit={() => setEditingId(t.id)} homeLabel={homeLabel(t, areas, projects)} />
-              ),
-            )}
-          </AnimatePresence>
-        </div>
-      )}
+  return <div className={styles.panel}>
+    <div className={styles.intro}><span>Quick capture</span><strong>Inbox</strong></div>
+    <div className={[styles.composer, error ? styles.composerFailed : ''].filter(Boolean).join(' ')}><span>+</span><input value={draft} onChange={(event) => { setDraft(event.target.value); setError(null); }} onKeyDown={(event: KeyboardEvent<HTMLInputElement>) => { if (event.key === 'Enter') create(); }} placeholder="What’s on your mind?" aria-invalid={!!error} autoFocus /><button type="button" onClick={create} disabled={!draft.trim() || busy}>{busy ? 'Adding…' : 'Add'}</button></div>
+    {error && <span className={styles.error} role="alert">{error}</span>}
+    <div className={styles.rule} />
+    <div className={styles.scroll}>
+      {inbox.length === 0 ? <div className={styles.empty}><span>✓</span><strong>Inbox clear</strong><p>Capture now. Organize later.</p></div> : <AnimatePresence initial={false}>{inbox.slice(0, 8).map((task) => <motion.div key={task.id} className={styles.row} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: 12 }}><button type="button" onClick={() => complete(task)} aria-label={`Complete ${task.title}`}><CheckIcon /></button><span>{task.title}</span></motion.div>)}</AnimatePresence>}
     </div>
-  );
+  </div>;
 }

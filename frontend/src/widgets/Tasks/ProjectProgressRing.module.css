@@ -1,0 +1,5 @@
+.ring { display: inline-grid; place-items: center; flex: none; color: var(--accent); }
+.ring svg { display: block; width: 100%; height: 100%; overflow: visible; transform: rotate(-90deg); }
+.track, .value { fill: none; stroke-width: 2.1; }
+.track { stroke: color-mix(in oklab, var(--text-tertiary) 42%, transparent); }
+.value { stroke: currentColor; stroke-linecap: round; transition: stroke-dasharray var(--dur-med) var(--ease); }

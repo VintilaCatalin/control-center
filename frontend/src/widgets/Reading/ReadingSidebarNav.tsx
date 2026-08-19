@@ -1,18 +1,20 @@
-import { useEffect, useMemo, useState } from 'react';
-import { addTopic, removeTopic, reorderTopics, setTopicIcon } from '../../api/actions/reading';
+import { type DragEvent, useEffect, useMemo, useState } from 'react';
+import { addTopic, removeTopic, reorderTopics } from '../../api/actions/reading';
 import type { Book, ReadingItem } from '../../api/types';
 import { Menu, type MenuItem } from '../../primitives/Menu/Menu';
 import { useMenu } from '../../primitives/Menu/useMenu';
+import { GlyphPicker } from '../../primitives/GlyphPicker/GlyphPicker';
 import { Spinner } from '../../primitives/Spinner/Spinner';
+import { useToast } from '../../primitives/Toast/ToastProvider';
 import { GearIcon, ReadingIcon } from '../../shell/icons';
 import { BookIcon, BookmarkIcon, LinkIcon, PlayGlyphIcon, PlusIcon } from './icons';
 import { type ReadingSection, type TopicDef, topicLabel } from './topics';
-import { TOPIC_ICON_IDS, TopicIcon } from './topicIcons';
+import { TopicIcon } from './topicIcons';
 import styles from './ReadingSidebarNav.module.css';
 
-function iconLabel(id: string): string {
-  return id.charAt(0).toUpperCase() + id.slice(1);
-}
+const TOPIC_DRAG_TYPE = 'application/x-control-center-reading-topic';
+
+function GripIcon() { return <svg width="12" height="14" viewBox="0 0 12 16" fill="currentColor" aria-hidden="true"><circle cx="3" cy="3" r="1.2" /><circle cx="9" cy="3" r="1.2" /><circle cx="3" cy="8" r="1.2" /><circle cx="9" cy="8" r="1.2" /><circle cx="3" cy="13" r="1.2" /><circle cx="9" cy="13" r="1.2" /></svg>; }
 
 export type { ReadingSection };
 
@@ -25,6 +27,7 @@ interface ReadingSidebarNavProps {
   onSelect: (key: ReadingSection) => void;
   onManageSources: () => void;
   onAddBookmark: () => void;
+  onTopicIconChange: (id: string, icon: string) => Promise<void>;
   collapsed?: boolean;
 }
 
@@ -44,8 +47,10 @@ export function ReadingSidebarNav({
   onSelect,
   onManageSources,
   onAddBookmark,
+  onTopicIconChange,
   collapsed,
 }: ReadingSidebarNavProps) {
+  const { push } = useToast();
   // Create/remove both write through the backend then wait for the next
   // 2s poll to see it reflected in `topics` - which reads as "nothing
   // happened" for a beat. This mirrors the real value locally the instant
@@ -58,9 +63,7 @@ export function ReadingSidebarNav({
 
   useEffect(() => {
     if (!override) return;
-    const overrideIds = new Set(override.map((t) => t.id));
-    const propIds = new Set(topics.map((t) => t.id));
-    const matches = overrideIds.size === propIds.size && [...overrideIds].every((id) => propIds.has(id));
+    const matches = override.length === topics.length && override.every((topic, index) => topic.id === topics[index]?.id && topic.label === topics[index]?.label && topic.icon === topics[index]?.icon);
     if (matches) setOverride(null);
   }, [topics, override]);
 
@@ -76,6 +79,9 @@ export function ReadingSidebarNav({
   const [addBusy, setAddBusy] = useState(false);
   const topicMenu = useMenu();
   const [menuTopic, setMenuTopic] = useState<string | null>(null);
+  const [iconPicker, setIconPicker] = useState<{ topic: string; x: number; y: number } | null>(null);
+  const [draggingTopic, setDraggingTopic] = useState<string | null>(null);
+  const [topicDrop, setTopicDrop] = useState<{ id: string; edge: 'before' | 'after' } | null>(null);
 
   async function handleCreateTopic() {
     const trimmed = newTopicLabel.trim();
@@ -109,32 +115,42 @@ export function ReadingSidebarNav({
   }
 
   async function handleSetIcon(topic: string, icon: string) {
+    const previous = liveTopics;
     setOverride(liveTopics.map((t) => (t.id === topic ? { ...t, icon } : t)));
-    await setTopicIcon(topic, icon).catch(() => {});
+    try {
+      await onTopicIconChange(topic, icon);
+    } catch {
+      setOverride(previous);
+    }
   }
 
-  async function handleMoveTopic(topic: string, dir: -1 | 1) {
-    const ids = orderedTopics;
-    const from = ids.indexOf(topic);
-    const to = from + dir;
-    if (from < 0 || to < 0 || to >= ids.length) return;
-    const nextIds = [...ids];
-    [nextIds[from], nextIds[to]] = [nextIds[to], nextIds[from]];
-    const byId = new Map(liveTopics.map((t) => [t.id, t]));
-    setOverride(nextIds.map((id) => byId.get(id)).filter((t): t is TopicDef => !!t));
-    await reorderTopics(nextIds).catch(() => {});
+  async function handleReorderTopic(source: string, target: string, edge: 'before' | 'after') {
+    if (source === target) return;
+    const nextIds = orderedTopics.filter((id) => id !== source);
+    let index = nextIds.indexOf(target);
+    if (index < 0) return;
+    if (edge === 'after') index += 1;
+    nextIds.splice(index, 0, source);
+    const previous = liveTopics;
+    const byId = new Map(liveTopics.map((topic) => [topic.id, topic]));
+    const hidden = liveTopics.filter((topic) => topic.id === 'youtube');
+    const next = [...nextIds.map((id) => byId.get(id)).filter((topic): topic is TopicDef => !!topic), ...hidden];
+    setOverride(next);
+    setDraggingTopic(null);
+    setTopicDrop(null);
+    try {
+      const result = await reorderTopics(next.map((topic) => topic.id));
+      if (!result.ok) throw new Error(result.error || 'Could not reorder topics');
+    } catch (error) {
+      setOverride(previous);
+      push(error instanceof Error ? error.message : 'Could not reorder topics', 'error');
+    }
   }
 
   const topicMenuItems = useMemo<MenuItem[]>(() => {
     if (!menuTopic) return [];
-    const idx = orderedTopics.indexOf(menuTopic);
     const items: MenuItem[] = [{ heading: topicLabel(menuTopic, liveTopics) }];
-    if (idx > 0) items.push({ label: 'Move up', onClick: () => handleMoveTopic(menuTopic, -1) });
-    if (idx >= 0 && idx < orderedTopics.length - 1) items.push({ label: 'Move down', onClick: () => handleMoveTopic(menuTopic, 1) });
-    items.push({ sep: true }, { heading: 'Icon' });
-    for (const iconId of TOPIC_ICON_IDS) {
-      items.push({ label: iconLabel(iconId), icon: <TopicIcon icon={iconId} />, onClick: () => handleSetIcon(menuTopic, iconId) });
-    }
+    items.push({ label: 'Change icon…', icon: <TopicIcon icon={liveTopics.find((topic) => topic.id === menuTopic)?.icon} />, onClick: () => setIconPicker({ topic: menuTopic, x: topicMenu.x, y: topicMenu.y }) });
     if (menuTopic === 'interesting') {
       items.push({ sep: true }, { heading: "Can't be removed - it's the default" });
     } else {
@@ -142,7 +158,7 @@ export function ReadingSidebarNav({
     }
     return items;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [menuTopic, orderedTopics, liveTopics]);
+  }, [menuTopic, liveTopics, topicMenu.x, topicMenu.y]);
 
   const counts = useMemo(() => {
     const byTopic = new Map<string, number>();
@@ -179,23 +195,19 @@ export function ReadingSidebarNav({
       </button>
 
       <div className={styles.groupLabel}>Topics</div>
-      {orderedTopics.map((topic) => (
-        <button
-          key={topic}
-          type="button"
-          className={[styles.item, active === topic ? styles.itemActive : ''].filter(Boolean).join(' ')}
-          onClick={() => onSelect(topic)}
-          onContextMenu={(e) => handleTopicContextMenu(e, topic)}
-          title={collapsed ? topicLabel(topic, liveTopics) : undefined}
-        >
-          <span className={styles.icon}>
-            <TopicIcon icon={liveTopics.find((t) => t.id === topic)?.icon} />
-          </span>
-          <span className={styles.label}>{topicLabel(topic, liveTopics)}</span>
-          <span className={styles.count}>{counts.byTopic.get(topic) ?? 0}</span>
-        </button>
-      ))}
+      {orderedTopics.map((topic) => {
+        const drop = topicDrop?.id === topic ? topicDrop.edge : null;
+        return <div key={topic} className={[styles.topicRow, draggingTopic === topic ? styles.dragging : '', drop === 'before' ? styles.dropBefore : '', drop === 'after' ? styles.dropAfter : ''].filter(Boolean).join(' ')} onDragOver={(event: DragEvent<HTMLDivElement>) => { if (!event.dataTransfer.types.includes(TOPIC_DRAG_TYPE) || draggingTopic === topic) return; event.preventDefault(); const box = event.currentTarget.getBoundingClientRect(); setTopicDrop({ id: topic, edge: event.clientY < box.top + box.height / 2 ? 'before' : 'after' }); }} onDragLeave={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node)) setTopicDrop(null); }} onDrop={(event) => { event.preventDefault(); const source = event.dataTransfer.getData(TOPIC_DRAG_TYPE); if (source && topicDrop) void handleReorderTopic(source, topic, topicDrop.edge); }}>
+          <button type="button" className={[styles.item, active === topic ? styles.itemActive : ''].filter(Boolean).join(' ')} onClick={() => onSelect(topic)} onContextMenu={(event) => handleTopicContextMenu(event, topic)} title={collapsed ? topicLabel(topic, liveTopics) : undefined}>
+            <span className={styles.icon}><TopicIcon icon={liveTopics.find((item) => item.id === topic)?.icon} /></span>
+            <span className={styles.label}>{topicLabel(topic, liveTopics)}</span>
+            <span className={styles.count}>{counts.byTopic.get(topic) ?? 0}</span>
+          </button>
+          {!collapsed && <span className={styles.topicDragHandle} draggable onDragStart={(event) => { event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData(TOPIC_DRAG_TYPE, topic); setDraggingTopic(topic); }} onDragEnd={() => { setDraggingTopic(null); setTopicDrop(null); }} title={`Move ${topicLabel(topic, liveTopics)}`} aria-label={`Move ${topicLabel(topic, liveTopics)}`}><GripIcon /></span>}
+        </div>;
+      })}
       <Menu open={topicMenu.open} x={topicMenu.x} y={topicMenu.y} onClose={topicMenu.close} items={topicMenuItems} />
+      <GlyphPicker open={!!iconPicker} x={iconPicker?.x ?? 0} y={iconPicker?.y ?? 0} value={liveTopics.find((topic) => topic.id === iconPicker?.topic)?.icon} onChange={(icon) => { if (iconPicker) void handleSetIcon(iconPicker.topic, icon); }} onClose={() => setIconPicker(null)} />
 
       {addingTopic ? (
         <div className={styles.addTopicRow}>

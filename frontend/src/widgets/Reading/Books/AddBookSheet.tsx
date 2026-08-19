@@ -91,7 +91,7 @@ export function AddBookSheet({ open, onClose }: AddBookSheetProps) {
   }
 
   return (
-    <Sheet open={open} onClose={onClose} title="Add a book" subtitle="Search Open Library, or add one by hand.">
+    <Sheet open={open} onClose={onClose} title="Add a book" subtitle="Search Open Library, or add one by hand." size="standard">
       <div className={styles.field}>
         <input
           type="text"

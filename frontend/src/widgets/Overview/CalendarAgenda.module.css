@@ -1,12 +1,13 @@
 .timeline {
   display: flex;
   flex-direction: column;
+  gap: 1px;
 }
 
 .dayHeading {
-  composes: eyebrow from '../../tokens/typography.module.css';
-  color: var(--text-tertiary);
-  margin: var(--space-3) 0 6px;
+  color: var(--text-secondary);
+  margin: 13px 0 7px;
+  font: 650 var(--fs-footnote)/1.25 var(--font-text);
 }
 
 .entry:first-child .dayHeading {
@@ -17,8 +18,8 @@
   position: relative;
   display: flex;
   align-items: flex-start;
-  gap: var(--space-3);
-  padding: 5px 0;
+  gap: 10px;
+  padding: 6px 0;
 }
 
 .eventOngoing .time {
@@ -38,7 +39,7 @@
   flex-shrink: 0;
   width: 8px;
   height: 8px;
-  margin-top: 5px;
+  margin-top: 6px;
   border-radius: 999px;
   background: var(--accent);
   box-shadow: 0 0 6px color-mix(in oklab, var(--accent) 60%, transparent);
@@ -53,11 +54,10 @@
 }
 
 .time {
-  composes: caption from '../../tokens/typography.module.css';
   flex-shrink: 0;
-  width: 56px;
+  width: 61px;
   color: var(--text-tertiary);
-  font-weight: 600;
+  font: 560 var(--fs-footnote)/1.35 var(--font-text);
   font-variant-numeric: tabular-nums;
 }
 
@@ -68,23 +68,22 @@
 }
 
 .title {
-  composes: caption from '../../tokens/typography.module.css';
   color: var(--text-primary);
-  font-weight: 560;
+  font: 550 var(--fs-footnote)/1.35 var(--font-text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .location {
-  composes: footnote from '../../tokens/typography.module.css';
   color: var(--text-tertiary);
+  font: 480 var(--fs-caption)/1.35 var(--font-text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .empty {
-  composes: footnote from '../../tokens/typography.module.css';
   color: var(--text-tertiary);
+  font: 500 var(--fs-footnote)/1.5 var(--font-text);
 }

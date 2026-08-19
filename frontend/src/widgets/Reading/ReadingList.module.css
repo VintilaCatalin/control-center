@@ -117,6 +117,10 @@
   margin: 0 0 var(--space-5);
 }
 
+.topicHeader { display: flex; align-items: center; gap: 17px; margin: 0 0 var(--space-5); }
+.topicHeader .heading { margin: 0; }
+.empty { composes: footnote from '../../tokens/typography.module.css'; min-height: 180px; display: grid; place-items: center; color: var(--text-tertiary); text-align: center; }
+
 .row {
   position: relative;
   display: flex;

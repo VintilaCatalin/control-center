@@ -1,70 +1,24 @@
-.panel {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  height: 100%;
-  gap: var(--space-3);
-}
-
-.addRow {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  flex-shrink: 0;
-}
-
-.input {
-  composes: callout from '../../tokens/typography.module.css';
-  flex: 1;
-  min-width: 0;
-  color: var(--text-primary);
-  background: rgba(var(--overlay-tint), 0.05);
-  border: 1px solid var(--rim);
-  border-radius: 10px;
-  padding: var(--space-2) var(--space-3);
-}
-
-.input:focus {
-  outline: none;
-  border-color: color-mix(in oklab, var(--accent) 60%, transparent);
-}
-
-.input::placeholder {
-  color: var(--text-tertiary);
-}
-
-.addBtn {
-  composes: caption from '../../tokens/typography.module.css';
-  flex-shrink: 0;
-  height: 34px;
-  padding: 0 var(--space-3);
-  border: none;
-  border-radius: 999px;
-  background: var(--accent);
-  color: #0a0c10;
-  font-weight: 650;
-  cursor: pointer;
-  transition: transform var(--dur-fast) var(--ease);
-}
-
-.addBtn:hover:not(:disabled) {
-  transform: scale(1.03);
-}
-
-.addBtn:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-
-.empty {
-  composes: footnote from '../../tokens/typography.module.css';
-  color: var(--text-tertiary);
-  text-align: center;
-  padding: var(--space-5) var(--space-2);
-}
-
-.scroll {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-}
+.panel { display: flex; flex-direction: column; min-height: 0; height: 100%; gap: 13px; }
+.intro { display: flex; align-items: baseline; justify-content: space-between; }
+.intro span { font: var(--fw-eyebrow) var(--fs-eyebrow)/var(--lh-eyebrow) var(--font-text); text-transform: uppercase; letter-spacing: var(--ls-eyebrow); color: var(--text-tertiary); }
+.intro strong { font: var(--fw-caption) var(--fs-caption)/var(--lh-caption) var(--font-text); color: var(--accent); font-weight: 600; }
+.composer { display: grid; grid-template-columns: 20px minmax(0,1fr) auto; align-items: center; gap: 7px; min-height: 43px; padding: 3px 5px 3px 11px; border: 1px solid var(--rim); border-radius: 12px; background: rgba(var(--overlay-tint), .035); }
+.composer:focus-within { border-color: color-mix(in oklab, var(--accent) 35%, var(--rim)); }
+.composerFailed { border-color: color-mix(in oklab, var(--warn) 55%, var(--rim)); }
+.error { composes: caption from '../../tokens/typography.module.css'; margin: -7px 5px 0; color: var(--warn); }
+.composer > span { color: var(--accent); font-size: 21px; }
+.composer input { font: var(--fw-callout) var(--fs-callout)/var(--lh-callout) var(--font-text); min-width: 0; border: 0; outline: 0; background: none; color: var(--text-primary); }
+.composer input::placeholder { color: var(--text-tertiary); }
+.composer button { font: var(--fw-caption) var(--fs-caption)/var(--lh-caption) var(--font-text); height: 31px; padding: 0 12px; border: 0; border-radius: 8px; background: var(--accent); color: #0a0c10; font-weight: 670; cursor: pointer; transition: opacity var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease); }
+.composer button:disabled { opacity: 0; transform: scale(.9); pointer-events: none; }
+.rule { height: 1px; background: linear-gradient(90deg, transparent, var(--rim) 8%, var(--rim) 92%, transparent); }
+.scroll { flex: 1; min-height: 0; overflow-y: auto; }
+.row { display: grid; grid-template-columns: 23px minmax(0,1fr); align-items: center; gap: 9px; min-height: 40px; padding: 4px 6px; border-radius: 9px; }
+.row:hover { background: rgba(var(--overlay-tint), .04); }
+.row button { width: 18px; height: 18px; display: grid; place-items: center; padding: 0; border: 1.5px solid var(--rim-lit); border-radius: 6px; background: none; color: transparent; cursor: pointer; }
+.row button:hover { border-color: var(--accent); color: color-mix(in oklab, var(--accent) 45%, transparent); }
+.row > span { font: var(--fw-callout) var(--fs-callout)/var(--lh-callout) var(--font-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-secondary); }
+.empty { display: flex; min-height: 150px; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: var(--text-tertiary); }
+.empty > span { width: 34px; height: 34px; display: grid; place-items: center; margin-bottom: 9px; border: 1px solid color-mix(in oklab, var(--accent) 23%, var(--rim)); border-radius: 50%; color: var(--accent); }
+.empty strong { font: var(--fw-callout) var(--fs-callout)/var(--lh-callout) var(--font-text); color: var(--text-secondary); }
+.empty p { font: var(--fw-caption) var(--fs-caption)/var(--lh-caption) var(--font-text); margin: 4px 0 0; }

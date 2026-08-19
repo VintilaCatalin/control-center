@@ -130,6 +130,7 @@ DEFAULTS = {
     "screenshots_dir": str(Path.home() / "Pictures" / "Screenshots"),
     "downloads_dir": str(Path.home() / "Downloads"),
     "accent_override": "", "reduced_motion": "false", "sidebar_default_collapsed": "false",
+    "material_style": "liquid_glass",
     "default_app": "overview",
     "background_mode": "wallpaper", "background_color": "#0b0d12", "background_image": "",
 }
@@ -159,13 +160,16 @@ SETTINGS_SCHEMA = [
                  "unless you've made the whole calendar public."},
     ]},
     {"group": "Interface", "keys": [
+        {"key": "material_style", "label": "Material style", "type": "select",
+         "options": ["blur_cyberpunk", "liquid_glass"],
+         "hint": "Blur Cyberpunk keeps the original translucent atmosphere; Liquid Glass Mac uses stronger floating materials"},
         {"key": "accent_override", "label": "Accent colour", "type": "text",
          "hint": "#rrggbb — leave blank to follow your current wallpaper automatically"},
         {"key": "sidebar_default_collapsed", "label": "Collapse sidebar by default", "type": "bool"},
         {"key": "reduced_motion", "label": "Reduce motion", "type": "bool",
          "hint": "Turns off decorative animation across the app (charts, transitions, hover motion)"},
         {"key": "default_app", "label": "Open on launch", "type": "select",
-         "options": ["overview", "games", "scene", "notes", "plex", "reading", "homelab"],
+         "options": ["overview", "games", "scene", "notes", "tasks", "plex", "reading", "homelab"],
          "hint": "Which application is showing the moment Control Center starts"},
         {"key": "background_mode", "label": "App background", "type": "select",
          "options": ["wallpaper", "color", "image"],
@@ -369,12 +373,13 @@ DEFAULT_LAYOUTS = {
     # excluded entirely - that's the separate Homelab application's job.
     "overview": {
         "order": ["pad", "ov-nowplaying", "ov-profile", "ov-weather", "ov-calendar",
-                  "ov-news", "ov-notes-tasks", "ov-recent", "ov-system"],
+                  "ov-news", "ov-notes-tasks", "ov-recent", "ov-system", "ov-horizon", "ov-continue"],
         "sizes": {
             "pad": {"w": 3, "h": 6}, "ov-nowplaying": {"w": 3, "h": 6},
             "ov-profile": {"w": 2, "h": 5}, "ov-weather": {"w": 2, "h": 4}, "ov-calendar": {"w": 2, "h": 6},
             "ov-news": {"w": 3, "h": 6}, "ov-notes-tasks": {"w": 2, "h": 5},
             "ov-recent": {"w": 3, "h": 4}, "ov-system": {"w": 3, "h": 5},
+            "ov-horizon": {"w": 1, "h": 5}, "ov-continue": {"w": 3, "h": 5},
         },
     },
     # Homelab is entirely panels now - no fixed hero composition. Every
@@ -759,7 +764,7 @@ def effective_layout(store, view):
     # "hidden" has to fall back the same way "order" does - an empty list is
     # a real, meaningful choice ("show everything"), so only trust it once
     # the user has actually saved one; before that, use the defaults.
-    raw_hidden = saved["hidden"] if "hidden" in saved else base["hidden"]
+    raw_hidden = saved["hidden"] if "hidden" in saved else base.get("hidden", [])
     hidden = [p for p in raw_hidden if known(p)]
     return {"order": order, "sizes": sizes, "hidden": hidden}
 

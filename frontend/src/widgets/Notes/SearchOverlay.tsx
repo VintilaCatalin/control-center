@@ -105,7 +105,7 @@ export function SearchOverlay({ open, onClose, notes, onSelect }: SearchOverlayP
                     <StarIcon filled size={11} />
                   </span>
                 )}
-                <span className={styles.resultFolder}>{n.folder || 'Vault root'}</span>
+                {n.folder && <span className={styles.resultFolder}>{n.folder}</span>}
               </motion.button>
             ))}
           </AnimatePresence>

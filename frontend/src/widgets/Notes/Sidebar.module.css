@@ -1,175 +1,256 @@
-/* No own frame/background/scroll region any more - this renders inside
-   the shell's shared AppSidebar (see shell/AppSidebar.module.css),
-   which already provides the glass surface and the one scrollable nav
-   region for whatever application is active. This is purely Notes' own
-   nav content: Search/Quick Capture actions, then Pinned/Recent/All
-   Notes/Folders. */
 .sidebar {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  color: var(--text-secondary);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-height: 52px;
+  padding: 2px 9px 14px;
+  flex-shrink: 0;
+}
+
+.brandGlyph {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  flex: none;
+  color: var(--accent);
+}
+
+.brandCopy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.brandCopy strong {
+  color: var(--text-primary);
+  font-size: 1.125rem;
+  font-weight: 680;
+  line-height: 1.2;
+}
+
+.brandCopy small {
+  color: var(--text-tertiary);
+  font-size: var(--fs-caption);
+  line-height: 1.25;
 }
 
 .top {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 8px;
   flex-shrink: 0;
-  margin-bottom: var(--space-5);
+  margin-bottom: 20px;
 }
 
-/* Shared row language for the two top actions and every section header -
-   icon + label, generous 38px height. This is navigation chrome, not
-   body copy, so it reads at the same brightness as the document's own
-   title (text-primary) rather than the dimmer secondary/tertiary tones
-   reserved for actual note content. */
 .navRow {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: 10px;
   width: 100%;
-  height: 36px;
-  padding: 0 var(--space-2);
-  border: none;
-  background: none;
-  border-radius: 9px;
-  color: var(--text-primary);
+  padding: 0 11px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  color: var(--text-secondary);
   cursor: pointer;
-  transition: background var(--dur-fast) var(--ease);
+  text-align: left;
+  transition: color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
 }
 
 .navRow:hover {
-  background: rgba(var(--overlay-tint), 0.08);
+  border-color: color-mix(in oklab, var(--tasks-line) 76%, transparent);
+  background: var(--tasks-hover);
+  color: var(--text-primary);
+}
+
+.navRow:focus-visible,
+.sectionHead:focus-visible,
+.folderRow:focus-visible,
+.row:focus-visible,
+.addFolderBtn:focus-visible,
+.emptyFolders button:focus-visible {
+  outline: 3px solid color-mix(in oklab, var(--accent) 12%, transparent);
+  border-color: color-mix(in oklab, var(--accent) 42%, var(--tasks-line));
+}
+
+.searchRow {
+  height: 40px;
+  background: var(--tasks-control);
+  border-color: var(--tasks-line);
+  box-shadow: inset 0 1px 0 rgba(var(--overlay-tint), .04);
+}
+
+.searchRow:hover { border-color: var(--tasks-line-strong); }
+
+.captureRow {
+  min-height: 40px;
+  background: transparent;
+  border-color: transparent;
+}
+
+.captureRow:hover {
+  border-color: transparent;
+  background: var(--tasks-hover);
 }
 
 .navIcon {
   display: grid;
   place-items: center;
-  flex-shrink: 0;
   width: 19px;
+  flex: none;
   color: var(--text-secondary);
 }
 
-.navRow:hover .navIcon {
-  color: var(--text-primary);
+.captureIcon {
+  width: 19px;
+  color: var(--accent);
 }
 
 .navLabel {
-  composes: callout from '../../tokens/typography.module.css';
-  font-size: 0.95em;
-  font-weight: 540;
   flex: 1;
-  text-align: left;
+  min-width: 0;
+  color: inherit;
+  font-size: var(--fs-footnote);
+  font-weight: 570;
 }
 
-/* Collapsed: icon-only actions, same treatment as the shell's own root
-   nav list at 72px - the folder tree itself has no icon-only form (see
-   Sidebar.tsx), so this is the entirety of collapsed Notes. */
-.sidebar[data-collapsed] .navRow {
-  justify-content: center;
-  padding: 0;
+.captureCopy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.sidebar[data-collapsed] .navLabel {
-  display: none;
+.captureCopy strong {
+  color: var(--text-primary);
+  font-size: var(--fs-footnote);
+  font-weight: 650;
 }
 
-/* No longer its own scroll container - the shell's AppSidebar already
-   provides the one scrollable nav region every application shares (see
-   shell/AppSidebar.module.css's .navScroll), so this just flows inside
-   it. */
+.captureCopy small {
+  overflow: hidden;
+  color: var(--text-tertiary);
+  font-size: var(--fs-caption);
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .scroll {
   display: flex;
   flex-direction: column;
+  min-height: 0;
+  padding-bottom: 8px;
 }
 
-/* Real separation between Recent/Pinned/All Notes - enough margin that
-   Pinned reads as its own section starting fresh, never as a
-   continuation of Recent above it. */
-.section {
-  margin-bottom: var(--space-4);
+.groupLabel {
+  padding: 0 10px 8px;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-weight: 680;
+  letter-spacing: .065em;
+  text-transform: uppercase;
 }
+
+.section { margin-bottom: 3px; }
 
 .sectionHead {
-  display: flex;
+  display: grid;
+  grid-template-columns: 13px 24px minmax(0, 1fr) auto;
   align-items: center;
-  gap: var(--space-2);
+  gap: 7px;
   width: 100%;
-  height: 34px;
-  border: none;
-  background: none;
-  border-radius: 8px;
-  color: var(--text-primary);
+  height: 43px;
+  padding: 0 9px;
+  border: 1px solid transparent;
+  border-radius: 11px;
+  background: transparent;
+  color: var(--text-secondary);
   cursor: pointer;
+  transition: background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
 }
 
 .sectionHead:hover {
-  background: rgba(var(--overlay-tint), 0.07);
+  border-color: color-mix(in oklab, var(--tasks-line) 68%, transparent);
+  background: var(--tasks-hover);
+  color: var(--text-primary);
+}
+
+.sectionHead[aria-expanded='true'] {
+  color: var(--text-primary);
+  background: color-mix(in oklab, var(--tasks-control) 68%, transparent);
 }
 
 .sectionHead .navIcon {
-  width: 16px;
-  color: inherit;
+  width: 24px;
+  color: color-mix(in oklab, var(--accent) 58%, var(--text-secondary));
 }
 
 .sectionLabel {
-  composes: callout from '../../tokens/typography.module.css';
-  font-size: 0.95em;
-  flex: 1;
-  min-width: 0;
-  text-align: left;
-  font-weight: 620;
+  overflow: hidden;
   color: inherit;
+  font-size: var(--fs-callout);
+  font-weight: 610;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.sectionCount {
-  composes: caption from '../../tokens/typography.module.css';
+.sectionCount,
+.folderCount {
   color: var(--text-tertiary);
-  padding-right: var(--space-2);
+  font-size: var(--fs-caption);
+  font-variant-numeric: tabular-nums;
+  font-weight: 570;
 }
 
 .sectionBody {
-  padding-top: 2px;
-  padding-bottom: var(--space-2);
+  margin: 3px 0 8px 20px;
+  padding: 2px 0 2px 9px;
+  border-left: 1px solid var(--tasks-line);
 }
 
-/* One row per note - spacious (36px, not the previous pass's cramped
-   32px), real contrast (text-secondary at rest, text-primary when
-   active/hovered), never opacity-dimmed. */
 .row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-2);
+  gap: 7px;
   width: 100%;
-  height: 34px;
-  border: none;
-  background: none;
-  border-radius: 8px;
-  padding-left: 3px;
-  padding-right: var(--space-2);
+  min-height: 38px;
+  padding-right: 7px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
   cursor: pointer;
+  color: var(--text-secondary);
   text-align: left;
+  transition: background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
 }
 
 .row:hover {
-  background: rgba(var(--overlay-tint), 0.05);
+  border-color: color-mix(in oklab, var(--tasks-line) 62%, transparent);
+  background: var(--tasks-hover);
+  color: var(--text-primary);
 }
 
-/* Integrated, not boxed - a soft one-sided wash (fades out, no hard
-   right edge), the same "marker, not a filled control" restraint the
-   rest of the app uses for active state. No border, no full-bleed tint -
-   the note's own icon turning accent-coloured (see .rowIcon below) is
-   the active indicator now, instead of a separate dot doing the same
-   job the icon can do on its own. */
 .rowActive {
-  background: linear-gradient(to right, color-mix(in oklab, var(--accent) 12%, transparent), transparent 85%);
+  border-color: color-mix(in oklab, var(--accent) 25%, var(--tasks-line));
+  background: color-mix(in oklab, var(--accent) 12%, var(--tasks-raised));
+  box-shadow: inset 0 1px 0 rgba(var(--overlay-tint), .055), 0 5px 13px rgba(0,0,0,.08);
+  color: var(--text-primary);
 }
 
 .rowMain {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 9px;
   min-width: 0;
   padding-left: 5px;
 }
@@ -177,141 +258,181 @@
 .rowIcon {
   display: grid;
   place-items: center;
-  flex-shrink: 0;
-  color: var(--text-secondary);
-  transition: color var(--dur-fast) var(--ease);
+  flex: none;
+  color: var(--text-tertiary);
 }
 
-.rowActive .rowIcon {
-  color: var(--accent);
-}
+.row:hover .rowIcon { color: var(--text-secondary); }
+.rowActive .rowIcon { color: var(--accent); }
 
 .rowName {
-  composes: callout from '../../tokens/typography.module.css';
-  font-size: 0.95em;
-  color: var(--text-secondary);
+  min-width: 0;
   overflow: hidden;
+  color: inherit;
+  font-size: var(--fs-footnote);
+  font-weight: 520;
   text-overflow: ellipsis;
   white-space: nowrap;
-  min-width: 0;
 }
 
-.rowActive .rowName {
-  color: var(--text-primary);
-  font-weight: 600;
-}
+.rowActive .rowName { font-weight: 630; }
 
-.rowMeta {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-}
+.rowMeta { display: flex; align-items: center; flex: none; }
 
 .pinBtn {
   display: grid;
   place-items: center;
-  width: 19px;
-  height: 19px;
-  border: none;
-  background: none;
+  width: 25px;
+  height: 25px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
   color: var(--text-tertiary);
   cursor: pointer;
   opacity: 0;
-  transition: opacity var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+  transition: opacity var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
 }
 
 .row:hover .pinBtn,
-.pinBtnActive {
-  opacity: 1;
-}
-
-.pinBtnActive {
-  color: #f2c94c;
-}
-
-/* ---- folders ---- */
+.row:focus-within .pinBtn,
+.pinBtnActive { opacity: 1; }
+.pinBtn:hover { background: var(--tasks-control); color: var(--text-primary); transform: scale(1.06); }
+.pinBtnActive { color: #e7bb57; }
 
 .foldersHead {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 34px;
-  padding: 0 0 0 var(--space-2);
-  margin-top: var(--space-3);
+  min-height: 56px;
+  margin-top: 17px;
+  padding: 13px 8px 7px 10px;
+  border-top: 1px solid var(--tasks-line);
 }
 
-.foldersLabel {
-  composes: callout from '../../tokens/typography.module.css';
-  font-size: 0.95em;
+.foldersCopy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.foldersCopy strong {
   color: var(--text-primary);
-  font-weight: 620;
+  font-size: var(--fs-footnote);
+  font-weight: 680;
+  letter-spacing: .035em;
+  text-transform: uppercase;
+}
+
+.foldersCopy small {
+  color: var(--text-tertiary);
+  font-size: var(--fs-caption);
+  line-height: 1.25;
 }
 
 .addFolderBtn {
   display: grid;
   place-items: center;
-  width: 26px;
-  height: 26px;
-  border-radius: 7px;
-  border: none;
-  background: none;
-  color: var(--text-tertiary);
+  width: 31px;
+  height: 31px;
+  padding: 0;
+  border: 1px solid var(--tasks-line);
+  border-radius: 10px;
+  background: var(--tasks-control);
+  color: var(--text-secondary);
   cursor: pointer;
-  transition:
-    color var(--dur-fast) var(--ease),
-    background var(--dur-fast) var(--ease);
+  transition: color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
 }
 
 .addFolderBtn:hover {
-  color: var(--text-primary);
-  background: rgba(var(--overlay-tint), 0.06);
+  transform: translateY(-1px);
+  border-color: color-mix(in oklab, var(--accent) 28%, var(--tasks-line));
+  background: color-mix(in oklab, var(--accent) 9%, var(--tasks-control));
+  color: var(--accent);
 }
 
-.emptyFolders {
-  composes: caption from '../../tokens/typography.module.css';
-  color: var(--text-tertiary);
-  padding: var(--space-2);
+.rootGroup {
+  margin: 3px 0 8px 13px;
+  padding-left: 9px;
+  border-left: 1px solid var(--tasks-line);
 }
 
-.folderRow {
-  composes: callout from '../../tokens/typography.module.css';
-  font-size: 0.95em;
-  display: flex;
+.rootLabel {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) auto;
   align-items: center;
   gap: 7px;
+  min-height: 32px;
+  padding: 0 8px;
+  color: var(--text-tertiary);
+  font-size: var(--fs-caption);
+  font-weight: 590;
+}
+
+.looseNotes { margin: 5px 0 0 21px; }
+
+.folderRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   width: 100%;
-  height: 34px;
-  border: none;
-  background: none;
+  min-height: 45px;
+  padding-right: 9px;
+  border: 1px solid transparent;
+  border-radius: 11px;
+  background: transparent;
   color: var(--text-primary);
   cursor: pointer;
-  border-radius: 8px;
+  transition: color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
 }
 
 .folderRow:hover {
-  background: rgba(var(--overlay-tint), 0.07);
+  border-color: color-mix(in oklab, var(--tasks-line) 68%, transparent);
+  background: var(--tasks-hover);
 }
 
 .folderIcon {
   display: grid;
   place-items: center;
-  flex-shrink: 0;
-  color: var(--text-secondary);
+  width: 23px;
+  flex: none;
+  color: color-mix(in oklab, var(--accent) 72%, var(--text-secondary));
 }
 
 .folderName {
   flex: 1;
   min-width: 0;
   overflow: hidden;
+  color: inherit;
+  font-size: var(--fs-footnote);
+  font-weight: 630;
+  text-align: left;
   text-overflow: ellipsis;
   white-space: nowrap;
-  text-align: left;
 }
 
-.folderCount {
-  composes: caption from '../../tokens/typography.module.css';
-  color: var(--text-tertiary);
-  flex-shrink: 0;
-  padding-right: var(--space-2);
+.emptyFolders {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  margin: 5px 9px 0;
+  padding: 12px;
+  border: 1px dashed var(--tasks-line);
+  border-radius: 12px;
+  background: color-mix(in oklab, var(--tasks-control) 48%, transparent);
 }
+
+.emptyFolders strong { color: var(--text-secondary); font-size: var(--fs-footnote); font-weight: 630; }
+.emptyFolders span { color: var(--text-tertiary); font-size: var(--fs-caption); line-height: 1.4; }
+.emptyFolders button { margin-top: 4px; padding: 0; border: 0; background: transparent; color: var(--accent); font-size: var(--fs-caption); font-weight: 650; cursor: pointer; }
+
+.sidebar[data-collapsed] .brand { justify-content: center; padding-left: 0; padding-right: 0; }
+.sidebar[data-collapsed] .brandCopy,
+.sidebar[data-collapsed] .navLabel,
+.sidebar[data-collapsed] .captureCopy { display: none; }
+.sidebar[data-collapsed] .top { gap: 4px; margin-bottom: 0; }
+.sidebar[data-collapsed] .navRow { justify-content: center; width: 100%; height: 42px; min-height: 42px; padding: 0; background: transparent; border-color: transparent; box-shadow: none; }
+.sidebar[data-collapsed] .navRow:hover { background: var(--tasks-hover); }
+.sidebar[data-collapsed] .captureIcon { width: 22px; height: 22px; border: 0; background: transparent; }

@@ -51,8 +51,8 @@ export function AppIcon({ app, dimmed, dropIndicator, registerRef, onDragStart, 
         ref={(el) => registerRef?.(app.id, el)}
         layout
         {...dragMotionProps}
-        whileHover={{ y: -6, scale: 1.06 }}
-        whileTap={{ scale: 0.92, y: -2 }}
+        whileHover={{ y: -2, scale: 1.015 }}
+        whileTap={{ scale: 0.98 }}
         transition={{ duration: duration.fast, ease }}
         className={[styles.appButton, dropIndicator ? styles[`drop-${dropIndicator}`] : ''].filter(Boolean).join(' ')}
         style={{ opacity: dimmed ? 0.4 : 1 }}

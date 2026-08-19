@@ -111,12 +111,8 @@
   display: grid;
   place-items: center;
   flex-shrink: 0;
-  width: 32px;
-  height: 32px;
-  border-radius: 9px;
+  width: 22px;
   color: var(--accent);
-  background: color-mix(in oklab, var(--accent) 22%, transparent);
-  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--accent) 35%, transparent);
 }
 
 .identityTitle {
@@ -219,36 +215,24 @@
   cursor: default;
 }
 
-/* A chip, not a bare glyph - every nav item gets its own small icon tile
-   (the same rounded-square language Homelab's service tiles settled on),
-   which is most of what "icon presence" actually means: a glyph floating
-   in text-sized space reads as decoration, one sitting in its own tinted
-   container reads as a real navigation target. */
+/* Bare glyphs keep the rail legible without putting a second card inside
+   every navigation row. The row remains the interaction target. */
 .navIcon {
   display: grid;
   place-items: center;
   flex-shrink: 0;
-  width: 32px;
-  height: 32px;
-  border-radius: 9px;
+  width: 22px;
   color: var(--text-tertiary);
-  background: rgba(var(--overlay-tint), 0.035);
   transition:
-    color var(--dur-fast) var(--ease),
-    background var(--dur-fast) var(--ease),
-    transform var(--dur-fast) var(--ease);
+    color var(--dur-fast) var(--ease);
 }
 
 .navItem:hover:not(:disabled) .navIcon {
   color: var(--text-primary);
-  background: rgba(var(--overlay-tint), 0.09);
-  transform: translateY(-1px);
 }
 
 .navItemActive .navIcon {
   color: var(--accent);
-  background: color-mix(in oklab, var(--accent) 22%, transparent);
-  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--accent) 35%, transparent);
 }
 
 .navLabel {
@@ -291,4 +275,43 @@
   padding-top: var(--space-2);
   margin-top: var(--space-2);
   border-top: 1px solid var(--rim);
+}
+
+/* Liquid Glass promotes the persistent rail to a floating navigation
+   material in every application. Blur Cyberpunk keeps the canonical flush
+   window edge defined above. */
+:global(html[data-material='liquid']) .sidebar {
+  height: calc(100% - 28px);
+  margin: 14px 0 14px 14px;
+  overflow: hidden;
+  border: 1px solid var(--material-line);
+  border-radius: 22px;
+  background: color-mix(in oklab, var(--material-nav) 95%, transparent);
+  box-shadow: var(--material-shadow), var(--material-inner);
+  backdrop-filter: blur(30px) saturate(142%);
+}
+
+:global(html[data-material='liquid']) .sidebar::before {
+  height: 34%;
+  background:
+    radial-gradient(ellipse at 28% -12%, color-mix(in oklab, var(--accent) 12%, transparent), transparent 58%),
+    linear-gradient(rgba(var(--overlay-tint), .055), transparent);
+}
+
+:global(html[data-material='liquid']) .sidebar::after {
+  content: '';
+  position: absolute;
+  z-index: 5;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 1px 0 rgba(var(--overlay-tint), .13), inset 0 0 0 1px rgba(var(--overlay-tint), .02);
+  pointer-events: none;
+}
+
+@media (max-width: 620px) {
+  :global(html[data-material='liquid']) .sidebar {
+    height: calc(100% - 16px);
+    margin: 8px 0 8px 8px;
+    border-radius: 18px;
+  }
 }

@@ -1,176 +1,178 @@
-.nav {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-height: 100%;
-}
+.nav { display: flex; flex-direction: column; gap: 2px; min-height: 100%; padding-bottom: 2px; }
+.brand { display: flex; align-items: center; gap: 9px; padding: 2px var(--space-2) var(--space-4); }
+.brandGlyph { display: grid; place-items: center; color: var(--accent); }
+.brandLabel { composes: headline from '../../tokens/typography.module.css'; font-weight: 650; color: var(--text-primary); letter-spacing: .01em; }
+.search { display: flex; align-items: center; gap: 7px; width: 100%; box-sizing: border-box; height: 32px; margin: 0 0 10px; padding: 0 11px; border: 1px solid color-mix(in oklab, var(--rim) 74%, transparent); border-radius: 9px; background: rgba(var(--overlay-tint), .025); color: var(--text-tertiary); transition: border-color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease); }
+.search:focus-within { border-color: color-mix(in oklab, var(--accent) 38%, var(--rim)); background: rgba(var(--overlay-tint), .045); box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 5%, transparent); color: var(--text-secondary); }
+.search input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--text-primary); font: var(--fw-footnote) var(--fs-footnote)/var(--lh-footnote) var(--font-text); }
+.search input::placeholder { color: var(--text-tertiary); }
+.search button { display: grid; place-items: center; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 50%; background: rgba(var(--overlay-tint), .06); color: var(--text-tertiary); cursor: pointer; }
+.smartViews { display: flex; flex-direction: column; gap: 2px; }
+.item { composes: callout from '../../tokens/typography.module.css'; display: flex; align-items: center; gap: var(--space-3); width: 100%; height: 37px; padding: 0 var(--space-3); border: 0; border-radius: 9px; background: none; color: var(--text-secondary); cursor: pointer; transition: color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease); }
+.item:hover { color: var(--text-primary); background: rgba(var(--overlay-tint), .055); }
+.itemActive { color: var(--text-primary); background: color-mix(in oklab, var(--accent) 16%, transparent); box-shadow: 0 7px 20px color-mix(in oklab, var(--accent) 4%, transparent); }
+.icon { display: grid; place-items: center; flex: none; width: 19px; }
+.itemActive .icon, .itemActive .areaIcon, .itemActive .projectIcon { color: var(--accent); }
+.label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
+.count { font: var(--fw-caption) var(--fs-caption)/var(--lh-caption) var(--font-text); flex: none; color: var(--text-tertiary); }
+.organization { display: flex; flex-direction: column; margin-top: 15px; }
+.organizationLabel, .subsectionLabel { font: var(--fw-eyebrow) var(--fs-eyebrow)/var(--lh-eyebrow) var(--font-text); letter-spacing: var(--ls-eyebrow); text-transform: uppercase; color: var(--text-tertiary); }
+.organizationLabel { padding: 0 9px 8px; }
+.subsectionLabel { padding: 17px 9px 7px; opacity: .82; }
+.createDock { display: flex; flex-direction: column; margin: 0 3px 2px; overflow: hidden; border: 1px solid color-mix(in oklab, var(--rim) 70%, transparent); border-radius: 11px; background: rgba(var(--overlay-tint), .022); }
+.createDock button { display: grid; grid-template-columns: 25px minmax(0,1fr); gap: 9px; align-items: center; min-height: 43px; padding: 5px 9px; border: 0; background: transparent; color: var(--text-secondary); text-align: left; cursor: pointer; transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease); }
+.createDock button + button { border-top: 1px solid color-mix(in oklab, var(--rim) 62%, transparent); }
+.createDock button:hover { background: rgba(var(--overlay-tint), .05); color: var(--text-primary); }
+.createDock button > span:last-child { display: flex; flex-direction: column; min-width: 0; gap: 1px; }
+.createDock strong { font: var(--fw-footnote) var(--fs-footnote)/var(--lh-footnote) var(--font-text); font-weight: 620; }
+.createDock small { font: var(--fw-caption) var(--fs-caption)/var(--lh-caption) var(--font-text); overflow: hidden; color: var(--text-tertiary); text-overflow: ellipsis; white-space: nowrap; }
+.createGlyph { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 8px; background: color-mix(in oklab, var(--accent) 11%, transparent); color: var(--accent); }
+.entityEmpty { display: flex; flex-direction: column; gap: 3px; margin: 2px 9px 5px 43px; padding: 3px 0 6px; }
+.entityEmpty strong { font: var(--fw-footnote) var(--fs-footnote)/var(--lh-footnote) var(--font-text); color: var(--text-secondary); font-weight: 600; }
+.entityEmpty span { font: var(--fw-caption) var(--fs-caption)/var(--lh-caption) var(--font-text); color: var(--text-tertiary); line-height: 1.35; }
+.areaBlock { position: relative; display: flex; flex-direction: column; margin-bottom: 3px; border-radius: 10px; transition: opacity var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease); }
+.areaHeader { position: relative; display: flex; align-items: center; min-width: 0; }
+.areaItem { height: 45px; gap: 10px; padding: 0 82px 0 6px; font-weight: 630; color: color-mix(in oklab, var(--text-primary) 88%, var(--text-secondary)); }
+.areaIcon { display: grid; place-items: center; flex: none; width: 28px; height: 28px; border-radius: 9px; background: color-mix(in oklab, var(--accent) 9%, transparent); color: color-mix(in oklab, var(--accent) 72%, var(--text-secondary)); }
+.areaCopy { display: flex; flex: 1; flex-direction: column; min-width: 0; gap: 1px; text-align: left; }
+.areaCopy small { font: var(--fw-caption) var(--fs-caption)/var(--lh-caption) var(--font-text); color: var(--text-tertiary); font-weight: 450; }
+.areaActions { position: absolute; z-index: 2; right: 3px; top: 50%; display: flex; align-items: center; transform: translateY(-50%); }
+.dragHandle, .areaQuickAdd, .moreButton, .disclosure { display: grid; place-items: center; width: 24px; height: 26px; padding: 0; border: 0; border-radius: 7px; background: transparent; color: var(--text-tertiary); transition: opacity var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease); }
+.dragHandle { cursor: grab; opacity: 0; }
+.dragHandle:active { cursor: grabbing; }
+.areaQuickAdd, .moreButton { cursor: pointer; opacity: 0; }
+.areaHeader:hover .dragHandle, .areaHeader:focus-within .dragHandle, .areaHeader:hover .areaQuickAdd, .areaHeader:focus-within .areaQuickAdd { opacity: .72; }
+.dragHandle:hover, .areaQuickAdd:hover, .moreButton:hover, .disclosure:hover { color: var(--text-primary); background: rgba(var(--overlay-tint), .075); }
+.areaQuickAdd:hover { color: var(--accent); }
+.disclosure { cursor: pointer; opacity: .72; transform: rotate(0deg); }
+.disclosureExpanded { transform: rotate(90deg); }
+.areaProjects { display: flex; flex-direction: column; gap: 1px; margin: 1px 0 8px; }
+.entityRow { position: relative; display: flex; min-width: 0; border-radius: 8px; transition: opacity var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease); }
+.entityRow .item { min-width: 0; }
+.projectItem { height: 34px; gap: 10px; padding: 0 55px 0 8px; color: color-mix(in oklab, var(--text-secondary) 88%, var(--text-tertiary)); font-size: .9em; font-weight: 490; }
+.projectIcon { display: grid; place-items: center; flex: none; width: 26px; color: color-mix(in oklab, var(--text-tertiary) 78%, var(--accent)); opacity: .82; }
+.projectCount { font: var(--fw-caption) var(--fs-caption)/var(--lh-caption) var(--font-text); color: var(--text-tertiary); }
+.rowActions { position: absolute; z-index: 2; right: 4px; top: 50%; display: flex; align-items: center; transform: translateY(-50%); }
+.entityRow:hover .rowActions .dragHandle, .entityRow:focus-within .rowActions .dragHandle, .entityRow:hover .moreButton, .entityRow:focus-within .moreButton { opacity: .72; }
+.entityRow:hover .projectCount { opacity: 0; }
+.nestedProject { padding-left: 8px; }
+.independentSection { display: flex; flex-direction: column; border-radius: 10px; transition: background var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease); }
+.dragging { opacity: .38; }
+.dropBefore::before, .dropAfter::after { content: ''; position: absolute; z-index: 4; left: 7px; right: 7px; height: 2px; border-radius: 2px; background: var(--accent); box-shadow: 0 0 10px color-mix(in oklab, var(--accent) 40%, transparent); pointer-events: none; }
+.dropBefore::before { top: -1px; }
+.dropAfter::after { bottom: -1px; }
+.dropInto { background: color-mix(in oklab, var(--accent) 10%, transparent); box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--accent) 20%, transparent); }
+.sectionDrop { background: color-mix(in oklab, var(--accent) 6%, transparent); box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--accent) 16%, transparent); }
+.unassignedEmpty { font: var(--fw-caption) var(--fs-caption)/var(--lh-caption) var(--font-text); margin: 2px 8px 5px; padding: 8px; text-align: center; color: var(--text-tertiary); }
+.editRow { display: flex; flex: 1; flex-direction: column; gap: 3px; padding: 3px 8px 5px; }
+.nestedEdit { margin-left: 34px; }
+.renameRow { padding-left: 6px; }
+.addInput { composes: callout from '../../tokens/typography.module.css'; width: 100%; min-width: 0; height: 32px; padding: 4px 9px; border: 1px solid color-mix(in oklab, var(--accent) 44%, var(--rim)); border-radius: 8px; outline: none; background: rgba(var(--overlay-tint), .05); color: var(--text-primary); box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 5%, transparent); }
+.addInput[aria-invalid='true'] { border-color: color-mix(in oklab, var(--warn) 58%, var(--rim)); }
+.entityError { font: var(--fw-caption) var(--fs-caption)/var(--lh-caption) var(--font-text); color: var(--warn); padding-left: 3px; }
+.logbookItem { margin-top: 4px; color: var(--text-tertiary); }
+.nav[data-collapsed] .brand { justify-content: center; padding-left: 0; padding-right: 0; }
+.nav[data-collapsed] .brandLabel, .nav[data-collapsed] .label, .nav[data-collapsed] .count, .nav[data-collapsed] .organizationLabel, .nav[data-collapsed] .subsectionLabel, .nav[data-collapsed] .createDock, .nav[data-collapsed] .areaCopy small, .nav[data-collapsed] .projectCount { display: none; }
+.nav[data-collapsed] .item { justify-content: center; padding: 0; }
+.nav[data-collapsed] .organization { margin-top: 8px; }
+.nav[data-collapsed] .areaHeader { display: block; }
+.nav[data-collapsed] .areaItem { height: 37px; }
+.nav[data-collapsed] .areaIcon { width: 20px; height: 20px; background: transparent; }
+.nav[data-collapsed] .areaActions, .nav[data-collapsed] .rowActions, .nav[data-collapsed] .areaProjects, .nav[data-collapsed] .entityEmpty { display: none; }
 
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 2px var(--space-2) var(--space-4);
-}
+/* Clearer navigation material and type hierarchy for the Tasks experiment. */
+.nav { gap: 3px; padding-bottom: 4px; }
+.brand { gap: 10px; padding: 4px 9px 18px; }
+.brandGlyph { filter: drop-shadow(0 4px 10px color-mix(in oklab, var(--accent) 24%, transparent)); }
+.brandLabel { color: var(--text-primary); font-size: 1.125rem; font-weight: 680; }
+.search { height: 38px; margin-bottom: 13px; padding: 0 12px; border-color: var(--tasks-line); border-radius: 12px; background: var(--tasks-control); color: var(--text-secondary); box-shadow: inset 0 1px 0 rgba(var(--overlay-tint), .04); }
+.search:hover { border-color: var(--tasks-line-strong); }
+.search:focus-within { border-color: color-mix(in oklab, var(--accent) 48%, var(--tasks-line)); background: var(--tasks-control); box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 9%, transparent); }
+.search input { color: var(--text-primary); font-size: var(--fs-footnote); font-weight: 520; }
+.search input::placeholder { color: var(--text-tertiary); }
+.search button { width: 23px; height: 23px; background: var(--tasks-hover); color: var(--text-secondary); }
+.smartViews { gap: 3px; }
+.item { height: 42px; gap: 11px; padding: 0 12px; border: 1px solid transparent; border-radius: 11px; color: var(--text-secondary); font-size: var(--fs-callout); font-weight: 560; }
+.item:hover { border-color: color-mix(in oklab, var(--tasks-line) 65%, transparent); background: var(--tasks-hover); color: var(--text-primary); }
+.item:focus-visible { outline: 3px solid color-mix(in oklab, var(--accent) 10%, transparent); border-color: color-mix(in oklab, var(--accent) 38%, var(--tasks-line)); }
+.itemActive { border-color: color-mix(in oklab, var(--accent) 25%, var(--tasks-line)); background: color-mix(in oklab, var(--accent) 13%, var(--tasks-raised)); box-shadow: inset 0 1px 0 rgba(var(--overlay-tint), .06), 0 5px 14px rgba(0,0,0,.1); color: var(--text-primary); }
+.itemActive:hover { background: color-mix(in oklab, var(--accent) 16%, var(--tasks-raised)); }
+.icon { width: 20px; }
+.count { color: var(--text-tertiary); font-size: var(--fs-caption); font-weight: 570; }
+.organization { margin-top: 20px; }
+.organizationLabel, .subsectionLabel { color: var(--text-secondary); font-size: var(--fs-caption); font-weight: 680; letter-spacing: .065em; }
+.organizationLabel { padding: 0 10px 10px; }
+.subsectionLabel { padding: 20px 10px 8px; color: var(--text-tertiary); opacity: 1; }
+.createDock { margin: 1px 3px 5px; border-color: var(--tasks-line); border-radius: 13px; background: var(--tasks-control); box-shadow: inset 0 1px 0 rgba(var(--overlay-tint), .035); }
+.createDock button { min-height: 48px; padding: 6px 10px; color: var(--text-secondary); }
+.createDock button + button { border-top-color: var(--tasks-line); }
+.createDock button:hover { background: var(--tasks-hover); color: var(--text-primary); }
+.createDock strong { color: inherit; font-size: var(--fs-footnote); font-weight: 650; }
+.createDock small { color: var(--text-tertiary); font-size: var(--fs-caption); }
+.createGlyph { width: 27px; height: 27px; border: 1px solid color-mix(in oklab, var(--accent) 18%, var(--tasks-line)); border-radius: 9px; background: color-mix(in oklab, var(--accent) 12%, var(--tasks-raised)); }
+.entityEmpty { gap: 4px; margin: 4px 10px 7px 45px; padding: 4px 0 7px; }
+.entityEmpty strong { color: var(--text-secondary); font-size: var(--fs-footnote); font-weight: 620; }
+.entityEmpty span { color: var(--text-tertiary); font-size: var(--fs-caption); line-height: 1.42; }
+.areaBlock { margin-bottom: 4px; border-radius: 12px; }
+.areaItem { height: 50px; gap: 11px; padding-left: 7px; color: var(--text-primary); font-size: var(--fs-callout); font-weight: 650; }
+.areaIcon { width: 31px; height: 31px; border: 1px solid color-mix(in oklab, var(--accent) 17%, var(--tasks-line)); border-radius: 10px; background: color-mix(in oklab, var(--accent) 11%, var(--tasks-control)); color: color-mix(in oklab, var(--accent) 80%, var(--text-primary)); }
+.areaCopy { gap: 2px; }
+.areaCopy small { color: var(--text-tertiary); font-size: var(--fs-caption); }
+.dragHandle, .areaQuickAdd, .moreButton, .disclosure { color: var(--text-tertiary); }
+.dragHandle:hover, .areaQuickAdd:hover, .moreButton:hover, .disclosure:hover { background: var(--tasks-control); color: var(--text-primary); }
+.areaProjects { gap: 2px; margin: 2px 0 9px 13px; padding-left: 10px; border-left: 1px solid var(--tasks-line); }
+.entityRow { border-radius: 10px; }
+.projectItem { height: 39px; gap: 10px; padding-left: 7px; color: var(--text-secondary); font-size: var(--fs-footnote); font-weight: 550; }
+.projectIcon { width: 28px; color: color-mix(in oklab, var(--accent) 53%, var(--text-secondary)); opacity: 1; }
+.projectCount { color: var(--text-tertiary); font-size: var(--fs-caption); }
+.nestedProject { padding-left: 0; }
+.independentSection { border-radius: 11px; }
+.dropBefore::before, .dropAfter::after { height: 3px; box-shadow: 0 0 12px color-mix(in oklab, var(--accent) 38%, transparent); }
+.dropInto { background: color-mix(in oklab, var(--accent) 12%, var(--tasks-control)); box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--accent) 30%, var(--tasks-line)); }
+.sectionDrop { background: color-mix(in oklab, var(--accent) 8%, var(--tasks-control)); box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--accent) 24%, var(--tasks-line)); }
+.unassignedEmpty { margin: 3px 9px 6px; padding: 9px; color: var(--text-tertiary); font-size: var(--fs-caption); }
+.editRow { gap: 4px; }
+.addInput { height: 37px; padding: 5px 10px; border-color: color-mix(in oklab, var(--accent) 50%, var(--tasks-line)); border-radius: 10px; background: var(--tasks-control); color: var(--text-primary); font-size: var(--fs-footnote); box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 9%, transparent); }
+.entityError { font-size: var(--fs-caption); }
+.logbookItem { color: var(--text-secondary); }
 
-.brandGlyph {
-  display: grid;
-  place-items: center;
-  color: var(--accent);
-}
+/* Creation belongs to the navigation flow; it should not read as a card. */
+.createDock { gap: 1px; margin: 0 0 4px; overflow: visible; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+.createDock button { grid-template-columns: 20px minmax(0, 1fr); gap: 8px; min-height: 36px; padding: 0 10px; border: 0; border-radius: 9px; color: var(--text-secondary); }
+.createDock button + button { border-top: 0; }
+.createDock button:hover { background: var(--tasks-hover); color: var(--text-primary); }
+.createDock strong { overflow: hidden; font-size: var(--fs-footnote); font-weight: 570; text-overflow: ellipsis; white-space: nowrap; }
+.createGlyph { width: 19px; height: auto; border: 0; border-radius: 0; background: transparent; color: var(--accent); }
+.areaIcon { width: 23px; height: auto; border: 0; border-radius: 0; background: transparent; }
+.areaItem { padding-left: 11px; }
 
-.brandLabel {
-  composes: headline from '../../tokens/typography.module.css';
-  font-weight: 650;
-  color: var(--text-primary);
-  letter-spacing: 0.01em;
-}
+/* Things-like outline hierarchy: one quiet active wash, no connector rail,
+   and hover never becomes a second selected state. */
+.item:hover { border-color: transparent; background: rgba(var(--overlay-tint), .035); }
+.itemActive, .itemActive:hover { border-color: transparent; background: color-mix(in oklab, var(--accent) 7%, transparent); box-shadow: none; }
+.areaItem { height: 43px; font-weight: 620; }
+.areaProjects { margin: 1px 0 8px 22px; padding-left: 0; border-left: 0; }
+.projectItem { height: 36px; }
+.dragHandle:hover, .areaQuickAdd:hover, .moreButton:hover, .disclosure:hover { background: transparent; }
 
-.groupLabel {
-  composes: eyebrow from '../../tokens/typography.module.css';
-  color: var(--text-tertiary);
-  padding: var(--space-4) var(--space-2) 6px;
-}
+.smartViews { gap: 1px; }
+.item { height: 37px; border-radius: 8px; font-size: var(--fs-footnote); }
+.organization { flex: 1; min-height: 0; margin-top: 12px; }
+.organizationLabel { padding-bottom: 7px; }
+.subsectionLabel { padding-top: 16px; padding-bottom: 6px; }
+.areaItem { height: 38px; }
+.projectItem { height: 32px; }
+.createDock { flex-direction: row; gap: 3px; margin-top: auto; padding-top: 10px; border-top: 1px solid var(--tasks-line); }
+.createDock button { grid-template-columns: 17px minmax(0, 1fr); min-width: 0; min-height: 32px; padding: 0 7px; }
 
-.item {
-  composes: callout from '../../tokens/typography.module.css';
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  width: 100%;
-  height: 38px;
-  padding: 0 var(--space-3);
-  border: none;
-  border-radius: 10px;
-  background: none;
-  color: var(--text-secondary);
-  font-weight: 560;
-  font-size: 0.95em;
-  cursor: pointer;
-  transition:
-    color var(--dur-fast) var(--ease),
-    background var(--dur-fast) var(--ease);
-}
-
-.item:hover {
-  color: var(--text-primary);
-  background: rgba(var(--overlay-tint), 0.06);
-}
-
-.itemActive {
-  color: var(--text-primary);
-  background: color-mix(in oklab, var(--accent) 18%, transparent);
-}
-
-.icon {
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  width: 19px;
-  color: inherit;
-}
-
-.itemActive .icon {
-  color: var(--accent);
-}
-
-.label {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  text-align: left;
-}
-
-.count {
-  composes: caption from '../../tokens/typography.module.css';
-  color: var(--text-tertiary);
-  flex-shrink: 0;
-}
-
-/* One level of real indentation for Projects under an Area - Notes'
-   FolderRow uses a per-depth padding formula for arbitrary nesting; Tasks
-   only ever has this one level, so a single fixed offset is enough. */
-.indented {
-  padding-left: calc(var(--space-3) + 19px + var(--space-3));
-}
-
-.areaItem {
-  font-weight: 600;
-}
-
-.projectItem {
-  font-weight: 500;
-}
-
-.disclosure {
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  width: 14px;
-  height: 14px;
-  margin-left: -6px;
-  color: var(--text-tertiary);
-  transform: rotate(90deg);
-  transition: transform var(--dur-fast) var(--ease);
-}
-
-.disclosureCollapsed {
-  transform: rotate(0deg);
-}
-
-.addProjectBtn {
-  color: var(--text-tertiary);
-}
-
-.addRow {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  height: 38px;
-  padding: 0 var(--space-3);
-}
-
-.addInput {
-  composes: callout from '../../tokens/typography.module.css';
-  flex: 1;
-  min-width: 0;
-  color: var(--text-primary);
-  background: rgba(var(--overlay-tint), 0.05);
-  border: 1px solid var(--rim);
-  border-radius: 8px;
-  padding: 5px 8px;
-}
-
-.addInput:focus {
-  outline: none;
-  border-color: color-mix(in oklab, var(--accent) 55%, var(--rim));
-}
-
-/* Logbook - visually de-emphasized and pinned to the very bottom, same
-   placement/weight Things gives it (a record, not an active view). */
-.logbookItem {
-  margin-top: auto;
-  color: var(--text-tertiary);
-}
-
-.nav[data-collapsed] .brand {
-  justify-content: center;
-  padding-left: 0;
-  padding-right: 0;
-}
-
-.nav[data-collapsed] .brandLabel {
-  display: none;
-}
-
-.nav[data-collapsed] .item {
-  justify-content: center;
-  padding: 0;
-}
-
-.nav[data-collapsed] .label,
-.nav[data-collapsed] .count,
-.nav[data-collapsed] .groupLabel {
-  display: none;
-}
+/* Compact Things-style outline. Creation lives beside each section title. */
+.sectionHeading { display: flex; align-items: center; justify-content: space-between; min-height: 30px; padding: 13px 8px 4px 10px; color: var(--text-tertiary); font: 680 var(--fs-caption)/1 var(--font-text); letter-spacing: .065em; text-transform: uppercase; }
+.sectionHeading button { display: grid; place-items: center; width: 25px; height: 25px; padding: 0; border: 0; border-radius: 7px; background: transparent; color: var(--text-tertiary); cursor: pointer; transition: color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease); }
+.sectionHeading button:hover { background: rgba(var(--overlay-tint), .035); color: var(--accent); }
+.areaItem { padding-right: 58px; }
+.areaProjects { gap: 0; margin: 0 0 7px 15px; padding: 0; border: 0; }
+.projectItem { gap: 9px; padding-left: 0; }
+.projectIcon { width: 18px; color: var(--accent); }
+.nestedProject { padding-left: 0; }
+.logbookItem { flex: none; margin-top: 8px; }
+.nav[data-collapsed] .sectionHeading { display: none; }

@@ -85,6 +85,7 @@ export function IconSheet({ app, onClose }: IconSheetProps) {
       onClose={onClose}
       title={app ? `Icon for ${app.label}` : ''}
       subtitle="Pick one below, choose a file, detect it automatically, or paste a link."
+      size="wide"
       actions={
         <>
           <button type="button" className={styles.btn} onClick={() => apply(null, true)} disabled={busy}>

@@ -1,151 +1,54 @@
-.zone {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: var(--space-4);
-  padding: var(--space-4);
+.weather { display: flex; flex-direction: column; justify-content: center; gap: 15px; height: 100%; padding: 5px 3px 2px; container-type: size; }
+.empty { display: grid; place-items: center; height: 100%; color: var(--text-tertiary); font: 520 var(--fs-footnote)/1.45 var(--font-text); }
+.heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.place { overflow: hidden; color: var(--text-primary); font: 670 var(--fs-callout)/1.2 var(--font-text); text-overflow: ellipsis; white-space: nowrap; }
+.condition { overflow: hidden; color: var(--text-secondary); font: 530 var(--fs-footnote)/1.2 var(--font-text); text-overflow: ellipsis; white-space: nowrap; }
+
+.current { display: grid; grid-template-columns: auto 1fr auto; align-items: center; min-height: 78px; }
+.temperature { display: flex; align-items: flex-start; min-width: 0; }
+.number { color: var(--text-primary); font: 710 clamp(3.2rem, 13cqi, 5.15rem)/.84 var(--font-display); letter-spacing: -.065em; font-variant-numeric: tabular-nums; }
+.degree { margin: 3px 0 0 4px; color: var(--text-secondary); font: 620 var(--fs-callout)/1 var(--font-text); }
+.sky { position: relative; display: grid; place-items: center; min-width: 90px; color: color-mix(in oklab, var(--accent) 72%, var(--text-primary)); }
+.sky svg { position: relative; z-index: 1; filter: drop-shadow(0 8px 18px color-mix(in oklab, var(--accent) 18%, transparent)); }
+.iconGlow { position: absolute; width: 70px; height: 70px; border-radius: 50%; background: color-mix(in oklab, var(--accent) 10%, transparent); filter: blur(16px); }
+.todayRange { display: grid; grid-template-columns: auto auto; align-items: baseline; gap: 2px 11px; min-width: 66px; padding-left: 15px; border-left: 1px solid var(--rim); }
+.todayRange span { grid-column: 1 / -1; margin-bottom: 3px; color: var(--text-tertiary); font: 650 var(--fs-caption)/1 var(--font-text); letter-spacing: .055em; text-transform: uppercase; }
+.todayRange strong, .todayRange em { color: var(--text-primary); font: 650 var(--fs-callout)/1 var(--font-text); font-style: normal; font-variant-numeric: tabular-nums; }
+.todayRange em { color: var(--text-tertiary); font-weight: 540; }
+
+.facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid var(--rim); border-bottom: 1px solid var(--rim); }
+.fact { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 10px 8px; color: var(--text-tertiary); }
+.fact:first-child { padding-left: 1px; }
+.fact + .fact { border-left: 1px solid var(--rim); }
+.fact svg { flex: none; width: 15px; height: 15px; color: color-mix(in oklab, var(--accent) 66%, var(--text-tertiary)); }
+.fact > span { display: flex; flex-direction: column; min-width: 0; gap: 3px; }
+.fact small { overflow: hidden; color: var(--text-tertiary); font: 520 var(--fs-caption)/1 var(--font-text); text-overflow: ellipsis; white-space: nowrap; }
+.fact strong { overflow: hidden; color: var(--text-primary); font: 620 var(--fs-footnote)/1 var(--font-text); text-overflow: ellipsis; white-space: nowrap; }
+
+.outlook { min-width: 0; }
+.outlookLabel { display: block; margin-bottom: 7px; color: var(--text-tertiary); font: 650 var(--fs-caption)/1 var(--font-text); letter-spacing: .055em; text-transform: uppercase; }
+.days { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.day { display: grid; grid-template-columns: 1fr; justify-items: center; gap: 6px; min-width: 0; padding: 5px 3px; color: var(--text-tertiary); border-radius: 9px; transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease); }
+.day:hover { background: rgba(var(--overlay-tint), .05); color: var(--text-primary); }
+.dayName { overflow: hidden; width: 100%; color: currentColor; font: 620 var(--fs-caption)/1 var(--font-text); text-align: center; text-overflow: ellipsis; white-space: nowrap; }
+.day svg { color: color-mix(in oklab, var(--accent) 62%, var(--text-secondary)); }
+.dayTemps { display: flex; gap: 5px; font: 590 var(--fs-caption)/1 var(--font-text); font-variant-numeric: tabular-nums; }
+.dayTemps strong { color: var(--text-primary); }
+.dayTemps em { color: var(--text-tertiary); font-style: normal; font-weight: 510; }
+
+@container (max-width: 340px) {
+  .sky { min-width: 62px; }
+  .sky svg { width: 52px; height: 52px; }
+  .todayRange { padding-left: 10px; }
+  .fact { gap: 5px; padding-inline: 5px; }
+  .fact svg { display: none; }
+  .day:nth-child(5) { display: none; }
+  .days { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 
-.empty {
-  composes: footnote from '../../tokens/typography.module.css';
-  color: var(--text-tertiary);
-}
-
-.hero {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-}
-
-.heroIcon {
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  width: 64px;
-  height: 64px;
-  border-radius: 18px;
-  color: var(--accent);
-  background: radial-gradient(circle at 30% 25%, color-mix(in oklab, var(--accent) 22%, transparent), transparent 70%), rgba(var(--overlay-tint), 0.05);
-  border: 1px solid var(--rim);
-}
-
-.nowText {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.place {
-  composes: eyebrow from '../../tokens/typography.module.css';
-  color: var(--text-tertiary);
-  letter-spacing: 0.09em;
-  margin-bottom: 4px;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.temp {
-  font-family: var(--display);
-  font-stretch: 87.5%;
-  font-weight: 580;
-  font-size: clamp(2.4rem, 3.6vw, 3.1rem);
-  line-height: 1.05;
-  color: var(--text-primary);
-}
-
-.temp sup {
-  font-size: var(--fs-headline);
-  font-weight: 500;
-  color: var(--text-tertiary);
-  vertical-align: super;
-}
-
-.condition {
-  composes: callout from '../../tokens/typography.module.css';
-  color: var(--text-secondary);
-  font-weight: 560;
-}
-
-.stats {
-  composes: caption from '../../tokens/typography.module.css';
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-  color: var(--text-tertiary);
-}
-
-.stat {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.stat svg {
-  flex-shrink: 0;
-  opacity: 0.8;
-}
-
-.forecast {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--space-1);
-  padding-top: var(--space-3);
-  border-top: 1px solid var(--rim);
-}
-
-.day {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 7px;
-  padding: var(--space-2) 4px;
-  border-radius: var(--r-tile);
-  color: var(--text-tertiary);
-  transition: background var(--dur-fast) var(--ease);
-}
-
-.day:hover {
-  background: rgba(var(--overlay-tint), 0.05);
-  color: var(--text-primary);
-}
-
-.dayLabel {
-  composes: caption from '../../tokens/typography.module.css';
-  font-weight: 650;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.dayHigh {
-  composes: callout from '../../tokens/typography.module.css';
-  font-weight: 650;
-  color: var(--text-primary);
-}
-
-.dayLow {
-  composes: caption from '../../tokens/typography.module.css';
-  opacity: 0.6;
-}
-
-/* One shared scale across the whole 5-day window (see WeatherGlance.tsx's
-   trackMin/trackMax) - a narrow range reads as a short bar, a wide swing
-   reads as a tall one, at a glance, instead of two bare stacked numbers. */
-.rangeTrack {
-  position: relative;
-  width: 4px;
-  height: 40px;
-  border-radius: 999px;
-  background: rgba(var(--overlay-tint), 0.08);
-}
-
-.rangeBar {
-  position: absolute;
-  left: 0;
-  right: 0;
-  border-radius: 999px;
-  background: linear-gradient(180deg, color-mix(in oklab, var(--warn) 70%, var(--accent)), var(--accent) 60%, color-mix(in oklab, #6fa8e0 70%, var(--accent)));
+@container (max-height: 205px) {
+  .current { min-height: 64px; }
+  .facts { display: none; }
+  .outlookLabel { margin-bottom: 5px; }
+  .day { gap: 4px; padding-block: 3px; }
 }

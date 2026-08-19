@@ -1,0 +1,139 @@
+.inspector { position: relative; z-index: 2; display: flex; flex-direction: column; min-width: 0; min-height: 0; height: 100%; border-left: 1px solid var(--rim); background: linear-gradient(145deg, rgba(var(--overlay-tint), .055), rgba(var(--overlay-tint), .018)); box-shadow: -18px 0 55px rgba(0,0,0,.07); }
+.topbar { display: flex; align-items: center; justify-content: space-between; min-height: 58px; padding: 0 19px 0 23px; }
+.eyebrow { composes: eyebrow from '../../tokens/typography.module.css'; color: var(--text-tertiary); }
+.close { width: 30px; height: 30px; border: 0; border-radius: 9px; background: none; color: var(--text-tertiary); font-size: 22px; line-height: 1; cursor: pointer; transition: color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease); }
+.close:hover { color: var(--text-primary); background: rgba(var(--overlay-tint), .07); }
+.scroll { flex: 1; min-height: 0; overflow-y: auto; padding: 11px 24px 24px; }
+.titleBlock { display: grid; grid-template-columns: 26px minmax(0,1fr); gap: 12px; align-items: start; }
+.heroCheck { width: 23px; height: 23px; margin-top: 7px; display: grid; place-items: center; border: 1.5px solid var(--rim-lit); border-radius: 7px; background: rgba(var(--overlay-tint), .03); color: transparent; cursor: pointer; transition: all var(--dur-fast) var(--ease); }
+.heroCheck:hover { border-color: color-mix(in oklab, var(--accent) 58%, var(--rim)); transform: scale(1.05); }
+.heroCheckDone { background: var(--accent); border-color: var(--accent); color: #0a0c10; }
+.title { composes: title2 from '../../tokens/typography.module.css'; width: 100%; min-height: 70px; resize: none; overflow: hidden; border: 0; outline: 0; background: none; color: var(--text-primary); line-height: 1.24; padding: 2px 0 10px; }
+.notes { composes: callout from '../../tokens/typography.module.css'; display: block; box-sizing: border-box; width: 100%; min-height: 108px; margin: 5px 0 22px; resize: none; overflow: hidden; border: 1px solid color-mix(in oklab, var(--rim) 74%, transparent); border-radius: 12px; outline: 0; background: rgba(var(--overlay-tint), .024); color: var(--text-secondary); line-height: 1.58; padding: 12px 13px; transition: border-color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease); }
+.notes:hover { border-color: var(--rim-lit); background: rgba(var(--overlay-tint), .036); }
+.notes:focus { border-color: color-mix(in oklab, var(--accent) 38%, var(--rim)); background: rgba(var(--overlay-tint), .045); box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 6%, transparent); }
+.notes::placeholder { color: color-mix(in oklab, var(--text-tertiary) 80%, transparent); }
+.editScope { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: -5px 4px 15px; }
+.editScope > span { font: var(--fw-caption) var(--fs-caption)/var(--lh-caption) var(--font-text); color: var(--text-tertiary); }
+.scopeSegmented { display: flex; padding: 2px; border-radius: 9px; background: rgba(var(--overlay-tint), .045); }
+.scopeSegmented button { font: var(--fw-caption) var(--fs-caption)/var(--lh-caption) var(--font-text); padding: 5px 8px; border: 0; border-radius: 7px; background: transparent; color: var(--text-tertiary); cursor: pointer; }
+.scopeSegmented .scopeActive { background: rgba(var(--overlay-tint), .095); color: var(--text-primary); box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+.properties { border-top: 1px solid var(--rim); border-bottom: 1px solid var(--rim); padding: 8px 0; }
+.property { width: 100%; min-height: 44px; display: grid; grid-template-columns: 24px 80px minmax(0,1fr); gap: 7px; align-items: center; padding: 0 4px; border: 0; border-radius: 9px; background: none; color: inherit; text-align: left; }
+button.property { cursor: pointer; }
+.property:hover { background: rgba(var(--overlay-tint), .035); }
+.propertyIcon { display: grid; place-items: center; color: var(--text-tertiary); }
+.propertyLabel { composes: footnote from '../../tokens/typography.module.css'; color: var(--text-tertiary); }
+.propertyValue { composes: footnote from '../../tokens/typography.module.css'; justify-self: end; border: 0; background: none; color: var(--text-tertiary); cursor: pointer; padding: 6px; }
+.valueSet { color: var(--accent); }
+.deadlineSet { color: color-mix(in oklab, var(--warn) 70%, var(--text-primary)); }
+.select { composes: footnote from '../../tokens/typography.module.css'; width: 100%; min-width: 0; justify-self: stretch; text-align: right; border: 0; outline: 0; background: transparent; color: var(--text-secondary); cursor: pointer; }
+.select option { background: var(--native-popup-bg); color: var(--text-primary); }
+.segmented { justify-self: end; display: flex; padding: 2px; border-radius: 9px; background: rgba(var(--overlay-tint), .055); }
+.segmented button { font: var(--fw-caption) var(--fs-caption)/var(--lh-caption) var(--font-text); border: 0; border-radius: 7px; padding: 5px 7px; background: none; color: var(--text-tertiary); cursor: pointer; }
+.segmented .segmentActive { color: var(--text-primary); background: rgba(var(--overlay-tint), .10); box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+.tagSummary { composes: footnote from '../../tokens/typography.module.css'; justify-self: end; max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-secondary); }
+.tagEditor { margin: 1px 4px 8px 31px; padding: 8px; border-radius: 11px; background: rgba(var(--overlay-tint), .035); }
+.tagOptions { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
+.tagOptions button { font: var(--fw-caption) var(--fs-caption)/var(--lh-caption) var(--font-text); display: flex; align-items: center; gap: 5px; padding: 5px 8px; border: 1px solid transparent; border-radius: 8px; background: transparent; color: var(--text-tertiary); cursor: pointer; }
+.tagOptions button:hover { color: var(--text-primary); background: rgba(var(--overlay-tint), .05); }
+.tagOptions button > span { width: 11px; color: var(--accent); }
+.tagOptions .tagAssigned { color: var(--text-secondary); border-color: color-mix(in oklab, var(--accent) 20%, var(--rim)); background: color-mix(in oklab, var(--accent) 8%, transparent); }
+.tagCreate { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 6px; }
+.tagCreate input { font: var(--fw-footnote) var(--fs-footnote)/var(--lh-footnote) var(--font-text); min-width: 0; height: 30px; padding: 0 8px; border: 1px solid var(--rim); border-radius: 8px; outline: none; background: rgba(var(--overlay-tint), .035); color: var(--text-primary); }
+.tagCreate input:focus { border-color: color-mix(in oklab, var(--accent) 40%, var(--rim)); }
+.tagCreate button { font: var(--fw-caption) var(--fs-caption)/var(--lh-caption) var(--font-text); height: 30px; padding: 0 10px; border: 0; border-radius: 8px; background: color-mix(in oklab, var(--accent) 17%, transparent); color: var(--accent); cursor: pointer; }
+.tagCreate button:disabled { opacity: .4; cursor: default; }
+.recurrenceEditor { margin: 1px 4px 9px 31px; padding: 9px; border-radius: 11px; background: rgba(var(--overlay-tint), .035); }
+.recurrencePresets { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 3px; }
+.recurrencePresets button { font: var(--fw-caption) var(--fs-caption)/var(--lh-caption) var(--font-text); min-width: 0; padding: 7px 4px; border: 1px solid transparent; border-radius: 8px; background: transparent; color: var(--text-tertiary); cursor: pointer; }
+.recurrencePresets button:hover { background: rgba(var(--overlay-tint), .05); color: var(--text-primary); }
+.recurrencePresets .recurrenceActive { border-color: color-mix(in oklab, var(--accent) 20%, var(--rim)); background: color-mix(in oklab, var(--accent) 8%, transparent); color: var(--accent); }
+.customRecurrence { display: grid; grid-template-columns: auto 42px minmax(0,1fr) auto; align-items: center; gap: 6px; margin-top: 7px; padding-top: 8px; border-top: 1px solid color-mix(in oklab, var(--rim) 65%, transparent); }
+.customRecurrence > span { font: var(--fw-caption) var(--fs-caption)/var(--lh-caption) var(--font-text); color: var(--text-tertiary); }
+.customRecurrence input, .customRecurrence select { font: var(--fw-caption) var(--fs-caption)/var(--lh-caption) var(--font-text); min-width: 0; height: 29px; border: 1px solid var(--rim); border-radius: 8px; outline: 0; background: rgba(var(--overlay-tint), .035); color: var(--text-secondary); }
+.customRecurrence input { width: 42px; padding: 0 5px; }
+.customRecurrence select { padding: 0 5px; }
+.customRecurrence select option { background: var(--native-popup-bg); }
+.customRecurrence > button { font: var(--fw-caption) var(--fs-caption)/var(--lh-caption) var(--font-text); height: 29px; padding: 0 9px; border: 0; border-radius: 8px; background: color-mix(in oklab, var(--accent) 15%, transparent); color: var(--accent); cursor: pointer; }
+.recurrenceEditor p { font: var(--fw-caption) var(--fs-caption)/var(--lh-caption) var(--font-text); margin: 8px 3px 1px; color: color-mix(in oklab, var(--text-tertiary) 78%, transparent); line-height: 1.4; }
+.switch { justify-self: end; width: 30px; height: 18px; padding: 2px; border-radius: 999px; background: rgba(var(--overlay-tint), .10); transition: background var(--dur-fast) var(--ease); }
+.switch span { display: block; width: 14px; height: 14px; border-radius: 50%; background: var(--text-tertiary); transition: transform var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease); }
+.switchOn { background: color-mix(in oklab, var(--accent) 46%, transparent); }
+.switchOn span { transform: translateX(12px); background: var(--accent); }
+.context { composes: caption from '../../tokens/typography.module.css'; display: flex; justify-content: space-between; gap: 12px; margin: 17px 4px; color: color-mix(in oklab, var(--text-tertiary) 75%, transparent); }
+.deleteChoices { display: flex; flex-direction: column; gap: 4px; margin: 0 4px 12px; padding: 11px; border: 1px solid color-mix(in oklab, var(--warn) 18%, var(--rim)); border-radius: 11px; background: color-mix(in oklab, var(--warn) 4%, rgba(var(--overlay-tint), .025)); }
+.deleteChoices strong { font: var(--fw-footnote) var(--fs-footnote)/var(--lh-footnote) var(--font-text); color: var(--text-secondary); }
+.deleteChoices > span { font: var(--fw-caption) var(--fs-caption)/var(--lh-caption) var(--font-text); color: var(--text-tertiary); line-height: 1.4; }
+.deleteChoices > div { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
+.deleteChoices button { font: var(--fw-caption) var(--fs-caption)/var(--lh-caption) var(--font-text); padding: 6px 8px; border: 0; border-radius: 8px; background: rgba(var(--overlay-tint), .045); color: var(--text-secondary); cursor: pointer; }
+.deleteChoices button:first-child, .deleteChoices button:nth-child(2) { color: color-mix(in oklab, var(--warn) 76%, var(--text-primary)); }
+.footer { min-height: 62px; flex: none; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--rim); }
+.pinButton, .deleteButton { display: flex; align-items: center; gap: 7px; height: 32px; padding: 0 10px; border: 0; border-radius: 9px; background: none; color: var(--text-tertiary); cursor: pointer; font: var(--fw-caption) var(--fs-caption)/var(--lh-caption) var(--font-text); }
+.pinButton:hover { color: var(--text-primary); background: rgba(var(--overlay-tint), .05); }
+.pinActive { color: var(--accent); }
+.deleteButton:hover { color: var(--warn); background: color-mix(in oklab, var(--warn) 9%, transparent); }
+@media (max-width: 1000px) { .inspector { position: absolute; inset: 0 0 0 auto; width: min(390px, 92%); backdrop-filter: var(--blur); } }
+
+/* Tasks material experiment: the inspector is a focused work surface,
+   denser than the canvas but more substantial than a generic glass rail. */
+.inspector {
+  border-left-color: var(--tasks-line-strong);
+  background: var(--tasks-inspector);
+  box-shadow: -20px 0 48px rgba(0,0,0,.18), inset 1px 0 0 rgba(var(--overlay-tint), .035);
+}
+.inspector::before { content: ''; position: absolute; inset: 0 0 auto; height: 30%; background: radial-gradient(ellipse at 50% -20%, color-mix(in oklab, var(--accent) 8%, transparent), transparent 65%), linear-gradient(rgba(var(--overlay-tint), .035), transparent); pointer-events: none; }
+.topbar { position: relative; min-height: 64px; padding: 0 22px 0 26px; border-bottom: 1px solid color-mix(in oklab, var(--tasks-line) 72%, transparent); }
+.eyebrow { color: var(--text-secondary); font-size: var(--fs-caption); letter-spacing: .065em; }
+.close { width: 34px; height: 34px; border: 1px solid transparent; border-radius: 11px; color: var(--text-secondary); }
+.close:hover { border-color: var(--tasks-line); background: var(--tasks-control); }
+.close:focus-visible { outline: 3px solid color-mix(in oklab, var(--accent) 14%, transparent); }
+.scroll { position: relative; padding: 17px 27px 28px; }
+.titleBlock { grid-template-columns: 27px minmax(0,1fr); gap: 13px; }
+.heroCheck { width: 24px; height: 24px; margin-top: 7px; border-color: color-mix(in oklab, var(--text-secondary) 56%, var(--tasks-line)); background: var(--tasks-control); box-shadow: inset 0 1px 0 rgba(var(--overlay-tint), .055); }
+.heroCheckDone { background: var(--accent); border-color: var(--accent); box-shadow: 0 5px 14px color-mix(in oklab, var(--accent) 22%, transparent), inset 0 1px 0 rgba(255,255,255,.35); }
+.title { min-height: 74px; padding: 1px 0 12px; color: var(--text-primary); font-size: 1.45rem; font-weight: 620; line-height: 1.27; }
+.notes { min-height: 116px; margin: 7px 0 24px; padding: 14px 15px; border-color: var(--tasks-line); border-radius: 14px; background: var(--tasks-control); color: var(--text-secondary); line-height: 1.6; box-shadow: inset 0 1px 0 rgba(var(--overlay-tint), .04); }
+.notes:hover { border-color: var(--tasks-line-strong); background: var(--tasks-hover); }
+.notes:focus { border-color: color-mix(in oklab, var(--accent) 48%, var(--tasks-line)); background: var(--tasks-control); box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 9%, transparent), inset 0 1px 0 rgba(var(--overlay-tint), .05); }
+.notes::placeholder { color: var(--text-tertiary); }
+.editScope { margin: -7px 2px 17px; }
+.editScope > span { color: var(--text-secondary); font-size: var(--fs-footnote); }
+.scopeSegmented, .segmented { padding: 3px; border: 1px solid var(--tasks-line); border-radius: 10px; background: var(--tasks-control); }
+.scopeSegmented button, .segmented button { min-height: 29px; padding: 5px 9px; color: var(--text-tertiary); font-size: var(--fs-caption); }
+.scopeSegmented .scopeActive, .segmented .segmentActive { background: var(--form-bg-active); color: var(--text-primary); box-shadow: inset 0 1px 0 rgba(var(--overlay-tint), .06); }
+.properties { padding: 10px 0; border-color: var(--tasks-line); }
+.property { min-height: 49px; grid-template-columns: 25px 92px minmax(0,1fr); gap: 8px; padding: 0 7px; border-radius: 11px; }
+.property:hover { background: color-mix(in oklab, var(--tasks-control) 82%, transparent); }
+.property:focus-visible { outline: 2px solid color-mix(in oklab, var(--accent) 40%, var(--tasks-line)); outline-offset: -2px; }
+.propertyIcon { color: var(--text-tertiary); }
+.propertyLabel { color: var(--text-secondary); font-size: var(--fs-footnote); font-weight: 570; }
+.propertyValue, .select, .tagSummary { color: var(--text-primary); font-size: var(--fs-footnote); }
+.propertyValue { padding: 7px; }
+.valueSet { color: var(--accent); font-weight: 620; }
+.deadlineSet { color: color-mix(in oklab, var(--warn) 82%, var(--text-primary)); font-weight: 620; }
+.select option { background: var(--native-popup-bg); }
+.tagEditor, .recurrenceEditor { margin-left: 34px; padding: 11px; border: 1px solid var(--tasks-line); border-radius: 13px; background: var(--tasks-control); box-shadow: inset 0 1px 0 rgba(var(--overlay-tint), .035); }
+.tagOptions { gap: 5px; margin-bottom: 10px; }
+.tagOptions button, .recurrencePresets button { min-height: 32px; color: var(--text-secondary); font-size: var(--fs-caption); }
+.tagOptions button:hover, .recurrencePresets button:hover { background: var(--tasks-hover); }
+.tagOptions .tagAssigned, .recurrencePresets .recurrenceActive { border-color: color-mix(in oklab, var(--accent) 30%, var(--tasks-line)); background: color-mix(in oklab, var(--accent) 12%, var(--tasks-raised)); color: var(--accent); }
+.tagCreate input, .customRecurrence input, .customRecurrence select { border-color: var(--form-border); background: var(--form-bg); color: var(--text-primary); font-size: var(--fs-caption); }
+.tagCreate input { height: 34px; }
+.tagCreate button, .customRecurrence > button { background: color-mix(in oklab, var(--accent) 18%, var(--tasks-raised)); font-size: var(--fs-caption); font-weight: 640; }
+.customRecurrence { gap: 7px; border-top-color: var(--tasks-line); }
+.customRecurrence > span, .recurrenceEditor p { color: var(--text-tertiary); font-size: var(--fs-caption); }
+.switch { width: 34px; height: 20px; padding: 3px; background: var(--tasks-control); box-shadow: inset 0 1px 3px rgba(0,0,0,.22); }
+.switch span { width: 14px; height: 14px; background: var(--text-tertiary); }
+.switchOn { background: color-mix(in oklab, var(--accent) 48%, var(--tasks-control)); }
+.switchOn span { transform: translateX(14px); background: var(--accent); box-shadow: 0 1px 4px rgba(0,0,0,.28); }
+.context { margin: 19px 5px; color: var(--text-tertiary); font-size: var(--fs-caption); }
+.deleteChoices { border-color: color-mix(in oklab, var(--warn) 25%, var(--tasks-line)); border-radius: 13px; background: color-mix(in oklab, var(--warn) 5%, var(--tasks-control)); }
+.deleteChoices strong { color: var(--text-primary); font-size: var(--fs-footnote); }
+.deleteChoices > span { color: var(--text-secondary); font-size: var(--fs-caption); }
+.deleteChoices button { min-height: 31px; background: var(--form-bg); color: var(--text-secondary); font-size: var(--fs-caption); }
+.footer { min-height: 68px; padding: 14px 23px; border-top-color: var(--tasks-line); background: color-mix(in oklab, var(--tasks-inspector) 92%, var(--tasks-control)); }
+.pinButton, .deleteButton { height: 36px; padding: 0 11px; color: var(--text-secondary); font-size: var(--fs-caption); }
+.pinButton:hover { background: var(--tasks-control); }
+
+@media (max-width: 1000px) { .inspector { width: min(408px, 94%); backdrop-filter: blur(26px) saturate(135%); } }

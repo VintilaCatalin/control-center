@@ -22,5 +22,6 @@
   composes: caption from '../../tokens/typography.module.css';
   display: flex;
   justify-content: space-between;
+  width: 100%;
   color: var(--text-tertiary);
 }

@@ -3,7 +3,7 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: 11px;
 }
 
 .monthHead {
@@ -13,9 +13,9 @@
 }
 
 .monthLabel {
-  composes: callout from '../../tokens/typography.module.css';
   color: var(--text-primary);
-  font-weight: 640;
+  font: 670 var(--fs-headline)/1.2 var(--font-display);
+  letter-spacing: -.012em;
 }
 
 .monthNav {
@@ -26,18 +26,18 @@
 .navBtn {
   display: grid;
   place-items: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 999px;
-  border: 1px solid var(--rim);
-  background: rgba(var(--overlay-tint), 0.04);
+  width: 27px;
+  height: 27px;
+  border-radius: 7px;
+  border: 0;
+  background: transparent;
   color: var(--text-secondary);
   cursor: pointer;
   transition: background var(--dur-fast) var(--ease);
 }
 
 .navBtn:hover {
-  background: rgba(var(--overlay-tint), 0.08);
+  background: var(--material-hover);
   color: var(--text-primary);
 }
 
@@ -47,16 +47,15 @@
 }
 
 .weekday {
-  composes: caption from '../../tokens/typography.module.css';
   text-align: center;
   color: var(--text-tertiary);
-  font-weight: 650;
+  font: 650 var(--fs-caption)/1.3 var(--font-text);
 }
 
 .month {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 2px;
+  gap: 3px 2px;
 }
 
 .day {
@@ -65,7 +64,8 @@
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  padding: 4px 0;
+  min-height: 28px;
+  padding: 5px 0 3px;
   border: none;
   border-radius: 8px;
   background: none;
@@ -82,8 +82,8 @@
 }
 
 .dayNum {
-  composes: caption from '../../tokens/typography.module.css';
   color: var(--text-secondary);
+  font: 540 var(--fs-caption)/1 var(--font-text);
   font-variant-numeric: tabular-nums;
 }
 
@@ -121,8 +121,8 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  padding-top: var(--space-2);
-  border-top: 1px solid var(--rim);
+  padding-top: 13px;
+  border-top: 1px solid var(--material-line);
   overflow-y: auto;
 }
 
@@ -154,9 +154,9 @@
 }
 
 .sectionLabel {
-  composes: eyebrow from '../../tokens/typography.module.css';
-  color: var(--text-tertiary);
-  margin-bottom: 6px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  font: 650 var(--fs-footnote)/1.25 var(--font-text);
 }
 
 .dayList {
@@ -169,16 +169,15 @@
   display: flex;
   align-items: baseline;
   gap: var(--space-3);
-  padding: 6px 4px;
+  padding: 7px 3px;
   border-radius: 8px;
 }
 
 .dayEventTime {
-  composes: caption from '../../tokens/typography.module.css';
   flex-shrink: 0;
-  width: 56px;
+  width: 62px;
   color: var(--accent);
-  font-weight: 650;
+  font: 620 var(--fs-footnote)/1.35 var(--font-text);
   font-variant-numeric: tabular-nums;
 }
 
@@ -189,14 +188,13 @@
 }
 
 .dayEventTitle {
-  composes: caption from '../../tokens/typography.module.css';
   color: var(--text-primary);
-  font-weight: 600;
+  font: 570 var(--fs-footnote)/1.35 var(--font-text);
 }
 
 .dayEventLocation {
-  composes: footnote from '../../tokens/typography.module.css';
   color: var(--text-tertiary);
+  font: 480 var(--fs-caption)/1.35 var(--font-text);
 }
 
 .dayEmpty {

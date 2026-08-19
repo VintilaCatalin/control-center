@@ -2,6 +2,7 @@
 @import './motion.css';
 @import './layout.css';
 @import './typography.css';
+@import './materials.css';
 
 *,
 *::before,
@@ -41,8 +42,14 @@ select {
 }
 
 select option {
-  background: var(--slate);
+  background: var(--native-popup-bg, var(--graphite));
   color: var(--text-primary);
+}
+
+input,
+textarea,
+select {
+  accent-color: var(--accent);
 }
 
 /* One scrollbar language, applied globally rather than per-component so

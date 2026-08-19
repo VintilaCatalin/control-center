@@ -1,6 +1,8 @@
 import { LaunchpadHeaderActions, Launchpad } from '../widgets/Launchpad/Launchpad';
 import { NowPlaying } from '../widgets/NowPlaying/NowPlaying';
 import { CalendarGlance } from '../widgets/Overview/CalendarGlance';
+import { ContinueGlance } from '../widgets/Overview/ContinueGlance';
+import { HorizonGlance } from '../widgets/Overview/HorizonGlance';
 import { NewsGlance } from '../widgets/Overview/NewsGlance';
 import { NotesTasksGlance } from '../widgets/Overview/NotesTasksGlance';
 import { ProfileGlance } from '../widgets/Overview/ProfileGlance';
@@ -70,6 +72,18 @@ export function Overview() {
       label: 'This PC',
       minSize: { w: 1, h: 1 },
       content: <SystemGlance />,
+    },
+    {
+      id: 'ov-horizon',
+      label: 'On the Horizon',
+      minSize: { w: 1, h: 4 },
+      content: <HorizonGlance />,
+    },
+    {
+      id: 'ov-continue',
+      label: 'Continue',
+      minSize: { w: 2, h: 3 },
+      content: <ContinueGlance />,
     },
   ];
 

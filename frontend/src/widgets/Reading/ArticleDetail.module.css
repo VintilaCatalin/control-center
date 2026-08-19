@@ -28,7 +28,7 @@
 
 .heroWithImage {
   min-height: 220px;
-  background: linear-gradient(160deg, var(--raise), var(--slate));
+  background: linear-gradient(160deg, var(--graphite-raised), var(--graphite));
 }
 
 .heroImg {
@@ -281,7 +281,7 @@
   margin: var(--space-5) 0;
   padding: var(--space-4);
   border-radius: var(--r-tile);
-  background: color-mix(in oklab, var(--ink) 70%, var(--slate));
+  background: color-mix(in oklab, var(--ink) 70%, var(--graphite));
   border: 1px solid var(--rim);
   overflow-x: auto;
 }

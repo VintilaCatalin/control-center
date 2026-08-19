@@ -38,8 +38,8 @@
   width: 100%;
   padding: 9px var(--space-3);
   border-radius: 10px;
-  border: 1px solid var(--rim);
-  background: rgba(var(--overlay-tint), 0.03);
+  border: 1px solid var(--form-border);
+  background: var(--form-bg);
   color: var(--text-primary);
   transition:
     border-color var(--dur-fast) var(--ease),
@@ -49,8 +49,9 @@
 .input:focus,
 .textarea:focus {
   outline: none;
-  border-color: color-mix(in oklab, var(--accent) 55%, var(--rim));
-  background: rgba(var(--overlay-tint), 0.05);
+  border-color: var(--form-focus);
+  background: var(--form-bg-hover);
+  box-shadow: var(--form-ring);
 }
 
 .textarea {
@@ -84,8 +85,8 @@
   flex-shrink: 0;
   padding: 0 var(--space-3);
   border-radius: 10px;
-  border: 1px solid var(--rim);
-  background: rgba(var(--overlay-tint), 0.05);
+  border: 1px solid var(--form-border);
+  background: var(--form-bg);
   color: var(--text-secondary);
   font-weight: 600;
   cursor: pointer;
@@ -96,7 +97,7 @@
 
 .browseBtn:hover {
   color: var(--text-primary);
-  background: rgba(var(--overlay-tint), 0.1);
+  background: var(--form-bg-active);
 }
 
 /* ---- bool: a real switch, not a checkbox ---- */
@@ -109,7 +110,7 @@
   height: 24px;
   border-radius: 999px;
   border: none;
-  background: rgba(var(--overlay-tint), 0.1);
+  background: var(--form-bg-active);
   cursor: pointer;
   transition: background var(--dur-fast) var(--ease);
 }
@@ -142,8 +143,8 @@
   gap: var(--space-2);
   padding: 9px var(--space-3);
   border-radius: 10px;
-  border: 1px solid var(--rim);
-  background: rgba(var(--overlay-tint), 0.03);
+  border: 1px solid var(--form-border);
+  background: var(--form-bg);
 }
 
 .secretMask {

@@ -28,6 +28,7 @@ interface ReadingFeedProps {
   onRemoveBookmark: (item: ReadingItem) => void;
   onSelectBook: (book: Book) => void;
   onSelectSection: (section: ReadingSection) => void;
+  onTopicIconChange: (id: string, icon: string) => Promise<void>;
 }
 
 interface ActionHandlers {
@@ -312,7 +313,7 @@ function YouTubeBody({ items, onOpen, onToggleSave, onDismiss }: { items: Readin
   );
 }
 
-export function ReadingFeed({ items, section, bookmarks, books, topics, onOpenItem, onRemoveBookmark, onSelectBook, onSelectSection }: ReadingFeedProps) {
+export function ReadingFeed({ items, section, bookmarks, books, topics, onOpenItem, onRemoveBookmark, onSelectBook, onSelectSection, onTopicIconChange }: ReadingFeedProps) {
   // Optimistic save-state overrides, cleared once the polled snapshot
   // itself agrees (or after a safety timeout) - same shape as PanelGrid's
   // own local-state-until-the-server-catches-up pattern. Dismissed ids
@@ -384,6 +385,7 @@ export function ReadingFeed({ items, section, bookmarks, books, topics, onOpenIt
 
   let sectioned: ReadingItem[];
   let body: ReactNode;
+  let activeTopic: TopicDef | undefined;
 
   if (section === 'foryou') {
     sectioned = resolved;
@@ -399,15 +401,16 @@ export function ReadingFeed({ items, section, bookmarks, books, topics, onOpenIt
     body = <ReadingList key={section} heading="Bookmarks" items={bookmarks} onOpen={handleOpen} onToggleSave={handleToggleSave} onRemove={onRemoveBookmark} />;
   } else {
     sectioned = resolved.filter((i) => i.topic === section);
+    activeTopic = topics.find((topic) => topic.id === section);
     // Keyed by section so switching topics remounts this fresh - the
     // alternative (an effect watching `items` to reset a stale
     // `sourceId`) works too, but this is what actually guarantees it:
     // a source picked in Tech has no reason to silently carry over and
     // empty out Design just because it happens to share no sources.
-    body = <ReadingList key={section} heading={topicLabel(section, topics)} items={sectioned} {...handlers} />;
+    body = <ReadingList key={section} heading={topicLabel(section, topics)} items={sectioned} topic={activeTopic} onTopicIconChange={onTopicIconChange} {...handlers} />;
   }
 
-  if (sectioned.length === 0) {
+  if (sectioned.length === 0 && !activeTopic) {
     return (
       <div className={styles.empty}>
         <span className={styles.emptyTitle}>Nothing here yet</span>

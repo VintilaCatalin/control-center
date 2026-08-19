@@ -1,4 +1,5 @@
 import type { SnapshotUpdate } from './types';
+import { normalizeTasksData } from './taskCompatibility';
 
 export interface SnapshotCursor {
   epoch: string;
@@ -11,7 +12,9 @@ export async function fetchSnapshot(cursor?: SnapshotCursor): Promise<SnapshotUp
     : '';
   const res = await fetch(`/api/data${query}`, { cache: 'no-store' });
   if (!res.ok) throw new Error(`/api/data ${res.status}`);
-  return res.json() as Promise<SnapshotUpdate>;
+  const update = await res.json() as SnapshotUpdate;
+  if (update.tasks) update.tasks = normalizeTasksData(update.tasks as unknown as Record<string, unknown>);
+  return update;
 }
 
 // The first generic mutating-call helper - every future action (media,
@@ -27,8 +30,10 @@ export async function postAction<T = { ok: boolean }>(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body ?? {}),
   });
-  if (!res.ok) throw new Error(`${path} ${res.status}`);
-  return res.json() as Promise<T>;
+  const payload = await res.json().catch(() => null) as ({ error?: string } & T) | null;
+  if (!res.ok) throw new Error(payload?.error || `${path} ${res.status}`);
+  if (!payload) throw new Error(`${path} returned an invalid response`);
+  return payload;
 }
 
 // Generic read-only GET helper, for the same reason postAction exists -

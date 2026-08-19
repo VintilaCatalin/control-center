@@ -2,7 +2,7 @@
   position: relative;
   overflow: hidden;
   border-radius: var(--r-tile);
-  background: linear-gradient(160deg, var(--raise), var(--slate));
+  background: linear-gradient(160deg, var(--graphite-raised), var(--graphite));
 }
 
 .square {
@@ -40,7 +40,7 @@
 .contain {
   object-fit: contain;
   padding: 14%;
-  background: var(--slate);
+  background: var(--graphite);
 }
 
 .imgSkeleton {

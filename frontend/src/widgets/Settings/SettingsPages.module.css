@@ -71,6 +71,166 @@
   background: rgba(var(--overlay-tint), 0.02);
 }
 
+.materialField {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.materialHeading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  color: var(--text-primary);
+  font-size: var(--fs-footnote);
+  font-weight: 640;
+}
+
+.materialHeading small {
+  color: var(--text-tertiary);
+  font-size: var(--fs-caption);
+  font-weight: 450;
+}
+
+.materialChoices {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 11px;
+}
+
+.materialOption {
+  position: relative;
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr) 22px;
+  align-items: center;
+  gap: 13px;
+  min-height: 104px;
+  padding: 12px;
+  border: 1px solid var(--rim);
+  border-radius: 15px;
+  background: var(--form-bg);
+  color: var(--text-secondary);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
+}
+
+.materialOption:hover {
+  transform: translateY(-1px);
+  border-color: var(--rim-lit);
+  background: var(--form-bg-hover);
+}
+
+.materialOption:focus-visible {
+  outline: 3px solid color-mix(in oklab, var(--accent) 24%, transparent);
+  outline-offset: 2px;
+}
+
+.materialSelected {
+  border-color: color-mix(in oklab, var(--accent) 48%, var(--rim-lit));
+  background: color-mix(in oklab, var(--accent) 7%, var(--form-bg));
+  box-shadow: inset 0 1px 0 rgba(var(--overlay-tint), .07), 0 8px 22px rgba(0, 0, 0, .12);
+}
+
+.materialPreview {
+  position: relative;
+  display: block;
+  width: 88px;
+  height: 76px;
+  overflow: hidden;
+  border-radius: 11px;
+  background: radial-gradient(circle at 80% 5%, color-mix(in oklab, var(--accent) 60%, #616b7b), #0c0e13 62%);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.09);
+}
+
+.previewRail,
+.previewSurface {
+  position: absolute;
+  top: 7px;
+  bottom: 7px;
+  border: 1px solid rgba(255,255,255,.11);
+}
+
+.previewRail { left: 7px; width: 20px; }
+.previewSurface { left: 32px; right: 7px; display: flex; flex-direction: column; gap: 5px; padding: 10px 8px; }
+.previewSurface i { display: block; height: 3px; border-radius: 3px; background: rgba(255,255,255,.55); }
+.previewSurface i:nth-child(2) { width: 72%; opacity: .55; }
+.previewSurface i:nth-child(3) { width: 46%; opacity: .3; }
+
+.cyberpunkPreview .previewRail {
+  top: 0;
+  bottom: 0;
+  left: 0;
+  border-width: 0 1px 0 0;
+  border-radius: 0;
+  background: rgba(12, 16, 24, .32);
+  backdrop-filter: blur(5px);
+}
+
+.cyberpunkPreview .previewSurface {
+  border-color: rgba(255,255,255,.08);
+  border-radius: 8px;
+  background: rgba(15, 20, 29, .28);
+  backdrop-filter: blur(5px);
+}
+
+.liquidPreview .previewRail,
+.liquidPreview .previewSurface {
+  border-radius: 8px;
+  background: oklch(.255 0 0 / .91);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.13), 0 5px 12px rgba(0,0,0,.3);
+  backdrop-filter: blur(8px) saturate(135%);
+}
+
+.materialCopy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.materialCopy strong {
+  color: var(--text-primary);
+  font-size: var(--fs-footnote);
+  font-weight: 650;
+}
+
+.materialCopy strong em {
+  margin-left: 5px;
+  color: var(--text-tertiary);
+  font-size: .72em;
+  font-style: normal;
+  font-weight: 620;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+}
+
+.materialCopy small {
+  color: var(--text-tertiary);
+  font-size: var(--fs-caption);
+  font-weight: 450;
+  line-height: 1.4;
+}
+
+.materialCheck {
+  display: grid;
+  place-items: center;
+  width: 21px;
+  height: 21px;
+  border: 1px solid var(--rim);
+  border-radius: 999px;
+  color: transparent;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.materialSelected .materialCheck {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #090c11;
+}
+
 .cardList {
   display: flex;
   flex-direction: column;
@@ -91,8 +251,15 @@
 
 @media (max-width: 640px) {
   .grid2,
-  .grid3 {
+  .grid3,
+  .materialChoices {
     grid-template-columns: 1fr;
+  }
+
+  .materialHeading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 3px;
   }
 }
 

@@ -21,15 +21,17 @@
   flex: 1;
   min-width: 0;
   color: var(--text-primary);
-  background: rgba(var(--overlay-tint), 0.05);
-  border: 1px solid var(--rim);
-  border-radius: 10px;
-  padding: var(--space-2) var(--space-3);
+  height: 44px;
+  background: var(--popup-control);
+  border: 1px solid var(--popup-divider);
+  border-radius: 11px;
+  padding: 0 12px;
 }
 
 .input:focus {
   outline: none;
-  border-color: color-mix(in oklab, var(--accent) 70%, transparent);
+  border-color: color-mix(in oklab, var(--accent) 54%, var(--popup-border));
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 10%, transparent);
 }
 
 .input::placeholder {
@@ -41,8 +43,8 @@
   resize: vertical;
   min-height: 120px;
   color: var(--text-primary);
-  background: rgba(var(--overlay-tint), 0.05);
-  border: 1px solid var(--rim);
+  background: var(--popup-control);
+  border: 1px solid var(--popup-divider);
   border-radius: 12px;
   padding: var(--space-3);
   line-height: 1.6;
@@ -50,7 +52,8 @@
 
 .textarea:focus {
   outline: none;
-  border-color: color-mix(in oklab, var(--accent) 70%, transparent);
+  border-color: color-mix(in oklab, var(--accent) 54%, var(--popup-border));
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 10%, transparent);
 }
 
 /* A custom chevron, not the browser's own default arrow - appearance:
@@ -71,7 +74,7 @@
 }
 
 .select option {
-  background: var(--slate);
+  background: var(--native-popup-bg);
   color: var(--text-primary);
 }
 
@@ -90,10 +93,11 @@
   composes: caption from '../../tokens/typography.module.css';
   flex-shrink: 0;
   color: var(--text-secondary);
-  background: rgba(var(--overlay-tint), 0.05);
-  border: 1px solid var(--rim);
+  min-height: 38px;
+  background: var(--popup-control);
+  border: 1px solid var(--popup-divider);
   border-radius: 10px;
-  padding: var(--space-2) var(--space-4);
+  padding: 0 15px;
   cursor: pointer;
   transition:
     color var(--dur-fast) var(--ease),
@@ -102,7 +106,7 @@
 
 .btn:hover:not(:disabled) {
   color: var(--text-primary);
-  background: rgba(var(--overlay-tint), 0.1);
+  background: var(--popup-hover);
 }
 
 .btn:disabled {

@@ -1,8 +1,6 @@
-import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { useSnapshotData } from '../../api/SnapshotProvider';
 import type { HardwareData, HomelabData } from '../../api/types';
-import { LineChart } from '../../primitives/LineChart/LineChart';
 import { StatusPulse } from '../Homelab/StatusPulse';
 import styles from './SystemGlance.module.css';
 
@@ -61,21 +59,34 @@ export function SystemGlance() {
 // Temperature is the headline (the number that actually says "is this
 // thing under strain"), the load history underneath is context, not the
 // other way around.
-function TempCard({ label, temp, load, chart, color, hint }: { label: string; temp: number | null; load: number | null; chart: ReactNode; color: string; hint?: string }) {
+function UsageBars({ values }: { values: number[] }) {
+  const samples = values.slice(-28);
+  return <div className={styles.usageGraph} aria-hidden="true">
+    <span className={styles.graphCeiling}>100</span>
+    <div className={styles.bars}>
+      {samples.length >= 2 ? samples.map((value, index) =>
+        <i key={index} className={index === samples.length - 1 ? styles.latestBar : undefined} style={{ height: `${Math.max(5, Math.min(100, value))}%` }} />
+      ) : <span className={styles.noHistory}>Waiting for history</span>}
+    </div>
+    <div className={styles.graphAxis}><span>12 min</span><span>Now</span></div>
+  </div>;
+}
+
+function TempCard({ label, temp, load, values, tone, hint }: { label: string; temp: number | null; load: number | null; values: number[]; tone?: 'secondary'; hint?: string }) {
   return (
-    <div className={styles.tempCard}>
+    <div className={[styles.tempCard, tone === 'secondary' ? styles.secondary : ''].filter(Boolean).join(' ')}>
       <div className={styles.tempHead}>
         <span className={styles.tempCardLabel}>{label}</span>
         {load != null && <span className={styles.tempCardLoad}>{Math.round(load)}% load</span>}
       </div>
       <div className={styles.tempReadout}>
-        <span className={styles.tempValue} style={{ color }}>
+        <span className={styles.tempValue}>
           {temp != null ? Math.round(temp) : '—'}
         </span>
         <span className={styles.tempUnit}>°C</span>
       </div>
       {temp == null && hint && <span className={styles.tempHint}>{hint}</span>}
-      <div className={styles.tempChart}>{chart}</div>
+      <UsageBars values={values} />
     </div>
   );
 }
@@ -100,16 +111,15 @@ function PcTab({ hw }: { hw: HardwareData }) {
           label="CPU"
           temp={hw.cpu_temp}
           load={hw.cpu_history.at(-1)?.v ?? null}
-          color="var(--accent)"
-          chart={<LineChart series={[{ values: cpuValues, color: 'var(--accent)' }]} height={52} min={0} max={100} />}
+          values={cpuValues}
           hint={hw.lhm === false ? 'Install LibreHardwareMonitor for CPU temp' : undefined}
         />
         <TempCard
           label="GPU"
           temp={hw.gpu_temp}
           load={hw.gpu_load}
-          color="#e0a15c"
-          chart={<LineChart series={[{ values: gpuValues, color: '#e0a15c' }]} height={52} min={0} max={100} />}
+          values={gpuValues}
+          tone="secondary"
         />
       </div>
     </div>
@@ -134,8 +144,7 @@ function ServerTab({ homelab }: { homelab: HomelabData }) {
           label="CPU"
           temp={netdata.temp?.c ?? null}
           load={netdata.cpu?.pct ?? null}
-          color="var(--accent)"
-          chart={<LineChart series={[{ values: cpuValues, color: 'var(--accent)' }]} height={52} min={0} max={100} />}
+          values={cpuValues}
         />
       </div>
     </div>

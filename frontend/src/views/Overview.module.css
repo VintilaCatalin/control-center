@@ -3,5 +3,12 @@
    every other PanelGrid-based view (Games, Homelab) already uses. */
 .overview {
   width: 100%;
-  padding: var(--space-5) var(--space-6) var(--space-6);
+  padding: 22px 26px 30px;
 }
+
+.overview :global([data-panel-grid='overview']) { gap: 18px; }
+.overview :global([data-panel-view='overview']) { border-radius: var(--r-card); }
+.overview :global([data-panel-label]) { color: var(--text-secondary); font: 680 var(--fs-caption)/1.2 var(--font-text); letter-spacing: .07em; }
+.overview :global([data-panel-label])::before { width: 4px; height: 11px; border-radius: 3px; opacity: .8; }
+
+@media (max-width: 780px) { .overview { padding: 14px; } }

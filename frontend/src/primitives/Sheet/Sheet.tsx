@@ -19,6 +19,7 @@ interface SheetProps {
   subtitle?: string;
   children: ReactNode;
   actions?: ReactNode;
+  size?: 'compact' | 'standard' | 'wide';
 }
 
 const FOCUSABLE = 'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])';
@@ -30,7 +31,7 @@ const FOCUSABLE = 'a[href], button:not([disabled]), textarea, input, select, [ta
 // triggered the sheet once it closes. This is also the first real down
 // payment on the overlay primitive Settings-as-a-sheet will need later -
 // built now because Change Cover genuinely needs it, not speculatively.
-export function Sheet({ open, onClose, title, subtitle, children, actions }: SheetProps) {
+export function Sheet({ open, onClose, title, subtitle, children, actions, size = 'compact' }: SheetProps) {
   const sheetRef = useRef<HTMLDivElement>(null);
   const restoreFocusRef = useRef<HTMLElement | null>(null);
 
@@ -38,8 +39,9 @@ export function Sheet({ open, onClose, title, subtitle, children, actions }: She
     if (!open) return;
     restoreFocusRef.current = document.activeElement as HTMLElement | null;
     const t = setTimeout(() => {
+      const preferred = sheetRef.current?.querySelector<HTMLElement>('[autofocus]');
       const first = sheetRef.current?.querySelector<HTMLElement>(FOCUSABLE);
-      (first ?? sheetRef.current)?.focus();
+      (preferred ?? first ?? sheetRef.current)?.focus();
     }, 0);
     return () => {
       clearTimeout(t);
@@ -88,7 +90,7 @@ export function Sheet({ open, onClose, title, subtitle, children, actions }: She
         >
           <motion.div
             ref={sheetRef}
-            className={styles.sheet}
+            className={`${styles.sheet} ${styles[size]}`}
             role="dialog"
             aria-modal="true"
             aria-label={title}

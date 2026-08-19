@@ -139,6 +139,7 @@ export interface ViewEntry {
 export interface UiPrefs {
   reduced_motion: boolean;
   sidebar_default_collapsed: boolean;
+  material_style: 'blur_cyberpunk' | 'liquid_glass';
   default_app: string;
   background_mode: 'wallpaper' | 'color' | 'image';
   background_color: string;
@@ -357,45 +358,66 @@ export interface NoteContent {
 // `completed` is only set once `done` is true (a timestamp, not a bool).
 export interface TaskEntry {
   id: string;
-  text: string;
-  done: boolean;
+  title: string;
+  status: 'open' | 'completed';
   priority: 'low' | 'normal' | 'high';
   pinned: boolean;
-  created: number;
-  completed: number | null;
+  created_at: number;
+  updated_at: number;
+  completed_at: number | null;
   notes?: string | null;
-  // The Things-style grouping/scheduling layer - all nullable and all
-  // absent on tasks created before this shipped, which is exactly the
-  // definition of Inbox (see TasksShell's view filters): unfiled, no
-  // date, nothing lost in the upgrade.
   project_id?: string | null;
   area_id?: string | null;
-  when?: 'today' | 'someday' | null;
-  when_date?: number | null;
-  deadline?: number | null;
-  // Reserved for the eventual iCloud Reminders push - unused until then.
+  someday: boolean;
+  scheduled_on?: string | null;
+  deadline_on?: string | null;
+  sort_key: number;
+  today_sort_key?: number | null;
+  recurrence?: TaskRecurrence | null;
+  recurrence_series_id?: string | null;
+  recurrence_previous_id?: string | null;
   caldav_uid?: string | null;
+  tags: TagEntry[];
+}
+
+export interface TaskRecurrence {
+  frequency: 'daily' | 'weekly' | 'monthly' | 'custom';
+  interval: number;
+  unit: 'days' | 'weeks' | 'months';
+  occurrence_on?: string;
+  month_day?: number;
+}
+
+export interface TagEntry {
+  id: string;
+  name: string;
+  color?: string | null;
+  sort_key: number;
 }
 
 // Same id+label+icon shape as Reading's TopicDef - see topics.ts.
 export interface AreaEntry {
   id: string;
-  label: string;
+  title: string;
+  notes: string;
   icon: string;
+  sort_key: number;
 }
 
 export interface ProjectEntry {
   id: string;
-  label: string;
+  title: string;
   area_id: string | null;
   icon: string;
   notes: string;
+  sort_key: number;
 }
 
 export interface TasksData {
   tasks: TaskEntry[];
   areas: AreaEntry[];
   projects: ProjectEntry[];
+  tags: TagEntry[];
 }
 
 // Matches server.py:DEFAULT_READING_SOURCES / the "reading_sources" store

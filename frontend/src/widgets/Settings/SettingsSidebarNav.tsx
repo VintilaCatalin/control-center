@@ -28,20 +28,20 @@ export function SettingsSidebarNav({ active, onSelect, status, collapsed }: Sett
         <span className={styles.brandGlyph}>
           <GearIcon />
         </span>
-        <span className={styles.brandLabel}>Preferences</span>
+        <span className={styles.brandCopy}><strong>Settings</strong><small>Control Center</small></span>
       </div>
 
       <button type="button" className={[styles.item, active === 'settings' ? styles.itemActive : ''].join(' ')} onClick={() => onSelect('settings')} title={collapsed ? 'Settings' : undefined}>
         <span className={styles.icon}>
           <GearIcon />
         </span>
-        <span className={styles.label}>Settings</span>
+        <span className={styles.label}>Appearance</span>
       </button>
       <button type="button" className={[styles.item, active === 'system' ? styles.itemActive : ''].join(' ')} onClick={() => onSelect('system')} title={collapsed ? 'System & Preferences' : undefined}>
         <span className={styles.icon}>
           <SlidersIcon />
         </span>
-        <span className={styles.label}>System &amp; Preferences</span>
+        <span className={styles.label}>System</span>
       </button>
       <button
         type="button"

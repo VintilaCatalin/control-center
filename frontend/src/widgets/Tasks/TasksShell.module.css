@@ -2,22 +2,78 @@
   position: relative;
   overflow: hidden;
   flex: 1;
-  min-height: 0;
   min-width: 0;
-  margin: var(--space-4);
-  border-radius: var(--r-card);
-  display: flex;
-  background: var(--glass);
-  backdrop-filter: var(--blur);
-  box-shadow: var(--lift), var(--inner);
-  border: 1px solid var(--rim);
+  min-height: 0;
+  margin: 14px;
+  border: 1px solid var(--tasks-line);
+  border-radius: 22px;
+  background: var(--tasks-canvas);
+  box-shadow: var(--tasks-shadow), var(--tasks-inner);
+  isolation: isolate;
 }
 
 .main::before {
   content: '';
   position: absolute;
-  inset: 0 0 auto;
-  height: 42%;
-  background: linear-gradient(rgba(var(--overlay-tint), 0.055), transparent);
+  z-index: -1;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 28% -12%, color-mix(in oklab, var(--accent) 10%, transparent), transparent 48%),
+    linear-gradient(135deg, rgba(var(--overlay-tint), .032), transparent 34%);
   pointer-events: none;
+}
+
+.main::after {
+  content: '';
+  position: absolute;
+  z-index: 8;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 1px 0 rgba(var(--overlay-tint), .12), inset 0 0 0 1px rgba(var(--overlay-tint), .018);
+  pointer-events: none;
+}
+
+:global(html[data-material='blur']) .main {
+  backdrop-filter: var(--blur);
+}
+
+.workspace { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); height: 100%; min-height: 0; }
+.withInspector { grid-template-columns: minmax(430px, 1fr) minmax(360px, 408px); }
+.inspectorSlot { min-width: 0; min-height: 0; height: 100%; }
+
+.fab {
+  position: absolute;
+  z-index: 9;
+  right: 24px;
+  bottom: 24px;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid color-mix(in oklab, var(--accent) 34%, var(--tasks-line));
+  border-radius: 50%;
+  background: color-mix(in oklab, var(--accent) 12%, var(--tasks-raised));
+  color: var(--accent);
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(0,0,0,.22), inset 0 1px 0 rgba(var(--overlay-tint), .09);
+  transition: right var(--dur-base) var(--ease), box-shadow var(--dur-fast) var(--ease);
+}
+
+.fab::before { display: none; }
+.fab:hover { border-color: color-mix(in oklab, var(--accent) 55%, var(--tasks-line)); background: color-mix(in oklab, var(--accent) 17%, var(--tasks-raised)); box-shadow: 0 13px 28px rgba(0,0,0,.26), inset 0 1px 0 rgba(var(--overlay-tint), .11); }
+.fab span { position: relative; display: grid; place-items: center; }
+.fab:focus-visible { outline: 3px solid color-mix(in oklab, var(--accent) 32%, transparent); outline-offset: 3px; }
+.fabWithInspector { right: calc(min(408px, 36vw) + 24px); }
+
+@media (max-width: 1000px) {
+  .withInspector { grid-template-columns: minmax(0, 1fr); }
+  .inspectorSlot { position: absolute; z-index: 5; inset: 0; pointer-events: none; }
+  .inspectorSlot > * { pointer-events: auto; }
+  .fabWithInspector { right: 24px; opacity: 0; pointer-events: none; }
+}
+
+@media (max-width: 620px) {
+  .main { margin: 8px; border-radius: 18px; }
 }

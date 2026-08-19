@@ -25,10 +25,19 @@ export function SettingsPage({ data, getValue, origin, onChange, setLocal }: Set
   }, [data.schema]);
 
   const theme = fieldMap.get('_profile_theme');
+  const material = fieldMap.get('material_style');
   const accent = fieldMap.get('accent_override');
   const sidebar = fieldMap.get('sidebar_default_collapsed');
   const motion = fieldMap.get('reduced_motion');
   const accentValue = getValue('accent_override');
+  const materialValue = getValue('material_style') || 'liquid_glass';
+
+  function chooseMaterial(value: 'blur_cyberpunk' | 'liquid_glass') {
+    // Optimistic application keeps this tactile; AtmosphereProvider repeats
+    // the same assignment from the persisted snapshot after the save lands.
+    document.documentElement.dataset.material = value === 'blur_cyberpunk' ? 'blur' : 'liquid';
+    onChange('material_style', value, { immediate: true });
+  }
 
   const backgroundMode = fieldMap.get('background_mode');
   const backgroundColor = fieldMap.get('background_color');
@@ -46,6 +55,50 @@ export function SettingsPage({ data, getValue, origin, onChange, setLocal }: Set
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Appearance</h2>
         <div className={styles.card}>
+          {material && (
+            <div className={styles.materialField}>
+              <div className={styles.materialHeading}>
+                <span>Material style</span>
+                <small>Applied across Control Center, including Tasks</small>
+              </div>
+              <div className={styles.materialChoices} role="radiogroup" aria-label="Material style">
+                <button
+                  type="button"
+                  className={`${styles.materialOption} ${materialValue === 'blur_cyberpunk' ? styles.materialSelected : ''}`}
+                  role="radio"
+                  aria-checked={materialValue === 'blur_cyberpunk'}
+                  onClick={() => chooseMaterial('blur_cyberpunk')}
+                >
+                  <span className={`${styles.materialPreview} ${styles.cyberpunkPreview}`} aria-hidden="true">
+                    <span className={styles.previewRail} />
+                    <span className={styles.previewSurface}><i /><i /><i /></span>
+                  </span>
+                  <span className={styles.materialCopy}>
+                    <strong>Blur Cyberpunk <em>Old</em></strong>
+                    <small>Airy, translucent and atmosphere-forward.</small>
+                  </span>
+                  <span className={styles.materialCheck} aria-hidden="true">✓</span>
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.materialOption} ${materialValue === 'liquid_glass' ? styles.materialSelected : ''}`}
+                  role="radio"
+                  aria-checked={materialValue === 'liquid_glass'}
+                  onClick={() => chooseMaterial('liquid_glass')}
+                >
+                  <span className={`${styles.materialPreview} ${styles.liquidPreview}`} aria-hidden="true">
+                    <span className={styles.previewRail} />
+                    <span className={styles.previewSurface}><i /><i /><i /></span>
+                  </span>
+                  <span className={styles.materialCopy}>
+                    <strong>Liquid Glass Mac <em>New</em></strong>
+                    <small>Richer graphite, floating depth and clearer type.</small>
+                  </span>
+                  <span className={styles.materialCheck} aria-hidden="true">✓</span>
+                </button>
+              </div>
+            </div>
+          )}
           <div className={styles.grid2}>
             {theme && <SettingsField field={theme} value={getValue('_profile_theme')} isSecret={false} origin={origin('_profile_theme')} onChange={(v, o) => onChange('_profile_theme', v, o)} />}
             {accent && (

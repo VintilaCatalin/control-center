@@ -1,8 +1,6 @@
-import { motion } from 'framer-motion';
 import { Menu, type MenuItem } from '../../primitives/Menu/Menu';
 import { useMenu } from '../../primitives/Menu/useMenu';
 import { ArtTile } from '../../primitives/ArtTile/ArtTile';
-import { duration, ease } from '../../tokens/motion';
 import styles from './WallpaperTile.module.css';
 
 interface WallpaperTileProps {
@@ -43,12 +41,9 @@ export function WallpaperTile({ thumbUrl, name, current, onApply, onApplyMatchLi
 
   return (
     <div className={styles.wrap}>
-      <motion.button
+      <button
         type="button"
         className={styles.tile}
-        whileHover={{ scale: 1.03, y: -3 }}
-        whileTap={{ scale: 0.97 }}
-        transition={{ duration: duration.base, ease }}
         onClick={onApply}
         onContextMenu={menu.openAt}
         disabled={applying}
@@ -66,7 +61,7 @@ export function WallpaperTile({ thumbUrl, name, current, onApply, onApplyMatchLi
             <span className={styles.spinner} />
           </div>
         )}
-      </motion.button>
+      </button>
       {onToggleFavorite && (
         <button
           type="button"

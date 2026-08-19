@@ -201,7 +201,12 @@ def make_handler(snapshot):
                 return self._send(json.dumps(result))
             if route.path.startswith("/api/tasks"):
                 body = self._body()
-                result = routes_tasks.dispatch_post(route.path, body)
+                try:
+                    result = routes_tasks.dispatch_post(route.path, body)
+                except (ValueError, KeyError) as e:
+                    return self._send(json.dumps({"ok": False, "error": str(e).strip("'")[:160]}), code=400)
+                except Exception as e:
+                    return self._send(json.dumps({"ok": False, "error": str(e)[:160]}), code=500)
                 if result is None: return self._send("not found", "text/plain", 404)
                 snapshot.refresh("tasks")
                 return self._send(json.dumps(result))

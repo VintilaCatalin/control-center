@@ -49,6 +49,7 @@ export function AddFolderSheet({ open, onClose, onCreated }: AddFolderSheetProps
       onClose={handleClose}
       title="Add folder"
       subtitle="Starts with one new note inside it, ready to write."
+      size="compact"
       actions={
         <>
           <button type="button" className={styles.btn} onClick={handleClose}>

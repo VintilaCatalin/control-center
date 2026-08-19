@@ -1,8 +1,11 @@
-import { useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { applyLocalWallpaper, favoriteWallpaper, matchLightsToWallpaper, wallImageUrl } from '../../api/actions/scene';
 import { useSnapshotData } from '../../api/SnapshotProvider';
+import type { WallpaperEntry } from '../../api/types';
 import { WallpaperTile } from './WallpaperTile';
 import styles from './WallpaperLibrary.module.css';
+
+const NO_FAVORITES: WallpaperEntry[] = [];
 
 // A pinboard, not a third copy of the library - reads the same
 // `wallpapers.favorites` list Yours' star buttons write to
@@ -12,9 +15,9 @@ export function FavoritesLibrary() {
   const { snapshot } = useSnapshotData();
   const [applyingPath, setApplyingPath] = useState<string | null>(null);
 
-  const favorites = snapshot?.wallpapers?.favorites ?? [];
+  const favorites = snapshot?.wallpapers?.favorites ?? NO_FAVORITES;
 
-  async function handleApply(path: string, matchLights: boolean) {
+  const handleApply = useCallback(async (path: string, matchLights: boolean) => {
     setApplyingPath(path);
     try {
       await applyLocalWallpaper(path);
@@ -22,15 +25,11 @@ export function FavoritesLibrary() {
     } finally {
       setApplyingPath(null);
     }
-  }
+  }, []);
 
-  if (favorites.length === 0) {
-    return <div className={styles.message}>No favorites yet - star a wallpaper in Yours to pin it here.</div>;
-  }
-
-  return (
-    <div className={styles.grid}>
-      {favorites.map((w) => (
+  const tiles = useMemo(
+    () =>
+      favorites.map((w) => (
         <WallpaperTile
           key={w.path}
           thumbUrl={wallImageUrl(w.path, 420, 236)}
@@ -42,7 +41,17 @@ export function FavoritesLibrary() {
           onApply={() => handleApply(w.path, false)}
           onApplyMatchLights={() => handleApply(w.path, true)}
         />
-      ))}
+      )),
+    [applyingPath, favorites, handleApply],
+  );
+
+  if (favorites.length === 0) {
+    return <div className={styles.message}>No favorites yet - star a wallpaper in Yours to pin it here.</div>;
+  }
+
+  return (
+    <div className={styles.grid}>
+      {tiles}
     </div>
   );
 }

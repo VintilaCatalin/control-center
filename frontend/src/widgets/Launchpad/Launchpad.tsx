@@ -48,7 +48,7 @@ export function LaunchpadHeaderActions() {
 
   return (
     <div className={styles.headActions}>
-      <span className={styles.count}>{count}</span>
+      <span className={styles.count}>{count} {count === 1 ? 'app' : 'apps'}</span>
       <button
         type="button"
         className={styles.iconBtn}
@@ -160,7 +160,7 @@ function LaunchpadSkeleton() {
     <div className={styles.dock} aria-busy="true" aria-label="Loading launchpad">
       {[0, 1, 2, 3, 4, 5].map((i) => (
         <div key={i} className={styles.skeletonSlot}>
-          <Skeleton width={68} height={68} radius={20} />
+          <Skeleton width={56} height={56} radius={15} />
         </div>
       ))}
     </div>

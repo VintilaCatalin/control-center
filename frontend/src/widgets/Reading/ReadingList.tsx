@@ -1,11 +1,13 @@
 import { useMemo, useState, type CSSProperties } from 'react';
 import type { ReadingItem } from '../../api/types';
 import { ArtTile } from '../../primitives/ArtTile/ArtTile';
+import { EditableGlyph } from '../../primitives/GlyphPicker/EditableGlyph';
 import { ClockIcon, DismissIcon, PlayGlyphIcon, TrashIcon } from './icons';
 import { readingThumbUrl } from './media';
 import { SaveButton } from './SaveButton';
 import { relativeTime } from './time';
 import { TOPIC_COLORS, TOPIC_LABELS } from './topics';
+import type { TopicDef } from './topics';
 import styles from './ReadingList.module.css';
 
 interface ReadingListProps {
@@ -15,6 +17,8 @@ interface ReadingListProps {
   onToggleSave: (item: ReadingItem) => void;
   onRemove?: (item: ReadingItem) => void;
   onDismiss?: (item: ReadingItem) => void;
+  topic?: TopicDef;
+  onTopicIconChange?: (id: string, icon: string) => Promise<void>;
 }
 
 function topicColor(item: ReadingItem): string {
@@ -45,12 +49,10 @@ function sourcesIn(items: ReadingItem[]): { id: string; label: string; count: nu
   return [...byId.values()].sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
 }
 
-export function ReadingList({ heading, items, onOpen, onToggleSave, onRemove, onDismiss }: ReadingListProps) {
+export function ReadingList({ heading, items, onOpen, onToggleSave, onRemove, onDismiss, topic, onTopicIconChange }: ReadingListProps) {
   const [sourceId, setSourceId] = useState<string | null>(null);
   const sources = useMemo(() => sourcesIn(items), [items]);
   const filtered = sourceId ? items.filter((i) => i.source_id === sourceId) : items;
-
-  if (items.length === 0) return null;
 
   return (
     <div className={styles.layout}>
@@ -77,7 +79,8 @@ export function ReadingList({ heading, items, onOpen, onToggleSave, onRemove, on
 
       <div className={styles.content}>
         <div className={styles.wrap}>
-          {heading && <h1 className={styles.heading}>{heading}</h1>}
+          {heading && topic && onTopicIconChange ? <div className={styles.topicHeader}><EditableGlyph value={topic.icon} onChange={(icon) => onTopicIconChange(topic.id, icon)} label={`Change ${topic.label} icon`} /><h1 className={styles.heading}>{heading}</h1></div> : heading && <h1 className={styles.heading}>{heading}</h1>}
+          {filtered.length === 0 && <div className={styles.empty}>Nothing from your sources in this topic right now.</div>}
           {filtered.map((item) => (
             <Row key={item.id} item={item} onOpen={onOpen} onToggleSave={onToggleSave} onRemove={onRemove} onDismiss={onDismiss} />
           ))}
@@ -87,7 +90,7 @@ export function ReadingList({ heading, items, onOpen, onToggleSave, onRemove, on
   );
 }
 
-function Row({ item, onOpen, onToggleSave, onRemove, onDismiss }: { item: ReadingItem } & Omit<ReadingListProps, 'heading' | 'items'>) {
+function Row({ item, onOpen, onToggleSave, onRemove, onDismiss }: { item: ReadingItem } & Omit<ReadingListProps, 'heading' | 'items' | 'topic' | 'onTopicIconChange'>) {
   return (
     <article className={styles.row}>
       <button type="button" className={styles.body} onClick={() => onOpen(item)}>

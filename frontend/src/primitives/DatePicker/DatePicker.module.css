@@ -1,84 +1,95 @@
 .picker {
   position: fixed;
-  z-index: 80;
-  width: 220px;
+  z-index: 84;
+  width: 344px;
   overflow: hidden;
-  border-radius: 14px;
-  border: 1px solid var(--popup-border);
-  box-shadow: var(--popup-shadow);
+  border: 1px solid var(--rim);
+  border-radius: 16px;
+  box-shadow: var(--lift), var(--inner);
 }
 
-.glass {
+.material {
   position: absolute;
   inset: 0;
   z-index: 0;
-  background: var(--popup-bg);
-  backdrop-filter: var(--popup-blur);
+  background: var(--glass);
+  backdrop-filter: var(--blur);
   pointer-events: none;
 }
 
-.glass::before {
+.material::before {
   content: '';
   position: absolute;
   inset: 0 0 auto;
   height: 42%;
-  background: linear-gradient(rgba(var(--overlay-tint), 0.075), transparent);
-  pointer-events: none;
+  background: linear-gradient(rgba(var(--overlay-tint), .055), transparent);
 }
 
-.content {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 8px;
-}
+.content { position: relative; z-index: 1; padding: 14px; }
 
-.presets {
-  display: flex;
-  flex-direction: column;
-}
+.intentHeader { display: flex; align-items: center; gap: 11px; min-height: 45px; padding: 0 3px 12px; }
+.intentHeader > span:last-child { display: flex; flex-direction: column; gap: 2px; }
+.intentHeader strong { font: 650 var(--fs-callout)/1.25 var(--font-text); color: var(--text-primary); }
+.intentHeader small { font: var(--fw-footnote) var(--fs-footnote)/1.35 var(--font-text); color: var(--text-secondary); }
+.intentMark { width: 4px; height: 31px; border-radius: 99px; box-shadow: 0 0 15px currentColor; }
+.scheduleMark { color: var(--accent); background: var(--accent); }
+.deadlineMark { color: var(--warn); background: var(--warn); }
 
-.presetBtn {
-  composes: callout from '../../tokens/typography.module.css';
-  text-align: left;
-  padding: var(--space-2) var(--space-3);
-  border: none;
-  border-radius: 9px;
-  background: transparent;
-  color: var(--text-primary);
-  cursor: pointer;
-  transition: background var(--dur-fast) var(--ease);
-}
+.shortcuts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; padding-bottom: 13px; border-bottom: 1px solid var(--rim); }
+.shortcuts button { min-width: 0; min-height: 32px; padding: 4px 3px; border: 1px solid var(--popup-divider); border-radius: 9px; background: var(--popup-control); color: var(--text-secondary); font: 580 var(--fs-caption)/1.2 var(--font-text); cursor: pointer; transition: color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease); }
+.shortcuts button:hover, .shortcuts button:focus-visible { color: var(--text-primary); border-color: var(--popup-border); background: color-mix(in oklab, var(--accent) 9%, var(--popup-hover)); outline: none; transform: translateY(-1px); }
 
-.presetBtn:hover {
-  background: var(--rim);
-}
+.calendarHeader { display: grid; grid-template-columns: 34px minmax(0, 1fr) 34px; align-items: center; gap: 6px; min-height: 54px; }
+.navButton { display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 10px; background: transparent; color: var(--text-secondary); cursor: pointer; }
+.navButton:hover, .navButton:focus-visible { background: var(--popup-hover); color: var(--text-primary); outline: none; }
+.monthButton { display: flex; align-items: baseline; justify-content: center; gap: 7px; min-height: 34px; border: 0; border-radius: 10px; background: transparent; color: var(--text-primary); cursor: pointer; }
+.monthButton:hover, .monthButton:focus-visible { background: var(--popup-control); outline: none; }
+.monthButton strong { font: 650 var(--fs-callout)/1 var(--font-text); }
+.monthButton span { color: var(--text-secondary); font: 560 var(--fs-footnote)/1 var(--font-text); }
 
-.dateInput {
-  composes: callout from '../../tokens/typography.module.css';
-  width: 100%;
-  color: var(--text-primary);
-  background: rgba(var(--overlay-tint), 0.05);
-  border: 1px solid var(--rim);
-  border-radius: 9px;
-  padding: var(--space-2) var(--space-3);
-  color-scheme: dark;
-}
+.calendar { min-height: 268px; }
+.weekdays, .days { display: grid; grid-template-columns: repeat(7, 1fr); }
+.weekdays { height: 27px; align-items: center; }
+.weekdays span { text-align: center; color: var(--text-tertiary); font: 650 var(--fs-caption)/1 var(--font-text); }
+.days { gap: 2px 3px; }
+.days button { display: grid; place-items: center; aspect-ratio: 1; min-width: 0; padding: 0; border: 1px solid transparent; border-radius: 11px; background: transparent; color: var(--text-primary); font: 560 var(--fs-footnote)/1 var(--font-text); cursor: pointer; outline: none; transition: color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease); }
+.days button:hover { background: var(--popup-hover); transform: scale(1.04); }
+.days button:focus-visible { border-color: color-mix(in oklab, var(--accent) 64%, transparent); box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 11%, transparent); }
+.days .outside { color: color-mix(in oklab, var(--text-tertiary) 62%, transparent); }
+.days .today { color: var(--accent); border-color: color-mix(in oklab, var(--accent) 36%, transparent); }
+.days .today span::after { content: ''; display: block; width: 3px; height: 3px; margin: 2px auto -5px; border-radius: 50%; background: currentColor; }
+.days .selected { color: #080b10; background: var(--accent); border-color: color-mix(in oklab, var(--accent) 78%, white); box-shadow: 0 5px 15px color-mix(in oklab, var(--accent) 22%, transparent), inset 0 1px 0 rgba(255,255,255,.38); font-weight: 720; }
+.days .selected:hover { background: color-mix(in oklab, var(--accent) 90%, white); }
 
-.removeBtn {
-  composes: caption from '../../tokens/typography.module.css';
-  padding: var(--space-2) var(--space-3);
-  border: none;
-  border-radius: 9px;
-  background: transparent;
-  color: var(--warn);
-  cursor: pointer;
-  text-align: left;
-  transition: background var(--dur-fast) var(--ease);
-}
+.jumpPanel { overflow: hidden; min-height: 268px; }
+.yearControl { display: grid; grid-template-columns: 34px 84px 34px; justify-content: center; align-items: center; gap: 7px; margin: 6px 0 13px; }
+.yearControl button { display: grid; place-items: center; width: 34px; height: 34px; border: 0; border-radius: 10px; background: var(--popup-control); color: var(--text-secondary); cursor: pointer; }
+.yearControl button:hover { background: var(--popup-hover); color: var(--text-primary); }
+.yearControl input { width: 84px; height: 36px; padding: 0 9px; border: 1px solid var(--popup-divider); border-radius: 10px; outline: none; background: var(--popup-control); color: var(--text-primary); text-align: center; font: 650 var(--fs-callout)/1 var(--font-text); }
+.yearControl input:focus { border-color: color-mix(in oklab, var(--accent) 55%, var(--rim)); box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 10%, transparent); }
+.monthGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.monthGrid button { min-height: 43px; border: 1px solid transparent; border-radius: 11px; background: var(--popup-control); color: var(--text-secondary); font: 580 var(--fs-footnote)/1 var(--font-text); cursor: pointer; }
+.monthGrid button:hover { background: var(--popup-hover); color: var(--text-primary); }
+.monthGrid .monthSelected { border-color: color-mix(in oklab, var(--accent) 30%, var(--rim)); background: color-mix(in oklab, var(--accent) 13%, transparent); color: var(--accent); }
 
-.removeBtn:hover {
-  background: color-mix(in oklab, var(--warn) 12%, transparent);
+.manual { padding: 12px 1px 10px; border-top: 1px solid var(--rim); }
+.manual > label { display: block; margin: 0 2px 6px; color: var(--text-secondary); font: 580 var(--fs-footnote)/1.3 var(--font-text); }
+.inputWrap { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; min-height: 39px; overflow: hidden; border: 1px solid var(--popup-divider); border-radius: 11px; background: var(--popup-control); transition: border-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease); }
+.inputWrap:focus-within { border-color: color-mix(in oklab, var(--accent) 50%, var(--rim)); box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 9%, transparent); }
+.inputWrap input { min-width: 0; height: 37px; padding: 0 11px; border: 0; outline: none; background: transparent; color: var(--text-primary); font: 560 var(--fs-footnote)/1 var(--font-text); letter-spacing: .025em; }
+.inputWrap input::placeholder { color: var(--text-tertiary); letter-spacing: .04em; }
+.inputWrap button { height: 29px; margin-right: 5px; padding: 0 11px; border: 0; border-radius: 8px; background: color-mix(in oklab, var(--accent) 16%, transparent); color: var(--accent); font: 650 var(--fs-caption)/1 var(--font-text); cursor: pointer; }
+.inputWrap button:hover { background: color-mix(in oklab, var(--accent) 23%, transparent); }
+.inputInvalid { border-color: color-mix(in oklab, var(--warn) 65%, var(--rim)); }
+.manual p { margin: 6px 3px 0; color: var(--warn); font: 550 var(--fs-caption)/1.35 var(--font-text); }
+
+.footer { display: flex; align-items: center; justify-content: flex-end; gap: 6px; min-height: 28px; }
+.footer button { min-height: 28px; padding: 0 8px; border: 0; border-radius: 8px; background: transparent; font: 580 var(--fs-caption)/1 var(--font-text); cursor: pointer; }
+.clearButton { margin-right: auto; color: color-mix(in oklab, var(--warn) 82%, var(--text-primary)); }
+.clearButton:hover { background: color-mix(in oklab, var(--warn) 10%, transparent); }
+.cancelButton { color: var(--text-secondary); }
+.cancelButton:hover { color: var(--text-primary); background: var(--popup-control); }
+
+@media (max-width: 520px) {
+  .picker { width: min(344px, calc(100vw - 20px)); }
 }

@@ -99,15 +99,23 @@ export function Sidebar({ notes, folders, selectedRel, onSelect, onTogglePin, on
 
   return (
     <nav className={styles.sidebar} data-collapsed={collapsed ? '' : undefined}>
+      <div className={styles.brand}>
+        <span className={styles.brandGlyph}><NoteIcon size={18} /></span>
+        <span className={styles.brandCopy}>
+          <strong>Notes</strong>
+          <small>{notes.length} {notes.length === 1 ? 'note' : 'notes'}</small>
+        </span>
+      </div>
+
       <div className={styles.top}>
-        <button type="button" className={styles.navRow} onClick={onOpenSearch} title={collapsed ? 'Search' : undefined}>
+        <button type="button" className={`${styles.navRow} ${styles.searchRow}`} onClick={onOpenSearch} title={collapsed ? 'Find a note' : undefined}>
           <span className={styles.navIcon}>
             <SearchIcon />
           </span>
-          <span className={styles.navLabel}>Search</span>
+          <span className={styles.navLabel}>Find a note</span>
         </button>
-        <button type="button" className={styles.navRow} onClick={onQuickCapture} title={collapsed ? 'Quick Capture' : undefined}>
-          <span className={styles.navIcon}>
+        <button type="button" className={`${styles.navRow} ${styles.captureRow}`} onClick={onQuickCapture} title={collapsed ? 'Quick Capture' : undefined}>
+          <span className={`${styles.navIcon} ${styles.captureIcon}`}>
             <CaptureIcon />
           </span>
           <span className={styles.navLabel}>Quick Capture</span>
@@ -128,6 +136,7 @@ export function Sidebar({ notes, folders, selectedRel, onSelect, onTogglePin, on
           you get back to browsing, same as any collapsed nav. */}
       {!collapsed && (
         <div className={styles.scroll}>
+          <div className={styles.groupLabel}>Library</div>
           {pinned.length > 0 && (
             <Section id="pinned" icon={<StarIcon />} label="Pinned" count={pinned.length} open={open.has('pinned')} onToggle={toggleSection}>
               <Rows notes={pinned} {...rowProps} />
@@ -143,19 +152,26 @@ export function Sidebar({ notes, folders, selectedRel, onSelect, onTogglePin, on
           </Section>
 
           <div className={styles.foldersHead}>
-            <span className={styles.foldersLabel}>Folders</span>
+            <span className={styles.foldersCopy}>
+              <strong>Folders</strong>
+              <small>Collections and loose notes</small>
+            </span>
             <button type="button" className={styles.addFolderBtn} onClick={onAddFolder} title="Add folder">
               <FolderPlusIcon />
             </button>
           </div>
-          {rootNotes.length > 0 && <Rows notes={rootNotes} {...rowProps} />}
           {tree.length === 0 && rootNotes.length === 0 ? (
-            <div className={styles.emptyFolders}>No folders yet.</div>
-          ) : (
-            tree.map((node) => (
+            <div className={styles.emptyFolders}>
+              <strong>No folders yet</strong>
+              <span>Create one to organize related notes.</span>
+              <button type="button" onClick={onAddFolder}>Create folder</button>
+            </div>
+          ) : <>
+            {tree.map((node) => (
               <FolderRow key={node.path} node={node} depth={0} collapsed={collapsedFolders} onToggle={toggleFolder} {...rowProps} showIcon />
-            ))
-          )}
+            ))}
+            {rootNotes.length > 0 && <div className={styles.looseNotes}><Rows notes={rootNotes} {...rowProps} /></div>}
+          </>}
         </div>
       )}
     </nav>
@@ -181,7 +197,7 @@ function Section({
 }) {
   return (
     <div className={styles.section}>
-      <button type="button" className={styles.sectionHead} onClick={() => onToggle(id)}>
+      <button type="button" className={styles.sectionHead} aria-expanded={open} onClick={() => onToggle(id)}>
         <ChevronIcon open={open} />
         <span className={styles.navIcon}>{icon}</span>
         <span className={styles.sectionLabel}>{label}</span>

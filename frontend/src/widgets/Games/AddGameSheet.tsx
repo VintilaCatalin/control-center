@@ -67,6 +67,7 @@ export function AddGameSheet({ open, onClose, shelves, defaultShelfId }: AddGame
     <Sheet
       open={open}
       onClose={handleClose}
+      size="standard"
       title="Add a game"
       subtitle="Adds a manually-tracked entry to a shelf."
       actions={

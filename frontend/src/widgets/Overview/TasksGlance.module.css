@@ -8,7 +8,7 @@
 .head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: var(--space-2);
 }
 
 .heading {
@@ -36,11 +36,55 @@
   color: var(--accent);
 }
 
+.sourceButton {
+  composes: caption from '../../tokens/typography.module.css';
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  max-width: 145px;
+  padding: 4px 7px;
+  border: 1px solid var(--form-border);
+  border-radius: 8px;
+  background: var(--material-control);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+}
+
+.sourceButton:first-child {
+  margin-left: 0;
+}
+
+.heading + .sourceButton {
+  margin-left: auto;
+}
+
+.sourceButton span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sourceButton svg {
+  flex: none;
+  color: var(--text-tertiary);
+}
+
+.sourceButton:hover,
+.sourceButton:focus-visible,
+.sourceButton[aria-expanded='true'] {
+  outline: none;
+  border-color: color-mix(in oklab, var(--accent) 28%, var(--rim));
+  background: rgba(var(--overlay-tint), .065);
+  color: var(--text-primary);
+}
+
 .summary {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  margin-top: -2px;
+  margin-top: -1px;
 }
 
 .ring {
@@ -64,10 +108,11 @@
   composes: callout from '../../tokens/typography.module.css';
   width: 100%;
   color: var(--text-primary);
-  background: rgba(var(--overlay-tint), 0.05);
-  border: 1px solid var(--rim);
+  min-height: 37px;
+  background: var(--material-control);
+  border: 1px solid var(--form-border);
   border-radius: 9px;
-  padding: 6px 10px;
+  padding: 7px 11px;
 }
 
 .input::placeholder {
@@ -76,7 +121,12 @@
 
 .input:focus {
   outline: none;
-  border-color: color-mix(in oklab, var(--accent) 60%, transparent);
+  border-color: var(--form-focus);
+  box-shadow: var(--form-ring);
+}
+
+.input:disabled {
+  opacity: .62;
 }
 
 .empty {
@@ -103,7 +153,7 @@
 .groupLabel {
   composes: eyebrow from '../../tokens/typography.module.css';
   color: var(--text-tertiary);
-  padding: 0 4px;
+  padding: 0 7px 3px;
 }
 
 .list {
@@ -118,6 +168,7 @@
   align-items: center;
   gap: var(--space-3);
   width: 100%;
+  min-height: 38px;
   padding: 7px 8px;
   border: none;
   border-radius: 8px;
@@ -128,7 +179,7 @@
 }
 
 .row:hover:not(:disabled) {
-  background: rgba(var(--overlay-tint), 0.05);
+  background: color-mix(in oklab, var(--material-hover) 62%, transparent);
 }
 
 .row:disabled {
@@ -154,7 +205,7 @@
   place-items: center;
   width: 17px;
   height: 17px;
-  border-radius: 999px;
+  border-radius: 5px;
   border: 1.5px solid var(--rim-lit);
   color: #fff;
   transition: border-color var(--dur-fast) var(--ease);
@@ -165,9 +216,9 @@
 }
 
 .text {
-  composes: callout from '../../tokens/typography.module.css';
   flex: 1;
   color: var(--text-primary);
+  font: 500 var(--fs-footnote)/1.35 var(--font-text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

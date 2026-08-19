@@ -42,7 +42,24 @@ def handle_get(handler, path, route, snapshot):
         except ValueError:
             w, h = 300, 250
         try:
-            handler._send(wall_thumb(str(target), size=(w, h)), "image/jpeg")
+            # The URL is stable for a given local file, so let WebView retain
+            # the rendered thumbnail between Scene visits. The mtime-backed
+            # ETag still invalidates it when the source file changes.
+            etag = f'"{target.stat().st_mtime_ns:x}-{w}x{h}"'
+            if handler.headers.get("If-None-Match") == etag:
+                handler.send_response(304)
+                handler.send_header("ETag", etag)
+                handler.send_header("Cache-Control", "private, max-age=3600")
+                handler.end_headers()
+                return True
+            body = wall_thumb(str(target), size=(w, h))
+            handler.send_response(200)
+            handler.send_header("Content-Type", "image/jpeg")
+            handler.send_header("Content-Length", str(len(body)))
+            handler.send_header("ETag", etag)
+            handler.send_header("Cache-Control", "private, max-age=3600")
+            handler.end_headers()
+            handler.wfile.write(body)
         except Exception as e:
             handler._send(f"thumb failed: {e}", "text/plain", 500)
         return True

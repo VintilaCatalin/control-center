@@ -6,10 +6,11 @@ interface Toast {
   id: string;
   title: string;
   tone: 'error' | 'warning' | 'success' | 'info';
+  action?: { label: string; onClick: () => void };
 }
 
 interface ToastApi {
-  push: (title: string, tone?: Toast['tone']) => void;
+  push: (title: string, tone?: Toast['tone'], action?: Toast['action']) => void;
 }
 
 const ToastContext = createContext<ToastApi | null>(null);
@@ -25,9 +26,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const idRef = useRef(0);
   const reduceMotion = useReducedMotion();
 
-  const push = useCallback((title: string, tone: Toast['tone'] = 'info') => {
+  const push = useCallback((title: string, tone: Toast['tone'] = 'info', action?: Toast['action']) => {
     const id = `t${++idRef.current}`;
-    setToasts((prev) => [...prev, { id, title, tone }]);
+    setToasts((prev) => [...prev, { id, title, tone, action }]);
     setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 6000);
   }, []);
 
@@ -64,6 +65,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               >
                 <span className={styles.dot} data-tone={t.tone} />
                 <span className={styles.title}>{t.title}</span>
+                {t.action && <button type="button" className={styles.action} onClick={(event) => { event.stopPropagation(); t.action?.onClick(); dismiss(t.id); }}>{t.action.label}</button>}
               </motion.div>
             </motion.div>
           ))}

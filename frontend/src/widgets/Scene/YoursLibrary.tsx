@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { applyLocalWallpaper, favoriteWallpaper, fixDesktopWallpapers, matchLightsToWallpaper, wallImageUrl } from '../../api/actions/scene';
 import { useSnapshotData } from '../../api/SnapshotProvider';
+import type { WallpaperEntry } from '../../api/types';
 import { FolderSetup } from '../../primitives/FolderSetup/FolderSetup';
 import { Menu, type MenuItem } from '../../primitives/Menu/Menu';
 import { useMenu } from '../../primitives/Menu/useMenu';
@@ -8,6 +9,8 @@ import { Sheet } from '../../primitives/Sheet/Sheet';
 import { Skeleton } from '../../primitives/Skeleton/Skeleton';
 import { WallpaperTile } from './WallpaperTile';
 import styles from './WallpaperLibrary.module.css';
+
+const NO_WALLPAPERS: WallpaperEntry[] = [];
 
 function DotsIcon() {
   return (
@@ -101,11 +104,11 @@ export function YoursLibrary() {
   const { snapshot, loading } = useSnapshotData();
   const [applyingPath, setApplyingPath] = useState<string | null>(null);
 
-  const walls = snapshot?.wallpapers?.walls ?? [];
+  const walls = snapshot?.wallpapers?.walls ?? NO_WALLPAPERS;
   const configured = snapshot?.wallpapers?.configured;
   const wallsError = snapshot?.wallpapers?.error;
 
-  async function handleApply(path: string, matchLights: boolean) {
+  const handleApply = useCallback(async (path: string, matchLights: boolean) => {
     setApplyingPath(path);
     try {
       await applyLocalWallpaper(path);
@@ -113,7 +116,29 @@ export function YoursLibrary() {
     } finally {
       setApplyingPath(null);
     }
-  }
+  }, []);
+
+  // Hardware/media updates refresh the shared snapshot every few seconds.
+  // The wallpapers array retains its identity when that section did not
+  // change, so preserve this comparatively large React subtree too instead
+  // of reconciling the whole library for an unrelated temperature update.
+  const tiles = useMemo(
+    () =>
+      walls.map((w) => (
+        <WallpaperTile
+          key={w.path}
+          thumbUrl={wallImageUrl(w.path, 420, 236)}
+          name={w.name}
+          current={w.current}
+          favorite={w.favorite}
+          onToggleFavorite={() => favoriteWallpaper(w.path, !w.favorite)}
+          applying={applyingPath === w.path}
+          onApply={() => handleApply(w.path, false)}
+          onApplyMatchLights={() => handleApply(w.path, true)}
+        />
+      )),
+    [applyingPath, handleApply, walls],
+  );
 
   if (!snapshot && loading) return <SkeletonGrid />;
   if (configured === false)
@@ -129,19 +154,7 @@ export function YoursLibrary() {
 
   return (
     <div className={styles.grid}>
-      {walls.map((w) => (
-        <WallpaperTile
-          key={w.path}
-          thumbUrl={wallImageUrl(w.path, 420, 236)}
-          name={w.name}
-          current={w.current}
-          favorite={w.favorite}
-          onToggleFavorite={() => favoriteWallpaper(w.path, !w.favorite)}
-          applying={applyingPath === w.path}
-          onApply={() => handleApply(w.path, false)}
-          onApplyMatchLights={() => handleApply(w.path, true)}
-        />
-      ))}
+      {tiles}
     </div>
   );
 }

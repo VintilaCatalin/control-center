@@ -45,6 +45,7 @@ export function RenameNoteSheet({ open, onClose, rel, currentName, onRenamed }: 
       open={open}
       onClose={onClose}
       title="Rename note"
+      size="compact"
       actions={
         <>
           <button type="button" className={styles.btn} onClick={onClose}>

@@ -30,6 +30,7 @@ export function AtmosphereProvider({ children }: { children: ReactNode }) {
   const accent = snapshot?.accent;
   const theme = snapshot?.ui?.profile?.theme;
   const reducedMotion = snapshot?.ui?.prefs?.reduced_motion;
+  const materialStyle = snapshot?.ui?.prefs?.material_style ?? 'liquid_glass';
 
   const value = useMemo<AtmosphereState>(
     () => ({
@@ -54,6 +55,13 @@ export function AtmosphereProvider({ children }: { children: ReactNode }) {
     if (theme === 'light') document.documentElement.dataset.theme = 'light';
     else delete document.documentElement.dataset.theme;
   }, [theme]);
+
+  // Material is a product-wide preference, not an application skin. The
+  // attribute lives beside the theme/accent signals so persistent chrome,
+  // app surfaces and portal-based popovers all change in the same frame.
+  useEffect(() => {
+    document.documentElement.dataset.material = materialStyle === 'blur_cyberpunk' ? 'blur' : 'liquid';
+  }, [materialStyle]);
 
   return (
     <AtmosphereContext.Provider value={value}>

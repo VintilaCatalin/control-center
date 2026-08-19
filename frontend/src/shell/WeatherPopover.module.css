@@ -88,16 +88,16 @@
   overflow: hidden;
   width: 400px;
   border-radius: 16px;
-  border: 1px solid var(--popup-border);
-  box-shadow: var(--popup-shadow);
+  border: 1px solid var(--rim);
+  box-shadow: var(--lift), var(--inner);
 }
 
 .glass {
   position: absolute;
   inset: 0;
   z-index: 0;
-  background: var(--popup-bg);
-  backdrop-filter: var(--popup-blur);
+  background: var(--glass);
+  backdrop-filter: var(--blur);
   pointer-events: none;
 }
 
@@ -109,21 +109,12 @@
   position: absolute;
   inset: 0 0 auto;
   height: 42%;
-  background: linear-gradient(rgba(var(--overlay-tint), 0.075), transparent);
-  pointer-events: none;
-}
-
-.glass::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  box-shadow: inset 0 0 0 1px rgba(var(--overlay-tint), 0.05);
+  background: linear-gradient(rgba(var(--overlay-tint), .055), transparent);
   pointer-events: none;
 }
 
 .content {
   position: relative;
   z-index: 1;
-  padding: var(--space-4);
+  padding: 17px;
 }

@@ -20,8 +20,8 @@
   color-scheme: dark;
 
   --ink: #07090d;
-  --slate: #14171e;
-  --raise: #1b1f28;
+  --graphite: #181919;
+  --graphite-raised: #202121;
   --mist: #8f97a8;
   --paper: #f2f4f8;
   --accent: #8f97a8;
@@ -35,8 +35,8 @@
      fog, but still solid enough to read text against. */
   --glass-strength: 32%;
   --glass-strength-up: 44%;
-  --glass: color-mix(in oklab, var(--slate) var(--glass-strength), transparent);
-  --glass-up: color-mix(in oklab, var(--slate) var(--glass-strength-up), transparent);
+  --glass: color-mix(in oklab, var(--graphite) var(--glass-strength), transparent);
+  --glass-up: color-mix(in oklab, var(--graphite) var(--glass-strength-up), transparent);
 
   --overlay-tint: 255, 255, 255;
   --rim: rgba(var(--overlay-tint), 0.085);
@@ -51,13 +51,10 @@
      running (see the .module.css files - -webkit- removed everywhere;
      that was the real bug behind every earlier "see-through/no blur"
      report, not a tint or opacity problem). Chroma zeroed via oklch
-     rather than reusing --glass directly - --slate carries a faint
-     blue-navy cast (#14171e, blue channel higher than red/green) that's
-     too diluted to notice across a big Card but reads as a clear blue
-     tint once it's the dominant colour in a small floating popup -
-     "remove that hint of blue" per direct feedback. Same lightness/
-     opacity/blur as Card's --glass, just hue-neutralised. */
-  --popup-bg: color-mix(in oklab, oklch(from var(--slate) l 0 h) var(--glass-strength), transparent);
+     rather than reusing --glass directly, which once inherited a faint
+     blue-grey fallback in small floating surfaces. The
+     shared popup contract in materials.css now uses --glass directly. */
+  --popup-bg: var(--glass);
   /* Same border Card uses (not the brighter --rim-lit this used to be) -
      "let's get the border glass the same like panels" per direct
      feedback. */
@@ -93,8 +90,8 @@
   color-scheme: light;
 
   --ink: #eceef3;
-  --slate: #f7f8fb;
-  --raise: #e7e9f0;
+  --graphite: #f7f8fb;
+  --graphite-raised: #e7e9f0;
   --mist: #545b6a;
   --paper: #14161c;
   --overlay-tint: 15, 18, 26;

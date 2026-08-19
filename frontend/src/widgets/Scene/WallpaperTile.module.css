@@ -1,5 +1,10 @@
 .wrap {
   position: relative;
+  /* The wallpaper library can contain hundreds of tiles inside its own
+     scrollport. Keep off-screen tiles out of layout/paint until the user
+     approaches them; the intrinsic size prevents scroll jumps. */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 180px;
 }
 
 .tile {
@@ -12,6 +17,15 @@
   cursor: pointer;
   border-radius: var(--r-tile);
   outline: none;
+  transition: transform var(--dur-base) var(--ease);
+}
+
+.tile:hover {
+  transform: translateY(-3px) scale(1.03);
+}
+
+.tile:active {
+  transform: scale(0.97);
 }
 
 .tile:focus-visible {

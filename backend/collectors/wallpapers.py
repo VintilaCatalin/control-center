@@ -6,6 +6,8 @@ Extracted verbatim from the pre-modularization panel/server.py.
 import json
 import subprocess
 import sys
+import threading
+from collections import OrderedDict
 from pathlib import Path
 from urllib.parse import urlparse, parse_qs, urljoin
 import requests
@@ -41,7 +43,15 @@ def collect_wallpapers(cfg, _shared):
     favorites = [w for w in walls if w["favorite"]]
     return {"dir": str(folder), "walls": walls[:limit], "favorites": favorites, "total": len(walls), "current_path": current, "current_bg": current_bg, "configured": True}
 
-_wall_thumbs = {}
+_wall_thumbs = OrderedDict()
+_wall_thumbs_lock = threading.Lock()
+# Pillow releases the GIL while decoding/resampling. Without a small bound,
+# the browser's parallel image requests can therefore occupy every core at
+# once when Scene opens. Two workers keep the gallery responsive without a
+# short, hot all-core burst.
+_wall_thumb_slots = threading.BoundedSemaphore(2)
+_WALL_THUMB_CACHE_LIMIT = 384
+
 def wall_thumb(path, size=(300, 250)):
     from PIL import Image
     import io
@@ -50,18 +60,44 @@ def wall_thumb(path, size=(300, 250)):
     # file) - without it the second size to ask for a given path would
     # silently get served the first size's cached bytes.
     key = f"{path}|{Path(path).stat().st_mtime_ns}|{size[0]}x{size[1]}"
-    if key in _wall_thumbs: return _wall_thumbs[key]
-    img = Image.open(path).convert("RGB")
-    scale = max(size[0] / img.width, size[1] / img.height)
-    img = img.resize((max(1, int(img.width * scale)), max(1, int(img.height * scale))), Image.LANCZOS)
-    left, top = (img.width - size[0]) // 2, (img.height - size[1]) // 2
-    img = img.crop((left, top, left + size[0], top + size[1]))
-    buffer = io.BytesIO()
-    img.save(buffer, "JPEG", quality=82)
-    data = buffer.getvalue()
-    if len(_wall_thumbs) > 80: _wall_thumbs.clear()
-    _wall_thumbs[key] = data
-    return data
+    with _wall_thumbs_lock:
+        cached = _wall_thumbs.get(key)
+        if cached is not None:
+            _wall_thumbs.move_to_end(key)
+            return cached
+
+    with _wall_thumb_slots:
+        # A second request for the same image may have completed while this
+        # thread waited for a decoder slot.
+        with _wall_thumbs_lock:
+            cached = _wall_thumbs.get(key)
+            if cached is not None:
+                _wall_thumbs.move_to_end(key)
+                return cached
+
+        with Image.open(path) as source:
+            # JPEG draft decoding asks libjpeg to downsample during decode,
+            # before Pillow allocates/resamples the full 4K/8K image. Other
+            # formats safely ignore this hint.
+            source.draft("RGB", (size[0] * 2, size[1] * 2))
+            img = source.convert("RGB")
+            scale = max(size[0] / img.width, size[1] / img.height)
+            img = img.resize(
+                (max(1, int(img.width * scale)), max(1, int(img.height * scale))),
+                Image.Resampling.LANCZOS,
+            )
+            left, top = (img.width - size[0]) // 2, (img.height - size[1]) // 2
+            img = img.crop((left, top, left + size[0], top + size[1]))
+            buffer = io.BytesIO()
+            img.save(buffer, "JPEG", quality=82)
+            data = buffer.getvalue()
+
+        with _wall_thumbs_lock:
+            _wall_thumbs[key] = data
+            _wall_thumbs.move_to_end(key)
+            while len(_wall_thumbs) > _WALL_THUMB_CACHE_LIMIT:
+                _wall_thumbs.popitem(last=False)
+        return data
 
 _bg_cache = {}
 def wall_background(path, width=1600):

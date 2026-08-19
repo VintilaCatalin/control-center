@@ -1,8 +1,5 @@
-/* Two tiers, not five independent rows that happen to sit near each
-   other: Weather/Quick Tasks/Quick Note/Panels share one quiet plate
-   (they're all "glance or act, then get back to work"), and Profile sits
-   below its own divider as a distinct identity row - the footer of the
-   sidebar, not just one more item in the same list. */
+/* Utility actions stay in one rhythm but sit directly on the sidebar;
+   profile remains separated as the identity footer. */
 .stack {
   display: flex;
   flex-direction: column;
@@ -12,10 +9,8 @@
 .group {
   display: flex;
   flex-direction: column;
-  gap: 1px;
-  padding: 4px;
-  border-radius: 12px;
-  background: rgba(var(--overlay-tint), 0.02);
+  gap: 2px;
+  padding: 0;
 }
 
 /* Full labelled row - the sidebar's whole point is that utilities read

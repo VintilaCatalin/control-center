@@ -46,7 +46,7 @@ export function GlobalUtilities({ collapsed = false }: { collapsed?: boolean }) 
   const tasks = snapshot?.tasks?.tasks ?? [];
   const taskAreas = snapshot?.tasks?.areas ?? [];
   const taskProjects = snapshot?.tasks?.projects ?? [];
-  const openTaskCount = tasks.filter((t) => !t.done).length;
+  const openTaskCount = tasks.filter((t) => t.status === 'open').length;
   const panelsControl = usePanelsControl();
 
   const profileMenu = useSidebarAnchor<HTMLButtonElement>();

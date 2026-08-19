@@ -52,6 +52,8 @@ export function ArtTile({
             key={current}
             src={current}
             alt={alt}
+            loading="lazy"
+            decoding="async"
             className={[styles.img, contain ? styles.contain : ''].filter(Boolean).join(' ')}
             style={{ opacity: loaded ? 1 : 0 }}
             onLoad={() => setLoaded(true)}

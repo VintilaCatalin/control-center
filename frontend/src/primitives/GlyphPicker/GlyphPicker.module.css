@@ -1,0 +1,13 @@
+.picker { position: fixed; z-index: 82; width: 300px; overflow: hidden; border: 1px solid var(--rim); border-radius: 16px; box-shadow: var(--lift), var(--inner); isolation: isolate; }
+.glass { position: absolute; inset: 0; background: var(--glass); backdrop-filter: var(--blur); }
+.glass::before { content: ''; position: absolute; inset: 0 0 auto; height: 42%; background: linear-gradient(rgba(var(--overlay-tint), .055), transparent); }
+.content { position: relative; padding: 14px; }
+.header { display: flex; align-items: center; gap: 11px; min-height: 52px; padding: 0 4px 12px; }
+.preview { display: grid; place-items: center; width: 22px; color: var(--accent); }
+.header > span:last-child { display: flex; flex-direction: column; gap: 2px; }
+.header strong { color: var(--text-primary); font-size: var(--fs-footnote); font-weight: 650; line-height: 1.3; }
+.header small { color: var(--text-secondary); font-size: var(--fs-caption); line-height: 1.3; }
+.grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+.item { display: grid; place-items: center; aspect-ratio: 1; padding: 0; border: 1px solid var(--popup-divider); border-radius: 10px; background: var(--popup-control); color: var(--text-secondary); cursor: pointer; outline: none; transition: color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease); }
+.item:hover, .item:focus-visible { transform: translateY(-1px); border-color: var(--popup-border); background: var(--popup-hover); color: var(--text-primary); box-shadow: 0 5px 12px rgba(0,0,0,.1); }
+.selected { border-color: color-mix(in oklab, var(--accent) 40%, var(--popup-border)); background: color-mix(in oklab, var(--accent) 14%, var(--popup-bg-elevated)); color: var(--accent); box-shadow: inset 0 1px 0 rgba(var(--overlay-tint), .07); }

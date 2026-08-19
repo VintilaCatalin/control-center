@@ -1,104 +1,44 @@
-.glance {
-  position: relative;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  padding: var(--space-3);
+.glance { height: 100%; container-type: size; }
+.briefing { position: relative; display: flex; flex-direction: column; justify-content: center; gap: 18px; height: 100%; padding: 7px 4px 3px; }
+.masthead { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; min-width: 0; }
+.intro { min-width: 0; }
+.date { display: block; margin-bottom: 8px; color: color-mix(in oklab, var(--accent) 78%, var(--text-secondary)); font: 680 var(--fs-caption)/1.2 var(--font-text); letter-spacing: .075em; text-transform: uppercase; }
+.hello { margin: 0; color: var(--text-primary); font: 710 clamp(2rem, 7.5cqi, 3.35rem)/.98 var(--font-display); letter-spacing: -.045em; text-wrap: balance; }
+.hello span { color: color-mix(in oklab, var(--text-primary) 82%, var(--accent)); }
+.summary { max-width: 52ch; margin: 12px 0 0; color: var(--text-secondary); font: 520 var(--fs-footnote)/1.45 var(--font-text); }
+.avatarRing { flex: none; padding: 2px; border-radius: 50%; background: conic-gradient(from 205deg, color-mix(in oklab, var(--accent) 48%, transparent), var(--accent), color-mix(in oklab, var(--accent) 25%, white 20%)); box-shadow: 0 13px 30px color-mix(in oklab, var(--accent) 13%, transparent); }
+.avatar { display: grid; place-items: center; width: 74px; height: 74px; overflow: hidden; border: 3px solid var(--glass); border-radius: 50%; background: linear-gradient(155deg, color-mix(in oklab, var(--accent) 76%, white 8%), color-mix(in oklab, var(--accent) 42%, #15171b)); color: #090b0f; font: 700 27px/1 var(--font-display); }
+.avatarImg { width: 100%; height: 100%; object-fit: cover; }
+
+.pulse { display: grid; grid-template-columns: .76fr 1.55fr .82fr; border-top: 1px solid var(--rim); border-bottom: 1px solid var(--rim); }
+.signal { display: flex; flex-direction: column; justify-content: center; min-width: 0; min-height: 68px; padding: 9px 14px; }
+.signal:first-child { padding-left: 2px; }
+.signal + .signal { border-left: 1px solid var(--rim); }
+.signalLabel { margin-bottom: 5px; color: var(--text-tertiary); font: 670 var(--fs-caption)/1 var(--font-text); letter-spacing: .065em; text-transform: uppercase; }
+.signalValue, .weatherValue { color: var(--text-primary); font: 710 1.55rem/1 var(--font-display); letter-spacing: -.035em; font-variant-numeric: tabular-nums; }
+.weatherValue { color: color-mix(in oklab, var(--accent) 62%, var(--text-primary)); }
+.nextTitle { overflow: hidden; color: var(--text-primary); font: 650 var(--fs-footnote)/1.2 var(--font-text); text-overflow: ellipsis; white-space: nowrap; }
+.signalMeta { overflow: hidden; margin-top: 4px; color: var(--text-tertiary); font: 510 var(--fs-caption)/1.2 var(--font-text); text-overflow: ellipsis; white-space: nowrap; }
+.links { display: flex; align-items: center; justify-content: flex-end; gap: 4px; }
+.link { display: flex; align-items: center; gap: 6px; height: 31px; padding: 0 9px; border: 0; border-radius: 8px; background: transparent; color: var(--text-tertiary); font: 570 var(--fs-caption)/1 var(--font-text); cursor: pointer; transition: color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease); }
+.link svg { width: 14px; height: 14px; }
+.link:hover { background: rgba(var(--overlay-tint), .055); color: var(--text-primary); }
+.link:focus-visible { outline: 2px solid color-mix(in oklab, var(--accent) 42%, var(--rim)); outline-offset: -2px; }
+
+@container (max-width: 430px) {
+  .briefing { gap: 14px; }
+  .avatar { width: 58px; height: 58px; font-size: 22px; }
+  .hello { font-size: clamp(1.75rem, 9cqi, 2.3rem); }
+  .summary { margin-top: 8px; }
+  .pulse { grid-template-columns: 1fr 1fr; }
+  .next { grid-column: 1 / -1; grid-row: 2; border-top: 1px solid var(--rim); border-left: 0 !important; }
+  .signal { min-height: 55px; padding: 8px 10px; }
+  .signal:nth-child(3) { border-left: 1px solid var(--rim); }
+  .links { justify-content: flex-start; }
 }
 
-.links {
-  position: absolute;
-  top: var(--space-3);
-  right: var(--space-3);
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.link {
-  display: grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 999px;
-  border: 1px solid var(--rim);
-  background: rgba(var(--overlay-tint), 0.05);
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition:
-    color var(--dur-fast) var(--ease),
-    background var(--dur-fast) var(--ease),
-    border-color var(--dur-fast) var(--ease);
-}
-
-.link:hover {
-  color: var(--text-primary);
-  background: rgba(var(--overlay-tint), 0.1);
-  border-color: color-mix(in oklab, var(--accent) 40%, transparent);
-}
-
-.hero {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-4);
-  text-align: center;
-}
-
-/* A real portrait, not a small utility avatar - the ring is a gradient
-   border (not a flat one), the closest this app gets to a "profile
-   story ring" without inventing a whole new decorative system. */
-.avatarRing {
-  flex-shrink: 0;
-  padding: 3px;
-  border-radius: 999px;
-  background: conic-gradient(from 180deg, var(--accent), color-mix(in oklab, var(--accent) 40%, white 30%), var(--accent));
-}
-
-.avatar {
-  display: grid;
-  place-items: center;
-  width: 96px;
-  height: 96px;
-  border-radius: 999px;
-  overflow: hidden;
-  background: linear-gradient(160deg, var(--accent), color-mix(in oklab, var(--accent) 55%, black 25%));
-  color: #0a0c10;
-  font-weight: 650;
-  font-size: 34px;
-  border: 2px solid var(--ink);
-}
-
-.avatarImg {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.text {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-}
-
-.greeting {
-  composes: title1 from '../../tokens/typography.module.css';
-  color: var(--text-primary);
-  font-weight: 680;
-  line-height: 1.15;
-}
-
-.subline {
-  composes: callout from '../../tokens/typography.module.css';
-  color: var(--text-secondary);
-  font-weight: 550;
-}
-
-.context {
-  composes: footnote from '../../tokens/typography.module.css';
-  color: var(--text-tertiary);
+@container (max-height: 245px) {
+  .briefing { gap: 12px; }
+  .summary { display: none; }
+  .signal { min-height: 58px; }
 }

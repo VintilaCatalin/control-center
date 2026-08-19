@@ -56,6 +56,7 @@ export function NewNoteSheet({ open, onClose, folders, defaultFolder, onCreated 
       open={open}
       onClose={handleClose}
       title="New note"
+      size="compact"
       actions={
         <>
           <button type="button" className={styles.btn} onClick={handleClose}>

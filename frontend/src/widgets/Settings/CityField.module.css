@@ -22,8 +22,8 @@
   width: 100%;
   padding: 9px var(--space-3);
   border-radius: 10px;
-  border: 1px solid var(--rim);
-  background: rgba(var(--overlay-tint), 0.03);
+  border: 1px solid var(--form-border);
+  background: var(--form-bg);
   color: var(--text-primary);
   transition:
     border-color var(--dur-fast) var(--ease),
@@ -32,8 +32,9 @@
 
 .input:focus {
   outline: none;
-  border-color: color-mix(in oklab, var(--accent) 55%, var(--rim));
-  background: rgba(var(--overlay-tint), 0.05);
+  border-color: var(--form-focus);
+  background: var(--form-bg-hover);
+  box-shadow: var(--form-ring);
 }
 
 .spinner {
@@ -62,10 +63,11 @@
   margin: 0;
   padding: 4px;
   list-style: none;
-  border-radius: 10px;
+  border-radius: var(--r-tile);
   border: 1px solid var(--rim);
-  background: var(--slate);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  background: var(--glass);
+  box-shadow: var(--lift), var(--inner);
+  backdrop-filter: var(--blur);
   max-height: 220px;
   overflow-y: auto;
 }

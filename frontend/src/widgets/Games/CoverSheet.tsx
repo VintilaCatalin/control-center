@@ -67,6 +67,7 @@ export function CoverSheet({ game, onClose }: CoverSheetProps) {
       onClose={onClose}
       title={game ? `Cover for ${game.name}` : ''}
       subtitle="Pick one below, choose a file, or paste a link."
+      size="wide"
       actions={
         <>
           <button type="button" className={styles.btn} onClick={() => apply(null)} disabled={busy}>

@@ -1,125 +1,107 @@
-/* background/backdrop-filter live on .glass, not here - see
-   Overlay.module.css's identical comment: Framer Motion drives this
-   element's opacity/scale/y directly, and Chromium doesn't reliably
-   blur through an element whose own transform is animating. */
 .menu {
   position: fixed;
-  z-index: 60;
-  min-width: 194px;
-  max-height: min(420px, calc(100vh - 24px));
+  z-index: 80;
+  min-width: 210px;
+  max-height: min(440px, calc(100vh - 24px));
   overflow: hidden;
+  border: 1px solid var(--rim);
   border-radius: 14px;
-  border: 1px solid var(--popup-border);
-  box-shadow: var(--popup-shadow);
+  box-shadow: var(--lift), var(--inner);
+  isolation: isolate;
 }
 
 .glass {
   position: absolute;
   inset: 0;
   z-index: 0;
-  background: var(--popup-bg);
-  backdrop-filter: var(--popup-blur);
+  background: var(--glass);
+  backdrop-filter: var(--blur);
   pointer-events: none;
 }
 
-/* The same top sheen every Card in the app has (primitives/Card) - see
-   Overlay.module.css's identical rule for why this is the piece that
-   actually reads as "glass". */
 .glass::before {
   content: '';
   position: absolute;
   inset: 0 0 auto;
   height: 42%;
-  background: linear-gradient(rgba(var(--overlay-tint), 0.075), transparent);
-  pointer-events: none;
-}
-
-.glass::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  box-shadow: inset 0 0 0 1px rgba(var(--overlay-tint), 0.05);
-  pointer-events: none;
+  background: linear-gradient(rgba(var(--overlay-tint), .055), transparent);
 }
 
 .content {
   position: relative;
   z-index: 1;
-  max-height: min(420px, calc(100vh - 24px));
+  max-height: min(440px, calc(100vh - 24px));
   overflow-y: auto;
-  padding: 6px;
+  padding: 7px;
 }
 
 .item {
-  composes: callout from '../../tokens/typography.module.css';
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-4);
+  gap: 18px;
   width: 100%;
-  text-align: left;
-  color: var(--text-primary);
+  min-height: 40px;
+  padding: 6px 10px;
+  border: 1px solid transparent;
+  border-radius: 10px;
   background: transparent;
-  border: 0;
-  border-radius: 9px;
-  padding: var(--space-2) var(--space-3);
+  color: var(--text-primary);
+  font-size: var(--fs-footnote);
+  font-weight: 560;
+  line-height: 1.3;
+  text-align: left;
   cursor: pointer;
-  transition: background var(--dur-fast) var(--ease);
+  transition: background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
 }
 
 .item:hover,
 .item:focus-visible {
-  background: var(--rim);
+  border-color: color-mix(in oklab, var(--popup-border) 62%, transparent);
+  background: var(--popup-hover);
   outline: none;
 }
 
-.danger {
-  color: #ff8a8a;
-}
+.danger { color: color-mix(in oklab, var(--warn) 86%, var(--text-primary)); }
 
 .itemMain {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: 10px;
   min-width: 0;
 }
 
-/* A small chip behind the glyph, not a bare icon floating next to text -
-   reads as a real product menu row (profile menu) rather than a plain
-   context-menu list, without needing a second menu component. */
 .itemIcon {
   display: grid;
   place-items: center;
-  flex-shrink: 0;
-  width: 24px;
-  height: 24px;
-  border-radius: 7px;
-  background: rgba(var(--overlay-tint), 0.05);
-  color: var(--text-tertiary);
-  transition:
-    background var(--dur-fast) var(--ease),
-    color var(--dur-fast) var(--ease);
+  width: 19px;
+  flex: none;
+  color: var(--text-secondary);
+  transition: color var(--dur-fast) var(--ease);
 }
 
 .item:hover .itemIcon {
-  background: rgba(var(--overlay-tint), 0.09);
-  color: var(--text-secondary);
+  color: var(--text-primary);
 }
 
 .sep {
+  height: 1px;
+  margin: 6px 5px;
   border: 0;
-  border-top: 1px solid var(--rim);
-  margin: var(--space-2) var(--space-1);
+  background: var(--popup-divider);
 }
 
 .heading {
-  composes: eyebrow from '../../tokens/typography.module.css';
+  padding: 8px 10px 5px;
   color: var(--text-tertiary);
-  padding: var(--space-2) var(--space-3) var(--space-1);
+  font-size: var(--fs-caption);
+  font-weight: 680;
+  letter-spacing: .065em;
+  text-transform: uppercase;
 }
 
 .hint {
-  composes: caption from '../../tokens/typography.module.css';
   color: var(--text-tertiary);
+  font-size: var(--fs-caption);
+  font-weight: 480;
 }

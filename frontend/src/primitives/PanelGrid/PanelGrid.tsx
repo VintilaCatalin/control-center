@@ -205,7 +205,7 @@ export function PanelGrid({ view, panels, fallbackSize = { w: 2, h: 6 } }: Panel
       {visible.length === 0 ? (
         <div className={styles.emptyState}>All panels are hidden - use the Panels control in the header to bring one back.</div>
       ) : (
-        <div className={styles.grid} ref={gridRef}>
+        <div className={styles.grid} ref={gridRef} data-panel-grid={view}>
           {visible.map((id) => {
             const panel = byId.get(id);
             if (!panel) return null;
@@ -213,6 +213,7 @@ export function PanelGrid({ view, panels, fallbackSize = { w: 2, h: 6 } }: Panel
               <Panel
                 key={id}
                 panel={panel}
+                view={view}
                 size={sizes[id] ?? fallbackSize}
                 minSize={panel.minSize ?? { w: 1, h: 1 }}
                 maxSize={panel.maxSize ?? { w: COLS, h: 20 }}
@@ -239,6 +240,7 @@ export function PanelGrid({ view, panels, fallbackSize = { w: 2, h: 6 } }: Panel
 
 interface PanelProps {
   panel: PanelDef;
+  view: string;
   size: Size;
   minSize: Size;
   maxSize: Size;
@@ -255,6 +257,7 @@ interface PanelProps {
 
 function Panel({
   panel,
+  view,
   size,
   minSize,
   maxSize,
@@ -371,6 +374,8 @@ function Panel({
         zIndex: ghostSnap ? 45 : undefined,
       }}
       transition={{ duration: duration.fast, ease }}
+      data-panel-view={view}
+      data-panel-id={panel.id}
     >
       <div className={styles.panelHead}>
         {!locked && (
@@ -378,10 +383,10 @@ function Panel({
             <DragIcon />
           </span>
         )}
-        {!panel.bleed && !locked && <span className={styles.panelLabel}>{panel.label}</span>}
+        {!panel.bleed && !locked && <span className={styles.panelLabel} data-panel-label>{panel.label}</span>}
         {panel.headerAction && <div className={styles.panelHeaderAction}>{panel.headerAction}</div>}
       </div>
-      <div className={styles.panelBody}>{panel.content}</div>
+      <div className={styles.panelBody} data-panel-body>{panel.content}</div>
       {!locked && (
         <span className={styles.resizeHandle} onPointerDown={startResize} title="Drag to resize">
           <ResizeIcon />

@@ -196,6 +196,7 @@ export function NotesShell() {
         open={deleteOpen}
         onClose={() => setDeleteOpen(false)}
         title="Delete this note?"
+        size="compact"
         subtitle={selected ? `"${selected.name}" will be permanently removed from the vault.` : undefined}
         actions={
           <>

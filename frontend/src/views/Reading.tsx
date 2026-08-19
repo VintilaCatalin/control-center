@@ -1,6 +1,6 @@
 import { AnimatePresence } from 'framer-motion';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { deleteBookmark } from '../api/actions/reading';
+import { deleteBookmark, setTopicIcon } from '../api/actions/reading';
 import { useSnapshotData } from '../api/SnapshotProvider';
 import type { Book, ReadingItem } from '../api/types';
 import { AddBookmarkSheet } from '../widgets/Reading/AddBookmarkSheet';
@@ -14,6 +14,7 @@ import { SourceManagerSheet } from '../widgets/Reading/SourceManagerSheet';
 import { VideoDetail } from '../widgets/Reading/VideoDetail';
 import { usePublishAppSidebar } from '../shell/AppChromeContext';
 import { useSidebarCollapsed } from '../shell/SidebarCollapseContext';
+import { useToast } from '../primitives/Toast/ToastProvider';
 import styles from './Reading.module.css';
 
 // A curated visual feed, not an RSS table - see the Reading redesign plan.
@@ -35,6 +36,7 @@ export function Reading({ initialSection, onInitialSectionApplied }: ReadingProp
   const { snapshot } = useSnapshotData();
   const data = snapshot?.reading;
   const { collapsed } = useSidebarCollapsed();
+  const { push } = useToast();
   const [activeKey, setActiveKey] = useState<ReadingSection>('foryou');
   const appliedInitial = useRef(false);
 
@@ -50,6 +52,33 @@ export function Reading({ initialSection, onInitialSectionApplied }: ReadingProp
   const [addBookOpen, setAddBookOpen] = useState(false);
   const [addBookmarkOpen, setAddBookmarkOpen] = useState(false);
   const [sourceManagerOpen, setSourceManagerOpen] = useState(false);
+  const [topicIconOverrides, setTopicIconOverrides] = useState<Record<string, string>>({});
+  const topics = useMemo(() => (data?.topics ?? []).map((topic) => ({ ...topic, icon: topicIconOverrides[topic.id] ?? topic.icon })), [data?.topics, topicIconOverrides]);
+
+  useEffect(() => {
+    if (!data?.topics) return;
+    setTopicIconOverrides((current) => {
+      const next = { ...current };
+      let changed = false;
+      data.topics.forEach((topic) => {
+        if (next[topic.id] !== undefined && next[topic.id] === topic.icon) { delete next[topic.id]; changed = true; }
+      });
+      return changed ? next : current;
+    });
+  }, [data?.topics]);
+
+  async function handleTopicIconChange(id: string, icon: string) {
+    const previous = topics.find((topic) => topic.id === id)?.icon;
+    setTopicIconOverrides((current) => ({ ...current, [id]: icon }));
+    try {
+      const result = await setTopicIcon(id, icon);
+      if (!result.ok) throw new Error(result.error || 'Could not change topic icon');
+    } catch (error) {
+      setTopicIconOverrides((current) => { const next = { ...current }; if (previous) next[id] = previous; else delete next[id]; return next; });
+      push(error instanceof Error ? error.message : 'Could not change topic icon', 'error');
+      throw error;
+    }
+  }
 
   usePublishAppSidebar(
     useMemo(
@@ -59,16 +88,17 @@ export function Reading({ initialSection, onInitialSectionApplied }: ReadingProp
             items={data.items}
             books={data.books}
             bookmarks={data.bookmarks}
-            topics={data.topics}
+            topics={topics}
             active={activeKey}
             onSelect={setActiveKey}
             onManageSources={() => setSourceManagerOpen(true)}
             onAddBookmark={() => setAddBookmarkOpen(true)}
+            onTopicIconChange={handleTopicIconChange}
             collapsed={collapsed}
           />
         ) : null,
       // eslint-disable-next-line react-hooks/exhaustive-deps
-      [data?.items, data?.books, data?.bookmarks, data?.topics, activeKey, collapsed],
+      [data?.items, data?.books, data?.bookmarks, topics, activeKey, collapsed],
     ),
   );
 
@@ -94,12 +124,13 @@ export function Reading({ initialSection, onInitialSectionApplied }: ReadingProp
             items={data.items}
             bookmarks={data.bookmarks}
             books={data.books}
-            topics={data.topics}
+            topics={topics}
             section={activeKey}
             onOpenItem={setDetailItem}
             onRemoveBookmark={handleRemoveBookmark}
             onSelectBook={setDetailBook}
             onSelectSection={setActiveKey}
+            onTopicIconChange={handleTopicIconChange}
           />
         )}
       </div>

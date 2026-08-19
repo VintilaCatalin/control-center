@@ -1,14 +1,9 @@
 import type { AreaEntry, ProjectEntry, TaskEntry } from '../../api/types';
 
-// The five fixed views (Things' own Inbox/Today/Upcoming/Anytime/Someday/
-// Logbook), computed client-side off the flat tasks/areas/projects arrays
-// - the backend never encodes view semantics, same as Notes builds a
-// folder tree client-side rather than the backend nesting JSON.
 export type SmartViewId = 'inbox' | 'today' | 'upcoming' | 'anytime' | 'someday' | 'logbook';
-
 export type Selection = { kind: 'smart'; id: SmartViewId } | { kind: 'area'; id: string } | { kind: 'project'; id: string };
 
-export const SMART_VIEWS: { id: SmartViewId; label: string }[] = [
+export const SMART_VIEWS: { id: Exclude<SmartViewId, 'logbook'>; label: string }[] = [
   { id: 'inbox', label: 'Inbox' },
   { id: 'today', label: 'Today' },
   { id: 'upcoming', label: 'Upcoming' },
@@ -16,88 +11,108 @@ export const SMART_VIEWS: { id: SmartViewId; label: string }[] = [
   { id: 'someday', label: 'Someday' },
 ];
 
-function startOfDay(ts: number): number {
-  const d = new Date(ts * 1000);
-  d.setHours(0, 0, 0, 0);
-  return d.getTime() / 1000;
+function two(n: number): string {
+  return String(n).padStart(2, '0');
 }
 
-export function today(): number {
-  return startOfDay(Date.now() / 1000);
+export function localDateKey(value = new Date()): string {
+  return `${value.getFullYear()}-${two(value.getMonth() + 1)}-${two(value.getDate())}`;
 }
 
-// "Today" · "Tomorrow" · "Yesterday" · a weekday name for the next week ·
-// otherwise a short date - the same small vocabulary Things itself uses
-// for a due chip, never a raw ISO date.
-export function formatDue(ts: number): string {
-  const t = today();
-  const day = startOfDay(ts);
-  const diffDays = Math.round((day - t) / 86400);
-  if (diffDays === 0) return 'Today';
-  if (diffDays === 1) return 'Tomorrow';
-  if (diffDays === -1) return 'Yesterday';
-  if (diffDays > 1 && diffDays < 7) return new Date(ts * 1000).toLocaleDateString(undefined, { weekday: 'long' });
-  const sameYear = new Date(ts * 1000).getFullYear() === new Date().getFullYear();
-  return new Date(ts * 1000).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: sameYear ? undefined : 'numeric' });
+export function dateFromKey(value: string): Date {
+  const [year, month, day] = value.split('-').map(Number);
+  return new Date(year, month - 1, day, 12, 0, 0);
 }
 
-function isFiled(t: TaskEntry): boolean {
-  return !!(t.project_id || t.area_id);
+export function formatTaskDate(value: string): string {
+  const date = dateFromKey(value);
+  const today = new Date();
+  const tomorrow = new Date();
+  const yesterday = new Date();
+  tomorrow.setDate(today.getDate() + 1);
+  yesterday.setDate(today.getDate() - 1);
+  const key = localDateKey(date);
+  if (key === localDateKey(today)) return 'Today';
+  if (key === localDateKey(tomorrow)) return 'Tomorrow';
+  if (key === localDateKey(yesterday)) return 'Yesterday';
+  const diff = Math.round((date.getTime() - new Date(today.getFullYear(), today.getMonth(), today.getDate(), 12).getTime()) / 86_400_000);
+  if (diff > 1 && diff < 7) return date.toLocaleDateString(undefined, { weekday: 'long' });
+  return date.toLocaleDateString(undefined, {
+    month: 'short', day: 'numeric', year: date.getFullYear() === today.getFullYear() ? undefined : 'numeric',
+  });
+}
+
+export function isOpen(task: TaskEntry): boolean {
+  return task.status === 'open';
+}
+
+export function isFiled(task: TaskEntry): boolean {
+  return !!(task.project_id || task.area_id);
+}
+
+export function nextUpcomingDate(task: TaskEntry): string | null {
+  const today = localDateKey();
+  const candidates = [task.scheduled_on, task.deadline_on].filter((value): value is string => !!value && value > today);
+  return candidates.sort()[0] ?? null;
 }
 
 export function tasksForSmartView(id: SmartViewId, tasks: TaskEntry[]): TaskEntry[] {
-  const t0 = today();
+  const today = localDateKey();
   switch (id) {
     case 'inbox':
-      return tasks.filter((t) => !t.done && !isFiled(t) && !t.when && !t.when_date);
+      return tasks.filter((task) => isOpen(task) && !isFiled(task) && !task.scheduled_on && !task.someday);
     case 'today':
-      return tasks.filter(
-        (t) => !t.done && (t.when === 'today' || (!!t.when_date && t.when_date <= t0) || (!!t.deadline && t.deadline <= t0)),
-      );
+      return tasks.filter((task) => isOpen(task) && (!!task.scheduled_on && task.scheduled_on <= today || !!task.deadline_on && task.deadline_on <= today));
     case 'upcoming':
-      return tasks.filter((t) => !t.done && !!t.when_date && t.when_date > t0).sort((a, b) => (a.when_date ?? 0) - (b.when_date ?? 0));
+      return tasks
+        .filter((task) => isOpen(task) && !!nextUpcomingDate(task))
+        .sort((a, b) => (nextUpcomingDate(a) ?? '').localeCompare(nextUpcomingDate(b) ?? ''));
     case 'anytime':
-      return tasks.filter((t) => !t.done && isFiled(t) && t.when !== 'someday' && !t.when_date && t.when !== 'today');
+      return tasks.filter((task) => isOpen(task) && isFiled(task) && !task.scheduled_on && !task.someday);
     case 'someday':
-      return tasks.filter((t) => !t.done && t.when === 'someday');
+      return tasks.filter((task) => isOpen(task) && task.someday);
     case 'logbook':
-      return tasks.filter((t) => t.done).sort((a, b) => (b.completed ?? 0) - (a.completed ?? 0));
+      return tasks
+        .filter((task) => task.status === 'completed')
+        .sort((a, b) => (b.completed_at ?? 0) - (a.completed_at ?? 0));
   }
 }
 
 export function tasksForProject(projectId: string, tasks: TaskEntry[]): TaskEntry[] {
-  return tasks.filter((t) => t.project_id === projectId);
+  return tasks.filter((task) => task.project_id === projectId);
 }
 
-// An Area's own task list: tasks filed straight under it (no project) plus
-// every task belonging to one of its Projects - same "Area view rolls up
-// its Projects" behavior Things has.
 export function tasksForArea(areaId: string, tasks: TaskEntry[], projects: ProjectEntry[]): TaskEntry[] {
-  const projectIds = new Set(projects.filter((p) => p.area_id === areaId).map((p) => p.id));
-  return tasks.filter((t) => t.area_id === areaId || (t.project_id && projectIds.has(t.project_id)));
+  const projectIds = new Set(projects.filter((project) => project.area_id === areaId).map((project) => project.id));
+  return tasks.filter((task) => task.area_id === areaId || !!task.project_id && projectIds.has(task.project_id));
 }
 
-export function tasksForSelection(
-  sel: Selection,
-  tasks: TaskEntry[],
-  projects: ProjectEntry[],
-): TaskEntry[] {
-  if (sel.kind === 'smart') return tasksForSmartView(sel.id, tasks);
-  if (sel.kind === 'project') return tasksForProject(sel.id, tasks);
-  return tasksForArea(sel.id, tasks, projects);
+export function tasksForSelection(selection: Selection, tasks: TaskEntry[], projects: ProjectEntry[]): TaskEntry[] {
+  if (selection.kind === 'smart') return tasksForSmartView(selection.id, tasks);
+  if (selection.kind === 'project') return tasksForProject(selection.id, tasks);
+  return tasksForArea(selection.id, tasks, projects);
 }
 
-// Resolves a task's own "home" label for display in smart views/Inbox,
-// where a task's location isn't already implied by the current selection
-// (a Project's own view never needs to say which project a task is in).
-export function homeLabel(t: TaskEntry, areas: AreaEntry[], projects: ProjectEntry[]): string | null {
-  if (t.project_id) {
-    const p = projects.find((x) => x.id === t.project_id);
-    if (p) return p.label;
+export function taskHome(task: TaskEntry, areas: AreaEntry[], projects: ProjectEntry[]): { label: string; kind: 'area' | 'project' } | null {
+  if (task.project_id) {
+    const project = projects.find((item) => item.id === task.project_id);
+    if (project) return { label: project.title, kind: 'project' };
   }
-  if (t.area_id) {
-    const a = areas.find((x) => x.id === t.area_id);
-    if (a) return a.label;
+  if (task.area_id) {
+    const area = areas.find((item) => item.id === task.area_id);
+    if (area) return { label: area.title, kind: 'area' };
   }
+  return null;
+}
+
+export function selectionKey(selection: Selection): string {
+  return `${selection.kind}:${selection.id}`;
+}
+
+export function selectionFromKey(value: string | null): Selection | null {
+  if (!value) return null;
+  const [kind, id] = value.split(':');
+  if (kind === 'smart' && ['inbox', 'today', 'upcoming', 'anytime', 'someday', 'logbook'].includes(id)) return { kind, id: id as SmartViewId };
+  if ((kind === 'area' || kind === 'project') && id) return { kind, id };
   return null;
 }

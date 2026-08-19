@@ -7,7 +7,7 @@
   height: clamp(380px, 54vh, 620px);
   border-radius: var(--r-card);
   overflow: hidden;
-  background: linear-gradient(160deg, var(--raise), var(--slate));
+  background: linear-gradient(160deg, var(--graphite-raised), var(--graphite));
   box-shadow: var(--lift), var(--inner);
   border: 1px solid var(--rim);
 }

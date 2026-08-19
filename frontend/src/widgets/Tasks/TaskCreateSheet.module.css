@@ -1,0 +1,87 @@
+.editor { display: flex; flex-direction: column; min-height: 250px; }
+
+.titleRow {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+}
+
+.checkPreview {
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid color-mix(in oklab, var(--text-secondary) 62%, var(--popup-border));
+  border-radius: 5px;
+}
+
+.titleInput {
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text-primary);
+  font: 620 1.28rem/1.35 var(--font-text);
+  letter-spacing: -.012em;
+}
+
+.titleInput::placeholder, .notesInput::placeholder { color: color-mix(in oklab, var(--text-tertiary) 76%, transparent); }
+
+.notesInput {
+  width: calc(100% - 34px);
+  min-height: 112px;
+  margin: 1px 0 20px 34px;
+  padding: 0;
+  resize: none;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  font: var(--fw-callout) var(--fs-callout)/1.55 var(--font-text);
+}
+
+.options {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: auto;
+  padding: 15px 0 0 34px;
+  border-top: 1px solid var(--popup-divider);
+}
+
+.field { display: flex; align-items: center; gap: 7px; }
+.field > span { color: var(--text-tertiary); font: 580 var(--fs-caption)/1 var(--font-text); }
+.field select {
+  min-width: 132px;
+  height: 34px;
+  padding: 0 30px 0 10px;
+  border: 1px solid var(--popup-divider);
+  border-radius: 9px;
+  outline: 0;
+  background: var(--popup-control);
+  color: var(--text-secondary);
+  font: 570 var(--fs-footnote)/1 var(--font-text);
+  cursor: pointer;
+}
+.field select:hover { border-color: var(--popup-border); color: var(--text-primary); }
+.field select:focus { border-color: color-mix(in oklab, var(--accent) 48%, var(--popup-border)); box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 9%, transparent); }
+.field select option, .field select optgroup { background: var(--native-popup-bg); color: var(--text-primary); }
+
+.hint, .error { margin: 10px 0 0 34px; font: var(--fw-caption) var(--fs-caption)/var(--lh-caption) var(--font-text); }
+.hint { color: var(--text-tertiary); }
+.error { color: var(--warn); }
+
+.cancel, .create { height: 36px; padding: 0 17px; border-radius: 10px; font: 650 var(--fs-footnote)/1 var(--font-text); cursor: pointer; }
+.cancel { border: 1px solid var(--popup-divider); background: var(--popup-control); color: var(--text-secondary); }
+.cancel:hover { border-color: var(--popup-border); color: var(--text-primary); }
+.create { border: 1px solid color-mix(in oklab, var(--accent) 70%, white); background: var(--accent); color: #090c11; box-shadow: inset 0 1px 0 rgba(255,255,255,.3); }
+.create:disabled { opacity: .4; cursor: default; }
+
+@media (max-width: 560px) {
+  .options { align-items: stretch; flex-direction: column; padding-left: 0; }
+  .field { justify-content: space-between; }
+  .field select { flex: 1; }
+  .notesInput { width: 100%; margin-left: 0; }
+}

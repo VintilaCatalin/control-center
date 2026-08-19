@@ -11,7 +11,7 @@
   inset: 0;
   background-position: center;
   background-size: cover;
-  background-color: var(--raise);
+  background-color: var(--graphite-raised);
 }
 
 .artFallback {
@@ -20,7 +20,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(120% 100% at 50% 0%, var(--raise), var(--slate));
+  background: radial-gradient(120% 100% at 50% 0%, var(--graphite-raised), var(--graphite));
   color: var(--text-tertiary);
 }
 
