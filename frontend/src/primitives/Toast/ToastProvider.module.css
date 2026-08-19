@@ -9,22 +9,53 @@
   pointer-events: none;
 }
 
+/* background/backdrop-filter live on .glass, not here - see
+   Overlay.module.css's identical comment: Framer Motion drives this
+   element's opacity/x directly, and Chromium doesn't reliably blur
+   through an element whose own transform is animating. */
 .toast {
-  composes: callout from '../../tokens/typography.module.css';
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
+  position: relative;
+  overflow: hidden;
   min-width: 240px;
   max-width: 360px;
-  padding: var(--space-3) var(--space-4);
   border-radius: 12px;
-  background: var(--popup-bg);
-  backdrop-filter: var(--popup-blur);
   border: 1px solid var(--popup-border);
+  border-left: 3px solid var(--accent);
   box-shadow: var(--popup-shadow);
   color: var(--text-primary);
   pointer-events: auto;
   cursor: pointer;
+}
+
+.toast[data-tone='error'] {
+  border-left-color: var(--warn);
+}
+
+.toast[data-tone='warning'] {
+  border-left-color: var(--caution);
+}
+
+.toast[data-tone='success'] {
+  border-left-color: var(--good);
+}
+
+.glass {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: var(--popup-bg);
+  backdrop-filter: var(--popup-blur);
+  pointer-events: none;
+}
+
+.content {
+  composes: callout from '../../tokens/typography.module.css';
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
 }
 
 .dot {
@@ -38,6 +69,16 @@
 .dot[data-tone='error'] {
   background: var(--warn);
   box-shadow: 0 0 6px color-mix(in oklab, var(--warn) 60%, transparent);
+}
+
+.dot[data-tone='warning'] {
+  background: var(--caution);
+  box-shadow: 0 0 6px color-mix(in oklab, var(--caution) 60%, transparent);
+}
+
+.dot[data-tone='success'] {
+  background: var(--good);
+  box-shadow: 0 0 6px color-mix(in oklab, var(--good) 60%, transparent);
 }
 
 .title {

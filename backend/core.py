@@ -463,6 +463,12 @@ def _blank_store():
             "settings": {}, "profile": {}, "views": [dict(v) for v in DEFAULT_VIEWS],
             "pages": [], "layouts": {}, "wallpaper_favorites": [],
             "pinned_notes": [], "tasks": [],
+            # Areas/Projects - the Things-style grouping layer over "tasks"
+            # (id+label+icon, same shape as reading_topics). Seeded empty,
+            # not with any defaults - unlike reading topics these are fully
+            # user-created, so there's nothing sensible to pre-fill. See
+            # add_area()/add_project() in backend/collectors/tasks.py.
+            "tasks_areas": [], "tasks_projects": [],
             # Reading (the frontend's redesigned feed - see collect_reading).
             # saved/read/hidden are keyed by item id rather than booleans baked
             # into a feed item, since items themselves are re-derived from RSS
@@ -568,6 +574,12 @@ def load_store():
     # `topic` value still resolves to something real.
     if "reading_topics" not in found:
         store["reading_topics"] = [dict(t) for t in DEFAULT_READING_TOPICS]
+
+    # Migration: Tasks used to be one flat list with no grouping. Existing
+    # tasks simply lack project_id/area_id/when - which is exactly the
+    # definition of Inbox on the frontend, so no data needs touching here;
+    # tasks_areas/tasks_projects above already default to [] via
+    # _blank_store(), nothing to seed.
     return store
 
 def save_store(store):

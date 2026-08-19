@@ -41,14 +41,6 @@
   box-shadow: 0 0 6px color-mix(in oklab, var(--warn) 60%, transparent);
 }
 
-.dotRing {
-  position: absolute;
-  inset: 0;
-  border-radius: 999px;
-  border: 1px solid var(--good);
-  pointer-events: none;
-}
-
 .name {
   composes: footnote from '../../tokens/typography.module.css';
   color: var(--text-primary);

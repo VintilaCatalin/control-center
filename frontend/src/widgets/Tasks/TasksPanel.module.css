@@ -6,77 +6,11 @@
   gap: var(--space-3);
 }
 
-.addBlock {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  flex-shrink: 0;
-}
-
 .addRow {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-}
-
-.addFooter {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-}
-
-.addHint {
-  composes: caption from '../../tokens/typography.module.css';
-  color: var(--text-tertiary);
-}
-
-.addBtn {
-  composes: caption from '../../tokens/typography.module.css';
   flex-shrink: 0;
-  height: 28px;
-  padding: 0 var(--space-3);
-  border: none;
-  border-radius: 999px;
-  background: var(--accent);
-  color: #0a0c10;
-  font-weight: 650;
-  cursor: pointer;
-  transition:
-    opacity var(--dur-fast) var(--ease),
-    transform var(--dur-fast) var(--ease);
-}
-
-.addBtn:hover:not(:disabled) {
-  transform: scale(1.03);
-}
-
-.addBtn:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-
-.notesInput {
-  composes: footnote from '../../tokens/typography.module.css';
-  width: 100%;
-  resize: vertical;
-  min-height: 40px;
-  max-height: 160px;
-  color: var(--text-secondary);
-  background: rgba(var(--overlay-tint), 0.05);
-  border: 1px solid var(--rim);
-  border-radius: 10px;
-  padding: var(--space-2) var(--space-3);
-  line-height: 1.5;
-}
-
-.notesInput:focus {
-  outline: none;
-  border-color: color-mix(in oklab, var(--accent) 60%, transparent);
-}
-
-.notesInput::placeholder {
-  color: var(--text-tertiary);
 }
 
 .input {
@@ -99,47 +33,27 @@
   color: var(--text-tertiary);
 }
 
-.priorityPicker {
-  display: flex;
-  gap: 5px;
+.addBtn {
+  composes: caption from '../../tokens/typography.module.css';
   flex-shrink: 0;
-}
-
-.priorityDot {
-  width: 14px;
-  height: 14px;
+  height: 34px;
+  padding: 0 var(--space-3);
+  border: none;
   border-radius: 999px;
-  border: 1.5px solid var(--rim-lit);
-  background: none;
-  cursor: pointer;
-  opacity: 0.5;
-  transition:
-    opacity var(--dur-fast) var(--ease),
-    transform var(--dur-fast) var(--ease);
-}
-
-.priorityDot:hover {
-  opacity: 0.85;
-}
-
-.priorityActive {
-  opacity: 1;
-  transform: scale(1.15);
-}
-
-.priority-low {
-  background: var(--text-tertiary);
-  border-color: transparent;
-}
-
-.priority-normal {
   background: var(--accent);
-  border-color: transparent;
+  color: #0a0c10;
+  font-weight: 650;
+  cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease);
 }
 
-.priority-high {
-  background: #e0665a;
-  border-color: transparent;
+.addBtn:hover:not(:disabled) {
+  transform: scale(1.03);
+}
+
+.addBtn:disabled {
+  opacity: 0.4;
+  cursor: default;
 }
 
 .empty {
@@ -153,234 +67,4 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-}
-
-.doneGroup {
-  margin-top: var(--space-2);
-  opacity: 0.6;
-}
-
-/* align-items: flex-start, not center - task text now wraps to more
-   than one line (see .taskText below), so everything in the row has to
-   anchor to the first line's baseline instead of the row's centre. */
-.task {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-2);
-  padding: 7px 2px;
-  overflow: hidden;
-}
-
-.taskLabel {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-2);
-  min-width: 0;
-  cursor: pointer;
-}
-
-/* Same custom checkbox as Markdown task lines (see Markdown.module.css's
-   .taskBox) - one visual language for "a checkable thing" everywhere in
-   the app, not a bare native control in one place and a styled one in
-   another. */
-.checkboxInput {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
-}
-
-.checkboxBox {
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  width: 18px;
-  height: 18px;
-  margin-top: 1px;
-  border-radius: 5px;
-  border: 1.5px solid var(--rim-lit);
-  background: rgba(var(--overlay-tint), 0.04);
-  color: transparent;
-  transition:
-    background var(--dur-fast) var(--ease),
-    border-color var(--dur-fast) var(--ease),
-    color var(--dur-fast) var(--ease);
-}
-
-.checkboxInput:checked + .checkboxBox {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #0a0c10;
-}
-
-.taskLabel:hover .checkboxBox {
-  border-color: color-mix(in oklab, var(--accent) 55%, var(--rim-lit));
-}
-
-.checkboxInput:focus-visible + .checkboxBox {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-/* Brief revert-with-explanation when an optimistic toggle's request
-   actually fails (rare - the backend toggle route doesn't error in
-   practice, this covers real network failures) - a red ring for ~1.6s,
-   not a silent snap-back that leaves the user wondering what happened. */
-.checkboxError {
-  border-color: #e0665a;
-  box-shadow: 0 0 0 2px color-mix(in oklab, #e0665a 35%, transparent);
-}
-
-.priorityBadge {
-  width: 6px;
-  height: 6px;
-  margin-top: 7px;
-  border-radius: 999px;
-  flex-shrink: 0;
-}
-
-/* Wraps naturally now instead of truncating to one ellipsised line - a
-   quick task should hold a real sentence, not just a tiny label. */
-.taskText {
-  composes: callout from '../../tokens/typography.module.css';
-  color: var(--text-secondary);
-  white-space: normal;
-  overflow-wrap: break-word;
-  line-height: 1.4;
-  padding-top: 1px;
-}
-
-.taskTextDone {
-  composes: taskText;
-  color: var(--text-tertiary);
-  text-decoration: line-through;
-}
-
-/* Title stays the row's primary content (size/weight); the description,
-   when present, always sits directly beneath it in the dimmer
-   .taskNotes tone below - no expand/collapse interaction needed. */
-.taskTextCol {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-}
-
-.taskNotes {
-  composes: footnote from '../../tokens/typography.module.css';
-  color: var(--text-tertiary);
-  white-space: pre-wrap;
-  overflow-wrap: break-word;
-  line-height: 1.5;
-}
-
-.taskActions {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  flex-shrink: 0;
-  opacity: 0;
-  transition: opacity var(--dur-fast) var(--ease);
-}
-
-.task:hover .taskActions,
-.task:focus-within .taskActions {
-  opacity: 1;
-}
-
-.taskIconBtn {
-  display: grid;
-  place-items: center;
-  width: 22px;
-  height: 22px;
-  border-radius: 6px;
-  border: none;
-  background: none;
-  color: var(--text-tertiary);
-  cursor: pointer;
-}
-
-.taskIconBtn:hover {
-  color: var(--text-primary);
-  background: rgba(var(--overlay-tint), 0.06);
-}
-
-.taskIconBtnActive {
-  color: #f2c94c;
-}
-
-/* ---- inline edit state - replaces the row entirely while active ---- */
-
-.taskEdit {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 8px 2px 10px;
-  border-radius: 10px;
-  background: rgba(var(--overlay-tint), 0.035);
-}
-
-.editRow {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.editFooter {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-}
-
-.editActions {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.cancelBtn {
-  composes: caption from '../../tokens/typography.module.css';
-  height: 28px;
-  padding: 0 var(--space-3);
-  border: 1px solid var(--rim);
-  border-radius: 999px;
-  background: none;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition:
-    color var(--dur-fast) var(--ease),
-    border-color var(--dur-fast) var(--ease);
-}
-
-.cancelBtn:hover {
-  color: var(--text-primary);
-  border-color: var(--rim-lit);
-}
-
-.pinToggle {
-  composes: caption from '../../tokens/typography.module.css';
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  height: 28px;
-  padding: 0 var(--space-3);
-  border: 1px solid var(--rim);
-  border-radius: 999px;
-  background: none;
-  color: var(--text-tertiary);
-  cursor: pointer;
-  transition:
-    color var(--dur-fast) var(--ease),
-    border-color var(--dur-fast) var(--ease);
-}
-
-.pinToggle:hover {
-  color: var(--text-secondary);
-}
-
-.pinToggleActive {
-  color: #f2c94c;
-  border-color: color-mix(in oklab, #f2c94c 45%, var(--rim));
 }

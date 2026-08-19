@@ -13,7 +13,6 @@
   padding: var(--space-4) var(--space-3);
   background: var(--glass);
   backdrop-filter: var(--blur);
-  -webkit-backdrop-filter: var(--blur);
   border-right: 1px solid var(--rim);
   transition: flex-basis var(--dur-base) var(--ease);
 }

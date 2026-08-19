@@ -1,0 +1,371 @@
+.input {
+  composes: callout from '../../tokens/typography.module.css';
+  flex: 1;
+  min-width: 0;
+  color: var(--text-primary);
+  background: rgba(var(--overlay-tint), 0.05);
+  border: 1px solid var(--rim);
+  border-radius: 10px;
+  padding: var(--space-2) var(--space-3);
+}
+
+.input:focus {
+  outline: none;
+  border-color: color-mix(in oklab, var(--accent) 60%, transparent);
+}
+
+.input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.notesInput {
+  composes: footnote from '../../tokens/typography.module.css';
+  width: 100%;
+  resize: vertical;
+  min-height: 40px;
+  max-height: 160px;
+  color: var(--text-secondary);
+  background: rgba(var(--overlay-tint), 0.05);
+  border: 1px solid var(--rim);
+  border-radius: 10px;
+  padding: var(--space-2) var(--space-3);
+  line-height: 1.5;
+}
+
+.notesInput:focus {
+  outline: none;
+  border-color: color-mix(in oklab, var(--accent) 60%, transparent);
+}
+
+.notesInput::placeholder {
+  color: var(--text-tertiary);
+}
+
+.priorityPicker {
+  display: flex;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.priorityDot {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  border: 1.5px solid var(--rim-lit);
+  background: none;
+  cursor: pointer;
+  opacity: 0.5;
+  transition:
+    opacity var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease);
+}
+
+.priorityDot:hover {
+  opacity: 0.85;
+}
+
+.priorityActive {
+  opacity: 1;
+  transform: scale(1.15);
+}
+
+.priority-low {
+  background: var(--text-tertiary);
+  border-color: transparent;
+}
+
+.priority-normal {
+  background: var(--accent);
+  border-color: transparent;
+}
+
+.priority-high {
+  background: #e0665a;
+  border-color: transparent;
+}
+
+.task {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: 7px 2px;
+  overflow: hidden;
+}
+
+.taskLabel {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  min-width: 0;
+  cursor: pointer;
+}
+
+.checkboxInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.checkboxBox {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  border-radius: 5px;
+  border: 1.5px solid var(--rim-lit);
+  background: rgba(var(--overlay-tint), 0.04);
+  color: transparent;
+  transition:
+    background var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
+}
+
+.checkboxInput:checked + .checkboxBox {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #0a0c10;
+}
+
+.taskLabel:hover .checkboxBox {
+  border-color: color-mix(in oklab, var(--accent) 55%, var(--rim-lit));
+}
+
+.checkboxInput:focus-visible + .checkboxBox {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.checkboxError {
+  border-color: #e0665a;
+  box-shadow: 0 0 0 2px color-mix(in oklab, #e0665a 35%, transparent);
+}
+
+.priorityBadge {
+  width: 6px;
+  height: 6px;
+  margin-top: 7px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.taskText {
+  composes: callout from '../../tokens/typography.module.css';
+  color: var(--text-secondary);
+  white-space: normal;
+  overflow-wrap: break-word;
+  line-height: 1.4;
+  padding-top: 1px;
+}
+
+.taskTextDone {
+  composes: taskText;
+  color: var(--text-tertiary);
+  text-decoration: line-through;
+}
+
+.taskTextCol {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.taskNotes {
+  composes: footnote from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  line-height: 1.5;
+}
+
+/* Where a task lives (Inbox/smart views only - not shown inside a
+   project's own list, where it'd be redundant) plus its deadline, if any
+   - a small metadata row under the notes, not competing with the title. */
+.taskMeta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.taskHome {
+  composes: caption from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+}
+
+.dueChip {
+  composes: caption from '../../tokens/typography.module.css';
+  border: none;
+  background: rgba(var(--overlay-tint), 0.06);
+  color: var(--text-tertiary);
+  border-radius: 999px;
+  padding: 1px 8px;
+  cursor: pointer;
+}
+
+.dueChip:hover {
+  background: rgba(var(--overlay-tint), 0.1);
+}
+
+.dueChipOverdue {
+  background: color-mix(in oklab, var(--warn) 22%, transparent);
+  color: var(--warn);
+}
+
+.taskActions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease);
+}
+
+.task:hover .taskActions,
+.task:focus-within .taskActions {
+  opacity: 1;
+}
+
+.taskIconBtn {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border: none;
+  background: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+}
+
+.taskIconBtn:hover {
+  color: var(--text-primary);
+  background: rgba(var(--overlay-tint), 0.06);
+}
+
+.taskIconBtnActive {
+  color: #f2c94c;
+}
+
+.taskEdit {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 2px 10px;
+  border-radius: 10px;
+  background: rgba(var(--overlay-tint), 0.035);
+}
+
+.editRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.editFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.editActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.deleteBtn {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 1px solid var(--rim);
+  background: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease);
+}
+
+.deleteBtn:hover {
+  color: #e0665a;
+  border-color: color-mix(in oklab, #e0665a 45%, var(--rim));
+}
+
+.cancelBtn {
+  composes: caption from '../../tokens/typography.module.css';
+  height: 28px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--rim);
+  border-radius: 999px;
+  background: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease);
+}
+
+.cancelBtn:hover {
+  color: var(--text-primary);
+  border-color: var(--rim-lit);
+}
+
+.addBtn {
+  composes: caption from '../../tokens/typography.module.css';
+  flex-shrink: 0;
+  height: 28px;
+  padding: 0 var(--space-3);
+  border: none;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #0a0c10;
+  font-weight: 650;
+  cursor: pointer;
+  transition:
+    opacity var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease);
+}
+
+.addBtn:hover:not(:disabled) {
+  transform: scale(1.03);
+}
+
+.addBtn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.pinToggle {
+  composes: caption from '../../tokens/typography.module.css';
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--rim);
+  border-radius: 999px;
+  background: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease);
+}
+
+.pinToggle:hover {
+  color: var(--text-secondary);
+}
+
+.pinToggleActive {
+  color: #f2c94c;
+  border-color: color-mix(in oklab, #f2c94c 45%, var(--rim));
+}

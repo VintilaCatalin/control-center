@@ -3,6 +3,7 @@ import { addTopic, removeTopic, reorderTopics, setTopicIcon } from '../../api/ac
 import type { Book, ReadingItem } from '../../api/types';
 import { Menu, type MenuItem } from '../../primitives/Menu/Menu';
 import { useMenu } from '../../primitives/Menu/useMenu';
+import { Spinner } from '../../primitives/Spinner/Spinner';
 import { GearIcon, ReadingIcon } from '../../shell/icons';
 import { BookIcon, BookmarkIcon, LinkIcon, PlayGlyphIcon, PlusIcon } from './icons';
 import { type ReadingSection, type TopicDef, topicLabel } from './topics';
@@ -211,7 +212,7 @@ export function ReadingSidebarNav({
             autoFocus
           />
           <button type="button" className={styles.addTopicConfirm} onClick={handleCreateTopic} disabled={addBusy || !newTopicLabel.trim()}>
-            {addBusy ? '…' : 'Add'}
+            {addBusy ? <Spinner size={12} /> : 'Add'}
           </button>
         </div>
       ) : (

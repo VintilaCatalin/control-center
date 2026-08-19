@@ -78,7 +78,13 @@ def wall_background(path, width=1600):
     buffer = io.BytesIO()
     img.save(buffer, "JPEG", quality=76)
     data = buffer.getvalue()
-    _bg_cache.clear()
+    # Was clearing itself on every miss - a cache that can only ever hold
+    # the single most-recent wallpaper, so switching back to a wallpaper
+    # viewed a moment ago (or any repeat request for the current one) redid
+    # the full decode/resize/Gaussian-blur/enhance pipeline from scratch
+    # every time instead of reusing it. Same bounded-then-clear shape as
+    # wall_thumb's own cache above.
+    if len(_bg_cache) > 8: _bg_cache.clear()
     _bg_cache[key] = data
     return data
 

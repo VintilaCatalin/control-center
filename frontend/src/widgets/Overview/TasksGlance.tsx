@@ -2,8 +2,7 @@ import { useState, type CSSProperties } from 'react';
 import { addTask, toggleTask } from '../../api/actions/tasks';
 import { useSnapshotData } from '../../api/SnapshotProvider';
 import type { TaskEntry } from '../../api/types';
-import { Overlay } from '../../primitives/Overlay/Overlay';
-import { TasksPanel } from '../Tasks/TasksPanel';
+import { useAppNavigation } from '../../shell/AppNavigationContext';
 import styles from './TasksGlance.module.css';
 
 function TasksIcon() {
@@ -33,19 +32,19 @@ function StarIcon() {
 
 // A glance, not a second Tasks app - pinned-first, open tasks only, a
 // tactile checkbox row with a real priority-coloured edge (no picker/
-// notes/edit chrome, that's what "View all" is for). A small completion
-// ring instead of plain text for "how am I doing today" - the same
+// notes/edit chrome). "View all" now hands off to the real Tasks
+// section (Areas/Projects/Today/Upcoming/...) instead of opening a
+// second, smaller Tasks UI in a modal - there's one real place tasks
+// live now, this is only ever a glance at it. A small completion ring
+// instead of plain text for "how am I doing today" - the same
 // radial-progress register This PC's gauges use, for visual consistency
-// across Overview's utility panels. Its own independent
-// <Overlay><TasksPanel/></Overlay> instance for the full view - the same
-// self-contained modal pattern GlobalUtilities' Quick Tasks already
-// uses, just a second entry point onto the same backend data.
+// across Overview's utility panels.
 export function TasksGlance({ hideHeader }: { hideHeader?: boolean } = {}) {
   const { snapshot } = useSnapshotData();
+  const { navigateToApp } = useAppNavigation();
   const tasks = snapshot?.tasks?.tasks ?? [];
   const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState(false);
-  const [viewAllOpen, setViewAllOpen] = useState(false);
 
   const open = tasks.filter((t) => !t.done);
   const pinned = open.filter((t) => t.pinned).slice(0, 4);
@@ -74,7 +73,7 @@ export function TasksGlance({ hideHeader }: { hideHeader?: boolean } = {}) {
             <TasksIcon /> Tasks
           </span>
         )}
-        <button type="button" className={styles.viewAll} onClick={() => setViewAllOpen(true)}>
+        <button type="button" className={styles.viewAll} onClick={() => navigateToApp('tasks')}>
           View all
         </button>
       </div>
@@ -125,10 +124,6 @@ export function TasksGlance({ hideHeader }: { hideHeader?: boolean } = {}) {
           )}
         </div>
       )}
-
-      <Overlay open={viewAllOpen} onClose={() => setViewAllOpen(false)} title="Quick Tasks" icon={<TasksIcon />}>
-        <TasksPanel tasks={tasks} />
-      </Overlay>
     </div>
   );
 }

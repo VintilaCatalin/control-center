@@ -5,7 +5,7 @@ import { AtmosphereBackground } from './primitives/Atmosphere/AtmosphereBackgrou
 import { AtmosphereProvider } from './primitives/Atmosphere/AtmosphereContext';
 import { AppShell } from './shell/AppShell';
 import { AppNavigationProvider } from './shell/AppNavigationContext';
-import { GamesIcon, HomelabIcon, NotesIcon, OverviewIcon, PlexIcon, ReadingIcon, SceneIcon } from './shell/icons';
+import { GamesIcon, HomelabIcon, NotesIcon, OverviewIcon, PlexIcon, ReadingIcon, SceneIcon, TasksIcon } from './shell/icons';
 import type { NavAppItem } from './shell/MainSidebar';
 import { useServiceAlerts } from './shell/useServiceAlerts';
 import { ToastProvider } from './primitives/Toast/ToastProvider';
@@ -19,11 +19,12 @@ import { Overview } from './views/Overview';
 import { Plex } from './views/Plex';
 import { Reading } from './views/Reading';
 import { Scene } from './views/Scene';
+import { Tasks } from './views/Tasks';
 import { Onboarding } from './views/Onboarding';
 import { SettingsView } from './views/SettingsView';
 import type { ReadingSection } from './widgets/Reading/topics';
 
-type AppId = 'overview' | 'games' | 'scene' | 'notes' | 'plex' | 'reading' | 'homelab';
+type AppId = 'overview' | 'games' | 'scene' | 'notes' | 'tasks' | 'plex' | 'reading' | 'homelab';
 
 interface AppDef {
   id: AppId;
@@ -44,6 +45,7 @@ const APPS: AppDef[] = [
   { id: 'games', label: 'Games', icon: <GamesIcon />, component: GamesView },
   { id: 'scene', label: 'Scene', icon: <SceneIcon />, component: Scene },
   { id: 'notes', label: 'Notes', icon: <NotesIcon />, component: Notes },
+  { id: 'tasks', label: 'Tasks', icon: <TasksIcon />, component: Tasks },
   { id: 'plex', label: 'Plex', icon: <PlexIcon />, component: Plex },
   { id: 'reading', label: 'Reading', icon: <ReadingIcon />, component: Reading },
   { id: 'homelab', label: 'Homelab', icon: <HomelabIcon />, component: Homelab },
@@ -59,7 +61,7 @@ const NAV_ITEMS: NavAppItem[] = APPS.map((a) => ({
   id: a.id,
   label: a.label,
   icon: a.icon,
-  hideSidebarIdentity: a.id === 'notes' || a.id === 'plex' || a.id === 'reading',
+  hideSidebarIdentity: a.id === 'notes' || a.id === 'tasks' || a.id === 'plex' || a.id === 'reading',
 }));
 
 // control_center.py --view <app> (see its --app=URL?view=... construction

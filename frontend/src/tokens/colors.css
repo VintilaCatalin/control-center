@@ -46,37 +46,26 @@
   --inner: inset 0 1px 0 var(--rim-lit), inset 0 -1px 0 rgba(0, 0, 0, 0.18);
 
   /* The one floating-popup surface every transient overlay in the app
-     shares (Sheet, Menu, Overlay, WeatherPopover) - not a "close cousin"
-     of Card's own recipe, the literal same values: --glass for the
-     background, --rim for the border, --lift + --inner for the shadow.
-     Any popup-only percentage, even one nudged just a little darker/
-     more opaque than Card's, concentrates --slate's own faint blue-navy
-     cast (#14171e - it's a navy, not a neutral grey) into something
-     visibly blue once it's the dominant colour in a small floating
-     panel, where the same tint spread across a big translucent Card is
-     too diluted to read as a colour at all. Aliasing straight to Card's
-     tokens removes that degree of freedom entirely, instead of tuning
-     the percentage again and re-introducing some other drift. */
-  /* Fully solid (no color-mix/translucency tuning - 45% -> 62% -> 86% ink,
-     then 92% raise, all still read as "losing itself in the background"),
-     and now tinted from the live --accent (the colour Atmosphere already
-     samples off the current wallpaper) instead of a generic neutral grey
-     - a dark SHADE of whatever the app's own accent currently is, the
-     same relationship a design tool's "darken 80%" swatch has to its
-     base colour: #0E8C07 accent -> roughly #112F10 modal, #6937F0 accent
-     -> roughly #1A0C3F modal. oklab keeps that hue recognisable at low
-     lightness instead of just crushing toward grey the way an sRGB mix
-     would. Black, not --ink, as the other end of the mix - --ink still
-     has its own faint hue, which fights the accent's at this low a
-     lightness; true black lets the accent be the only colour present.
-     The oklch(from ...) step first knocks the accent's own chroma down
-     ~12% before it ever gets mixed toward black - a touch too saturated
-     per direct feedback. This targets chroma specifically (not the mix
-     ratio below, which would also shift lightness/darkness as a side
-     effect of trying to fix saturation alone). */
-  --popup-bg: color-mix(in oklab, oklch(from var(--accent) l calc(c * 0.88) h) 26%, black);
-  --popup-border: var(--rim-lit);
-  --popup-shadow: var(--lift), var(--inner);
+     shares (Sheet, Menu, Overlay, WeatherPopover) - matched to Card's own
+     recipe as closely as possible now that backdrop-filter is actually
+     running (see the .module.css files - -webkit- removed everywhere;
+     that was the real bug behind every earlier "see-through/no blur"
+     report, not a tint or opacity problem). Chroma zeroed via oklch
+     rather than reusing --glass directly - --slate carries a faint
+     blue-navy cast (#14171e, blue channel higher than red/green) that's
+     too diluted to notice across a big Card but reads as a clear blue
+     tint once it's the dominant colour in a small floating popup -
+     "remove that hint of blue" per direct feedback. Same lightness/
+     opacity/blur as Card's --glass, just hue-neutralised. */
+  --popup-bg: color-mix(in oklab, oklch(from var(--slate) l 0 h) var(--glass-strength), transparent);
+  /* Same border Card uses (not the brighter --rim-lit this used to be) -
+     "let's get the border glass the same like panels" per direct
+     feedback. */
+  --popup-border: var(--rim);
+  /* No drop shadow - "let's get rid of dropshadow, is too crazy" per
+     direct feedback. Keep --inner alone: it's the subtle top/bottom
+     highlight, not a cast shadow, and Card doesn't skip it either. */
+  --popup-shadow: var(--inner);
   --popup-blur: blur(40px) saturate(160%);
   /* One scrim strength for every popup that has one (Sheet, Overlay) -
      0.8, not the ~0.5 this used to be: a modal reading against whatever
@@ -95,6 +84,9 @@
      part of this app's palette rather than a generic monitoring-tool
      accent color. */
   --good: #7fb894;
+  /* Toast's "heads up, not broken" tone - same desaturated family as
+     --warn/--good, sits between them. */
+  --caution: #d1ab5c;
 }
 
 :root[data-theme='light'] {

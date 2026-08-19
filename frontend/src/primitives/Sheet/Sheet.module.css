@@ -7,49 +7,128 @@
   justify-content: center;
   background: var(--popup-scrim);
   backdrop-filter: var(--popup-scrim-blur);
-  -webkit-backdrop-filter: var(--popup-scrim-blur);
 }
 
+/* background/backdrop-filter live on .glass, not here - see
+   Overlay.module.css's identical comment: this is the element Framer
+   Motion drives opacity/scale/y on directly, and Chromium doesn't
+   reliably blur through an element whose own transform is animating,
+   which read as "opaque but I can see text straight through it". */
 .sheet {
   position: relative;
-  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   width: min(980px, 92vw);
   max-height: 88vh;
-  padding: var(--space-6);
   border-radius: 28px;
-  background: var(--popup-bg);
-  backdrop-filter: var(--popup-blur);
   border: 1px solid var(--popup-border);
   box-shadow: var(--popup-shadow);
+}
+
+.glass {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: var(--popup-bg);
+  backdrop-filter: var(--popup-blur);
+  pointer-events: none;
 }
 
 /* The same top sheen every Card in the app has (primitives/Card) - see
    Overlay.module.css's identical rule for why this is the piece that
    actually reads as "glass". */
-.sheet::before {
+.glass::before {
   content: '';
   position: absolute;
   inset: 0 0 auto;
   height: 42%;
-  background: linear-gradient(rgba(var(--overlay-tint), 0.055), transparent);
+  background: linear-gradient(rgba(var(--overlay-tint), 0.075), transparent);
   pointer-events: none;
+}
+
+.glass::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px rgba(var(--overlay-tint), 0.05);
+  pointer-events: none;
+}
+
+/* Same head/body/footer shape as Overlay now, not title+subtitle+body
+   flowing straight into one padded block with no structure - "we need a
+   proper header... and content and footer more modern" per direct
+   feedback. Sheet and Overlay are the same modal language at two sizes,
+   so this keeps them reading that way. */
+.content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-shrink: 0;
+  gap: var(--space-3);
+  padding: var(--space-5) var(--space-6) var(--space-4);
+  border-bottom: 1px solid var(--rim);
+}
+
+.headText {
+  min-width: 0;
+}
+
+.closeBtn {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: none;
+  background: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease);
+}
+
+.closeBtn:hover {
+  color: var(--text-primary);
+  background: rgba(var(--overlay-tint), 0.06);
 }
 
 .title {
   composes: title1 from '../../tokens/typography.module.css';
   color: var(--text-primary);
-  margin-bottom: var(--space-1);
 }
 
 .subtitle {
   composes: subhead from '../../tokens/typography.module.css';
   color: var(--text-tertiary);
-  margin-bottom: var(--space-5);
+  margin-top: var(--space-1);
 }
 
-.actions {
+.body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: var(--space-5) var(--space-6);
+}
+
+.footer {
+  flex-shrink: 0;
   display: flex;
-  gap: var(--space-2);
+  align-items: center;
   justify-content: flex-end;
-  margin-top: var(--space-5);
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-6);
+  border-top: 1px solid var(--rim);
 }

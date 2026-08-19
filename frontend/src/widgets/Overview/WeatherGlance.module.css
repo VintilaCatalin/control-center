@@ -40,6 +40,11 @@
   composes: eyebrow from '../../tokens/typography.module.css';
   color: var(--text-tertiary);
   letter-spacing: 0.09em;
+  margin-bottom: 4px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .temp {

@@ -1,4 +1,3 @@
-import { motion, useReducedMotion } from 'framer-motion';
 import type { HomelabService } from '../../api/types';
 import { formatLatency } from './metrics';
 import styles from './ServiceCard.module.css';
@@ -14,7 +13,6 @@ interface ServiceCardProps {
 // rainbow that has nothing to do with the wallpaper theme the rest of the
 // app reacts to.
 export function ServiceCard({ service }: ServiceCardProps) {
-  const reduceMotion = useReducedMotion();
   const container = service.container;
 
   return (
@@ -25,13 +23,6 @@ export function ServiceCard({ service }: ServiceCardProps) {
       title={service.online ? `${service.name} - online, ${formatLatency(service.ms)}` : `${service.name} - offline`}
     >
       <span className={styles.dotWrap}>
-        {service.online && !reduceMotion && (
-          <motion.span
-            className={styles.dotRing}
-            animate={{ scale: [1, 2.2], opacity: [0.5, 0] }}
-            transition={{ duration: 2.2, repeat: Infinity, ease: 'easeOut' }}
-          />
-        )}
         <span className={[styles.dot, service.online ? styles.dotOn : styles.dotOff].join(' ')} />
       </span>
       <span className={styles.name}>{service.name}</span>

@@ -5,7 +5,7 @@ import styles from './ToastProvider.module.css';
 interface Toast {
   id: string;
   title: string;
-  tone: 'error' | 'info';
+  tone: 'error' | 'warning' | 'success' | 'info';
 }
 
 interface ToastApi {
@@ -45,14 +45,26 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               key={t.id}
               className={styles.toast}
               data-tone={t.tone}
-              initial={reduceMotion ? undefined : { opacity: 0, x: 24 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={reduceMotion ? undefined : { opacity: 0, x: 24 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
               onClick={() => dismiss(t.id)}
             >
-              <span className={styles.dot} data-tone={t.tone} />
-              <span className={styles.title}>{t.title}</span>
+              {/* See Overlay.tsx's identical comment - .glass (backdrop-filter)
+                  can't sit inside an element Framer Motion transforms, so the
+                  x slide lives on .content (a sibling of .glass) instead. */}
+              <div className={styles.glass} />
+              <motion.div
+                className={styles.content}
+                initial={reduceMotion ? undefined : { x: 24 }}
+                animate={{ x: 0 }}
+                exit={reduceMotion ? undefined : { x: 24 }}
+                transition={{ duration: 0.2 }}
+              >
+                <span className={styles.dot} data-tone={t.tone} />
+                <span className={styles.title}>{t.title}</span>
+              </motion.div>
             </motion.div>
           ))}
         </AnimatePresence>

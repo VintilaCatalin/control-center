@@ -44,6 +44,8 @@ export function GlobalUtilities({ collapsed = false }: { collapsed?: boolean }) 
   const { snapshot } = useSnapshotData();
   const profile = snapshot?.ui?.profile;
   const tasks = snapshot?.tasks?.tasks ?? [];
+  const taskAreas = snapshot?.tasks?.areas ?? [];
+  const taskProjects = snapshot?.tasks?.projects ?? [];
   const openTaskCount = tasks.filter((t) => !t.done).length;
   const panelsControl = usePanelsControl();
 
@@ -202,7 +204,7 @@ export function GlobalUtilities({ collapsed = false }: { collapsed?: boolean }) 
       />
 
       <Overlay open={tasksOpen} onClose={() => setTasksOpen(false)} title="Quick Tasks" icon={<TasksIcon />}>
-        <TasksPanel tasks={tasks} />
+        <TasksPanel tasks={tasks} areas={taskAreas} projects={taskProjects} />
       </Overlay>
 
       <QuickCapture open={captureOpen} onClose={() => setCaptureOpen(false)} onCreated={() => setCaptureOpen(false)} />

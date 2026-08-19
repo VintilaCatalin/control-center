@@ -57,22 +57,40 @@ export function Overlay({ open, onClose, title, icon, variant = 'center', width,
             <motion.div
               className={[styles.card, isDrawer ? styles.cardDrawer : styles.cardCenter].join(' ')}
               style={width ? { maxWidth: width } : undefined}
-              initial={isDrawer ? { x: '100%' } : { opacity: 0, y: -10, scale: 0.97 }}
-              animate={isDrawer ? { x: 0 } : { opacity: 1, y: 0, scale: 1 }}
-              exit={isDrawer ? { x: '100%' } : { opacity: 0, y: -8, scale: 0.98 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               transition={{ duration: duration.base, ease }}
             >
-              <div className={styles.head}>
-                <div className={styles.headTitle}>
-                  {icon && <span className={styles.headIcon}>{icon}</span>}
-                  <span>{title}</span>
+              {/* .glass (the backdrop-filter layer) must never sit inside an
+                  element Framer Motion applies transform to - Chromium
+                  doesn't reliably run backdrop-filter under an animated
+                  transform, which is what made every popup read as flat
+                  opaque colour with sharp content visible straight through
+                  it. This outer element only ever animates opacity now;
+                  the y/scale/slide "pop" moved onto .content below, a
+                  sibling of .glass rather than an ancestor, so it can
+                  still transform freely without breaking the blur. */}
+              <div className={styles.glass} />
+              <motion.div
+                className={styles.content}
+                initial={isDrawer ? { x: '100%' } : { y: -10, scale: 0.97 }}
+                animate={isDrawer ? { x: 0 } : { y: 0, scale: 1 }}
+                exit={isDrawer ? { x: '100%' } : { y: -8, scale: 0.98 }}
+                transition={{ duration: duration.base, ease }}
+              >
+                <div className={styles.head}>
+                  <div className={styles.headTitle}>
+                    {icon && <span className={styles.headIcon}>{icon}</span>}
+                    <span>{title}</span>
+                  </div>
+                  <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Close">
+                    <CloseIcon />
+                  </button>
                 </div>
-                <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Close">
-                  <CloseIcon />
-                </button>
-              </div>
-              <div className={styles.body}>{children}</div>
-              {footer && <div className={styles.footer}>{footer}</div>}
+                <div className={styles.body}>{children}</div>
+                {footer && <div className={styles.footer}>{footer}</div>}
+              </motion.div>
             </motion.div>
           </div>
         </>

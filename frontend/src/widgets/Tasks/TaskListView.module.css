@@ -1,0 +1,143 @@
+.pane {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  padding: var(--space-5) var(--space-6);
+  gap: var(--space-4);
+}
+
+.header {
+  flex-shrink: 0;
+}
+
+.heading {
+  composes: title1 from '../../tokens/typography.module.css';
+  color: var(--text-primary);
+}
+
+.hint {
+  composes: subhead from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  margin-top: var(--space-1);
+}
+
+.progress {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.progressLabel {
+  composes: caption from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+.progressTrack {
+  flex: 1;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(var(--overlay-tint), 0.08);
+  overflow: hidden;
+}
+
+.progressBar {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--good);
+}
+
+.addRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.addInput {
+  composes: callout from '../../tokens/typography.module.css';
+  flex: 1;
+  min-width: 0;
+  color: var(--text-primary);
+  background: rgba(var(--overlay-tint), 0.05);
+  border: 1px solid var(--rim);
+  border-radius: 10px;
+  padding: var(--space-2) var(--space-3);
+}
+
+.addInput:focus {
+  outline: none;
+  border-color: color-mix(in oklab, var(--accent) 60%, transparent);
+}
+
+.addInput::placeholder {
+  color: var(--text-tertiary);
+}
+
+.dueBtn {
+  composes: caption from '../../tokens/typography.module.css';
+  flex-shrink: 0;
+  height: 32px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--rim);
+  border-radius: 999px;
+  background: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease);
+}
+
+.dueBtn:hover {
+  color: var(--text-secondary);
+  border-color: var(--rim-lit);
+}
+
+.dueBtnSet {
+  color: var(--accent);
+  border-color: color-mix(in oklab, var(--accent) 45%, var(--rim));
+}
+
+.addBtn {
+  composes: caption from '../../tokens/typography.module.css';
+  flex-shrink: 0;
+  height: 32px;
+  padding: 0 var(--space-4);
+  border: none;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #0a0c10;
+  font-weight: 650;
+  cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease);
+}
+
+.addBtn:hover:not(:disabled) {
+  transform: scale(1.03);
+}
+
+.addBtn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.empty {
+  composes: footnote from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  text-align: center;
+  padding: var(--space-6) var(--space-2);
+}
+
+.scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.doneGroup {
+  margin-top: var(--space-2);
+  opacity: 0.6;
+}

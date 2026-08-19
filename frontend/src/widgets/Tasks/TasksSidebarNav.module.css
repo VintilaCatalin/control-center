@@ -1,0 +1,176 @@
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 100%;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 2px var(--space-2) var(--space-4);
+}
+
+.brandGlyph {
+  display: grid;
+  place-items: center;
+  color: var(--accent);
+}
+
+.brandLabel {
+  composes: headline from '../../tokens/typography.module.css';
+  font-weight: 650;
+  color: var(--text-primary);
+  letter-spacing: 0.01em;
+}
+
+.groupLabel {
+  composes: eyebrow from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  padding: var(--space-4) var(--space-2) 6px;
+}
+
+.item {
+  composes: callout from '../../tokens/typography.module.css';
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  height: 38px;
+  padding: 0 var(--space-3);
+  border: none;
+  border-radius: 10px;
+  background: none;
+  color: var(--text-secondary);
+  font-weight: 560;
+  font-size: 0.95em;
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease);
+}
+
+.item:hover {
+  color: var(--text-primary);
+  background: rgba(var(--overlay-tint), 0.06);
+}
+
+.itemActive {
+  color: var(--text-primary);
+  background: color-mix(in oklab, var(--accent) 18%, transparent);
+}
+
+.icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 19px;
+  color: inherit;
+}
+
+.itemActive .icon {
+  color: var(--accent);
+}
+
+.label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+}
+
+.count {
+  composes: caption from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+/* One level of real indentation for Projects under an Area - Notes'
+   FolderRow uses a per-depth padding formula for arbitrary nesting; Tasks
+   only ever has this one level, so a single fixed offset is enough. */
+.indented {
+  padding-left: calc(var(--space-3) + 19px + var(--space-3));
+}
+
+.areaItem {
+  font-weight: 600;
+}
+
+.projectItem {
+  font-weight: 500;
+}
+
+.disclosure {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  margin-left: -6px;
+  color: var(--text-tertiary);
+  transform: rotate(90deg);
+  transition: transform var(--dur-fast) var(--ease);
+}
+
+.disclosureCollapsed {
+  transform: rotate(0deg);
+}
+
+.addProjectBtn {
+  color: var(--text-tertiary);
+}
+
+.addRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 38px;
+  padding: 0 var(--space-3);
+}
+
+.addInput {
+  composes: callout from '../../tokens/typography.module.css';
+  flex: 1;
+  min-width: 0;
+  color: var(--text-primary);
+  background: rgba(var(--overlay-tint), 0.05);
+  border: 1px solid var(--rim);
+  border-radius: 8px;
+  padding: 5px 8px;
+}
+
+.addInput:focus {
+  outline: none;
+  border-color: color-mix(in oklab, var(--accent) 55%, var(--rim));
+}
+
+/* Logbook - visually de-emphasized and pinned to the very bottom, same
+   placement/weight Things gives it (a record, not an active view). */
+.logbookItem {
+  margin-top: auto;
+  color: var(--text-tertiary);
+}
+
+.nav[data-collapsed] .brand {
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.nav[data-collapsed] .brandLabel {
+  display: none;
+}
+
+.nav[data-collapsed] .item {
+  justify-content: center;
+  padding: 0;
+}
+
+.nav[data-collapsed] .label,
+.nav[data-collapsed] .count,
+.nav[data-collapsed] .groupLabel {
+  display: none;
+}

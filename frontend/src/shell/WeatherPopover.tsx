@@ -47,14 +47,26 @@ export function WeatherPopover({ collapsed = false }: { collapsed?: boolean }) {
               ref={popover.panelRef}
               className={styles.panel}
               style={{ left: popover.pos.left, top: popover.pos.top }}
-              initial={{ opacity: 0, scale: 0.96, x: -6 }}
-              animate={{ opacity: 1, scale: 1, x: 0 }}
-              exit={{ opacity: 0, scale: 0.98 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               transition={{ duration: duration.fast, ease }}
               role="dialog"
               aria-label="Weather details"
             >
-              <Weather />
+              {/* See Overlay.tsx's identical comment - .glass (backdrop-filter)
+                  can't sit inside an element Framer Motion transforms, so the
+                  scale/x pop lives on .content (a sibling of .glass) instead. */}
+              <div className={styles.glass} />
+              <motion.div
+                className={styles.content}
+                initial={{ scale: 0.96, x: -6 }}
+                animate={{ scale: 1, x: 0 }}
+                exit={{ scale: 0.98 }}
+                transition={{ duration: duration.fast, ease }}
+              >
+                <Weather />
+              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>,

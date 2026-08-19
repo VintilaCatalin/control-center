@@ -9,7 +9,6 @@
   z-index: 70;
   background: var(--popup-scrim);
   backdrop-filter: var(--popup-scrim-blur);
-  -webkit-backdrop-filter: var(--popup-scrim-blur);
 }
 
 .centerWrap {
@@ -40,19 +39,33 @@
    its own value here, not forced to match Sheet's 28px or Menu's 14px -
    this is a "medium" popup, sized between a compact context menu and a
    full modal, and scaling radius with a surface's own size is a
-   coherent pattern, not an inconsistency. */
+   coherent pattern, not an inconsistency.
+   background/backdrop-filter deliberately do NOT live here any more -
+   this element is what Framer Motion animates opacity/scale/y on
+   directly (see Overlay.tsx), and Chromium doesn't reliably run
+   backdrop-filter on an element whose own transform/opacity is being
+   driven by inline styles every frame: the filter just stops sampling
+   anything, so the modal reads as flat opaque colour with sharp text
+   visible straight through it - "I can literally see text through the
+   modal" was this bug, not a saturation/opacity tuning problem. Moved
+   the actual glass (background + backdrop-filter) onto .glass, a static
+   child that Framer Motion never touches directly - see it below. */
 .card {
   position: relative;
   overflow: hidden;
   pointer-events: auto;
-  display: flex;
-  flex-direction: column;
-  background: var(--popup-bg);
-  backdrop-filter: var(--popup-blur);
-  -webkit-backdrop-filter: var(--popup-blur);
   border: 1px solid var(--popup-border);
   border-radius: 16px;
   box-shadow: var(--popup-shadow);
+}
+
+.glass {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: var(--popup-bg);
+  backdrop-filter: var(--popup-blur);
+  pointer-events: none;
 }
 
 /* The same top sheen every Card in the app has (primitives/Card) - this
@@ -60,13 +73,35 @@
    than the blur/opacity tuning alone: a soft light catching the top
    edge, like light through actual glass. Popups never had it, which is
    most of why they read as flat solid panels next to Card surfaces. */
-.card::before {
+.glass::before {
   content: '';
   position: absolute;
   inset: 0 0 auto;
   height: 42%;
-  background: linear-gradient(rgba(var(--overlay-tint), 0.055), transparent);
+  background: linear-gradient(rgba(var(--overlay-tint), 0.075), transparent);
   pointer-events: none;
+}
+
+/* A second, thin highlight hugging the inner edge - what actually makes
+   liquid glass read as glass rather than a frosted card: a bright rim
+   where the "material" catches light, distinct from the sheen gradient
+   above it. */
+.glass::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px rgba(var(--overlay-tint), 0.05);
+  pointer-events: none;
+}
+
+.content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
 }
 
 .cardCenter {
@@ -88,20 +123,31 @@
   align-items: center;
   justify-content: space-between;
   flex-shrink: 0;
-  padding: var(--space-4) var(--space-4) var(--space-3);
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--rim);
 }
 
 .headTitle {
   composes: headline from '../../tokens/typography.module.css';
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--space-3);
   color: var(--text-primary);
 }
 
+/* A small tinted chip behind the header glyph, not a bare icon - the
+   same treatment Menu's own item icons use, so a modal's header reads
+   as deliberately designed rather than a plain title row with an icon
+   stuck in front of it. */
 .headIcon {
   display: grid;
   place-items: center;
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: rgba(var(--overlay-tint), 0.06);
   color: var(--text-secondary);
 }
 
@@ -129,11 +175,15 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 0 var(--space-4) var(--space-4);
+  padding: var(--space-4) var(--space-5);
 }
 
 .footer {
   flex-shrink: 0;
-  padding: var(--space-3) var(--space-4);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-5);
   border-top: 1px solid var(--rim);
 }

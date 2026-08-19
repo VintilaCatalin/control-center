@@ -1,15 +1,19 @@
-.card {
+.main {
   position: relative;
-  min-width: 0;
   overflow: hidden;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  margin: var(--space-4);
   border-radius: var(--r-card);
+  display: flex;
   background: var(--glass);
   backdrop-filter: var(--blur);
-  border: 1px solid var(--rim);
   box-shadow: var(--lift), var(--inner);
+  border: 1px solid var(--rim);
 }
 
-.card::before {
+.main::before {
   content: '';
   position: absolute;
   inset: 0 0 auto;

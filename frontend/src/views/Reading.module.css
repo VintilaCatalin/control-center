@@ -13,7 +13,6 @@
   overflow: hidden;
   background: var(--glass);
   backdrop-filter: var(--blur);
-  -webkit-backdrop-filter: var(--blur);
   box-shadow: var(--lift), var(--inner);
   border: 1px solid var(--rim);
 }

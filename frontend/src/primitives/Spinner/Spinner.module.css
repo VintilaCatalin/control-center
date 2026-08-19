@@ -1,0 +1,19 @@
+/* One spinner shape for every in-flight action in the app (Add topic,
+   future async buttons/panels) - a plain arc that rotates via CSS
+   animation, not per-caller ad-hoc "…" text or a bespoke keyframe each
+   time a widget needs a busy state. */
+.spinner {
+  display: inline-block;
+  flex-shrink: 0;
+  border-radius: 999px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  opacity: 0.7;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

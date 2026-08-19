@@ -123,44 +123,56 @@ export function Menu({ open, x, y, items, onClose, align = 'left', ignoreRef }: 
           ref={ref}
           className={styles.menu}
           style={{ left: pos.left, top: pos.top }}
-          initial={{ opacity: 0, scale: 0.96, y: -4 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.98 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
           transition={{ duration: duration.fast, ease }}
           role="menu"
           onKeyDown={handleKeyDown}
         >
-          {items.map((item, i) => {
-            if (item.sep) return <hr key={i} className={styles.sep} />;
-            if (item.heading) {
+          {/* See Overlay.tsx's identical comment - .glass (backdrop-filter)
+              can't sit inside an element Framer Motion transforms, so the
+              scale/y pop lives on .content (a sibling of .glass) instead. */}
+          <div className={styles.glass} />
+          <motion.div
+            className={styles.content}
+            initial={{ scale: 0.96, y: -4 }}
+            animate={{ scale: 1, y: 0 }}
+            exit={{ scale: 0.98 }}
+            transition={{ duration: duration.fast, ease }}
+          >
+            {items.map((item, i) => {
+              if (item.sep) return <hr key={i} className={styles.sep} />;
+              if (item.heading) {
+                return (
+                  <div key={i} className={styles.heading}>
+                    {item.heading}
+                  </div>
+                );
+              }
               return (
-                <div key={i} className={styles.heading}>
-                  {item.heading}
-                </div>
+                <button
+                  key={i}
+                  ref={(el) => {
+                    itemRefs.current[i] = el;
+                  }}
+                  type="button"
+                  role="menuitem"
+                  className={`${styles.item} ${item.danger ? styles.danger : ''}`}
+                  onClick={() => {
+                    onClose();
+                    item.onClick?.();
+                  }}
+                >
+                  <span className={styles.itemMain}>
+                    {item.icon && <span className={styles.itemIcon}>{item.icon}</span>}
+                    <span>{item.label}</span>
+                  </span>
+                  {item.hint && <span className={styles.hint}>{item.hint}</span>}
+                </button>
               );
-            }
-            return (
-              <button
-                key={i}
-                ref={(el) => {
-                  itemRefs.current[i] = el;
-                }}
-                type="button"
-                role="menuitem"
-                className={`${styles.item} ${item.danger ? styles.danger : ''}`}
-                onClick={() => {
-                  onClose();
-                  item.onClick?.();
-                }}
-              >
-                <span className={styles.itemMain}>
-                  {item.icon && <span className={styles.itemIcon}>{item.icon}</span>}
-                  <span>{item.label}</span>
-                </span>
-                {item.hint && <span className={styles.hint}>{item.hint}</span>}
-              </button>
-            );
-          })}
+            })}
+          </motion.div>
         </motion.div>
       )}
     </AnimatePresence>,

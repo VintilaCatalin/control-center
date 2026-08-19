@@ -364,10 +364,38 @@ export interface TaskEntry {
   created: number;
   completed: number | null;
   notes?: string | null;
+  // The Things-style grouping/scheduling layer - all nullable and all
+  // absent on tasks created before this shipped, which is exactly the
+  // definition of Inbox (see TasksShell's view filters): unfiled, no
+  // date, nothing lost in the upgrade.
+  project_id?: string | null;
+  area_id?: string | null;
+  when?: 'today' | 'someday' | null;
+  when_date?: number | null;
+  deadline?: number | null;
+  // Reserved for the eventual iCloud Reminders push - unused until then.
+  caldav_uid?: string | null;
+}
+
+// Same id+label+icon shape as Reading's TopicDef - see topics.ts.
+export interface AreaEntry {
+  id: string;
+  label: string;
+  icon: string;
+}
+
+export interface ProjectEntry {
+  id: string;
+  label: string;
+  area_id: string | null;
+  icon: string;
+  notes: string;
 }
 
 export interface TasksData {
   tasks: TaskEntry[];
+  areas: AreaEntry[];
+  projects: ProjectEntry[];
 }
 
 // Matches server.py:DEFAULT_READING_SOURCES / the "reading_sources" store
