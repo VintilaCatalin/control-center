@@ -1,9 +1,17 @@
-import type { Snapshot } from './types';
+import type { SnapshotUpdate } from './types';
 
-export async function fetchSnapshot(): Promise<Snapshot> {
-  const res = await fetch('/api/data', { cache: 'no-store' });
+export interface SnapshotCursor {
+  epoch: string;
+  versions: Record<string, number>;
+}
+
+export async function fetchSnapshot(cursor?: SnapshotCursor): Promise<SnapshotUpdate> {
+  const query = cursor
+    ? `?epoch=${encodeURIComponent(cursor.epoch)}&v=${encodeURIComponent(Object.entries(cursor.versions).map(([key, version]) => `${key}:${version}`).join(','))}`
+    : '';
+  const res = await fetch(`/api/data${query}`, { cache: 'no-store' });
   if (!res.ok) throw new Error(`/api/data ${res.status}`);
-  return res.json() as Promise<Snapshot>;
+  return res.json() as Promise<SnapshotUpdate>;
 }
 
 // The first generic mutating-call helper - every future action (media,

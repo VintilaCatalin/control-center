@@ -18,7 +18,7 @@ import time
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 
 # backend/server.py is launched directly (`python backend/server.py`,
 # cwd=backend/ - see control_center.py's SERVER/Popen), not as
@@ -87,6 +87,9 @@ class Snapshot:
         self.data = {key: {} for key in COLLECTORS}
         self.data["accent"] = {"hex": None}
         self.stamps = {key: 0.0 for key in COLLECTORS}
+        self.versions = {key: 0 for key in COLLECTORS}
+        self.epoch = str(time.time_ns())
+        self.error_version = 0
         self.errors = {}
     def reload(self):
         """Re-read settings and re-run every collector. Called after a settings
@@ -100,11 +103,19 @@ class Snapshot:
         try:
             value = COLLECTORS[key](self.cfg, self.data)
             with self.lock:
-                self.data[key] = value
+                if self.data.get(key) != value:
+                    self.data[key] = value
+                    self.versions[key] += 1
                 self.stamps[key] = time.time()
-                self.errors.pop(key, None)
+                if key in self.errors:
+                    self.errors.pop(key, None)
+                    self.error_version += 1
         except Exception as e:
-            with self.lock: self.errors[key] = str(e)[:200]
+            message = str(e)[:200]
+            with self.lock:
+                if self.errors.get(key) != message:
+                    self.errors[key] = message
+                    self.error_version += 1
     def loop(self):
         # First pass in parallel. Sequentially, one feed on a 12s timeout held up
         # every collector queued behind it, so the nav and the launchpad showed
@@ -123,9 +134,23 @@ class Snapshot:
                     self.refresh(key)
                     next_run[key] = now + interval
             time.sleep(0.5)
-    def payload(self):
+    def payload(self, since=None, epoch=None):
+        """Return a full snapshot, or the sections changed since a cursor.
+
+        The no-cursor response remains the legacy/full API. React sends its
+        last cursor after its initial load, so frequent hardware/media polls
+        no longer resend large unchanged collections such as Reading.
+        """
         with self.lock:
-            return {"ts": time.time(), "iso": datetime.now(timezone.utc).astimezone().isoformat(), **{k: v for k, v in self.data.items()}, "errors": dict(self.errors)}
+            versions = {**self.versions, "_errors": self.error_version}
+            delta = bool(since) and epoch == self.epoch
+            changed = [key for key in COLLECTORS if not delta or self.versions[key] > since.get(key, -1)]
+            if not delta or self.error_version > since.get("_errors", -1): changed.append("errors")
+            payload = {"ts": time.time(), "iso": datetime.now(timezone.utc).astimezone().isoformat(),
+                       "epoch": self.epoch, "versions": versions, "changed": changed}
+            payload.update({key: self.data[key] for key in changed if key in COLLECTORS})
+            if "errors" in changed: payload["errors"] = dict(self.errors)
+            return payload
 
 def make_handler(snapshot):
     # Every domain's GET routes are tried in turn (falling through to the

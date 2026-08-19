@@ -10,6 +10,7 @@ import mimetypes
 import os
 import re
 from pathlib import Path
+from urllib.parse import parse_qs as parse_query
 
 import requests
 
@@ -35,7 +36,19 @@ def handle_get(handler, path, route, snapshot):
             handler._send("legacy/index.html is missing.", "text/plain", 404)
         return True
     if path == "/api/data":
-        handler._send(json.dumps(snapshot.payload()))
+        # No cursor keeps the established complete response for the legacy
+        # page and any scripts. The React client supplies one after its first
+        # request and receives only collector sections that changed.
+        query = parse_query(route.query)
+        raw_versions = (query.get("v") or [""])[0]
+        since = {}
+        for pair in raw_versions.split(","):
+            key, sep, value = pair.partition(":")
+            if not sep: continue
+            try: since[key] = int(value)
+            except ValueError: continue
+        epoch = (query.get("epoch") or [None])[0]
+        handler._send(json.dumps(snapshot.payload(since, epoch)))
         return True
     if path == "/api/pick":
         from urllib.parse import parse_qs

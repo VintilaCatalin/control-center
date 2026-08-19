@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { fetchSnapshot } from './client';
-import type { Snapshot } from './types';
+import type { Snapshot, SnapshotUpdate } from './types';
 
 const POLL_MS = 2000; // matches the old app's poll cadence (index.html:7605)
 const HIDDEN_POLL_MS = 30_000;
@@ -18,6 +18,7 @@ export function useSnapshot(): SnapshotState {
     error: null,
   });
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const cursor = useRef<{ epoch: string; versions: Record<string, number> } | undefined>(undefined);
 
   useEffect(() => {
     let cancelled = false;
@@ -32,9 +33,10 @@ export function useSnapshot(): SnapshotState {
       if (fetching) return;
       fetching = true;
       try {
-        const snapshot = await fetchSnapshot();
+        const update = await fetchSnapshot(cursor.current);
         if (cancelled) return;
-        setState({ snapshot, loading: false, error: null });
+        cursor.current = { epoch: update.epoch, versions: update.versions };
+        applyUpdate(update);
       } catch (err) {
         if (cancelled) return;
         setState((prev) => ({
@@ -46,6 +48,20 @@ export function useSnapshot(): SnapshotState {
         fetching = false;
         if (!cancelled) schedule(document.hidden ? HIDDEN_POLL_MS : POLL_MS);
       }
+    }
+
+    function applyUpdate(update: SnapshotUpdate) {
+      setState((prev) => {
+        // Metadata-only replies are common now. Keeping the existing state
+        // object prevents a full React tree render when no collector changed.
+        if (prev.snapshot && update.changed.length === 0) return prev;
+        const { changed: _changed, epoch: _epoch, versions: _versions, ...delta } = update;
+        return {
+          snapshot: { ...(prev.snapshot ?? {}), ...delta } as Snapshot,
+          loading: false,
+          error: null,
+        };
+      });
     }
 
     // A minimized/covered dashboard cannot show a live update. Backing off

@@ -797,6 +797,17 @@ export interface Snapshot {
   [key: string]: unknown;
 }
 
+// A cursor-aware /api/data response. The initial request is complete;
+// subsequent requests contain only `changed` sections, which the client
+// merges into its last complete Snapshot.
+export interface SnapshotUpdate extends Partial<Snapshot> {
+  ts: number;
+  iso: string;
+  epoch: string;
+  versions: Record<string, number>;
+  changed: string[];
+}
+
 // Matches server.py:SETTINGS_SCHEMA field for field - the same schema the
 // old app's own settings form read (server.py:101-197). One generic
 // key/type/label/hint per field, grouped, rather than each field getting
