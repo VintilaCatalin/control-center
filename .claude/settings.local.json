@@ -1,0 +1,51 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node verify-fixes2.mjs)",
+      "Bash(ls \"C:\\\\Program Files \\(x86\\)\\\\Microsoft\\\\EdgeCore\\\\\" 2>&1)",
+      "Read(//c/Program Files \\\\\\(x86\\\\\\)/Microsoft/**)",
+      "Bash(node verify1b_notes.mjs)",
+      "Bash(node verify1d_notes.mjs)",
+      "Bash(node verify1e_notes.mjs)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:5173/)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:8770/api/reading/feed)",
+      "Bash(node foryou_verify3.mjs)",
+      "Bash(node foryou_verify4.mjs)",
+      "Bash(node foryou_verify5.mjs)",
+      "Bash(curl -s \"http://localhost:8770/api/reading/for-you\")",
+      "Bash(curl -s \"http://localhost:5173/api/reading/foryou?limit=5\")",
+      "Bash(node foryou_verify6.mjs)",
+      "Bash(curl -s \"http://localhost:8770/api/snapshot\" -o \"C:\\\\Users\\\\catal\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-catal-Scripts\\\\ef41b2c7-cabc-49c3-9362-3ef1027ee500\\\\scratchpad\\\\snapshot_full.json\")",
+      "Bash(python -c ' *)",
+      "Bash(node -e ' *)",
+      "Bash(node foryou_resize.mjs)",
+      "Bash(node row_measure.mjs)",
+      "Bash(npx tsc *)",
+      "Bash(ls \"C:\\\\Users\\\\catal\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-catal-Scripts\\\\ef41b2c7-cabc-49c3-9362-3ef1027ee500\\\\scratchpad\" 2>&1; echo \"---\"; ls \"C:\\\\Users\\\\catal\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-catal-Scripts\" 2>&1)",
+      "Read(//c/Users/catal/AppData/Local/Temp/claude/C--Users-catal-Scripts/**)",
+      "Bash(mkdir -p 'C:\\\\Users\\\\catal\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-catal-Scripts\\\\ef41b2c7-cabc-49c3-9362-3ef1027ee500\\\\scratchpad/foryou_bugfix_shots')",
+      "Bash(node 'C:\\\\Users\\\\catal\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-catal-Scripts\\\\ef41b2c7-cabc-49c3-9362-3ef1027ee500\\\\scratchpad/verify_foryou_bugfix.mjs')",
+      "Bash(node 'C:\\\\Users\\\\catal\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-catal-Scripts\\\\ef41b2c7-cabc-49c3-9362-3ef1027ee500\\\\scratchpad/verify_foryou_bugfix3.mjs')",
+      "Bash(python -m py_compile panel/server.py)",
+      "Bash(curl -s http://127.0.0.1:8770/api/data)",
+      "Bash(curl -s -X POST http://127.0.0.1:8770/api/reading/source/edit -H \"Content-Type: application/json\" -d '{\"id\":\"universitatea-craiova\",\"type\":\"webpage\"}')",
+      "Bash(npx oxlint *)",
+      "Bash(mkdir -p \"C:/Users/catal/Vinti-PC-Tools/lighting\" \"C:/Users/catal/Vinti-PC-Tools/automation\")",
+      "Read(//c/Users/catal/**)",
+      "Bash(git mv *)",
+      "Bash(tasklist)",
+      "PowerShell(Get-CimInstance Win32_Process -Filter \"ProcessId=7024 or ProcessId=36204 or ProcessId=18876\")",
+      "Bash(taskkill //PID 36204 //F)",
+      "Bash(taskkill //PID 18876 //F)",
+      "Bash(rmdir system *)",
+      "Bash(git -c user.name=VintilaCatalin -c user.email=catalin.vinti@gmail.com commit -q -m 'Rename system/ to capabilities/, generic filenames *)",
+      "Bash(git -c user.name=VintilaCatalin -c user.email=catalin.vinti@gmail.com commit -q -m 'Remove VirtualDesktopAccessor dependency entirely *)",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('backend/collectors/weather.py', encoding='utf-8'\\).read\\(\\)\\)\")"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\catal\\Vinti-PC-Tools\\lighting",
+      "C:\\Users\\catal\\Vinti-PC-Tools\\automation",
+      "C:\\Users\\catal\\Vinti-PC-Tools"
+    ]
+  }
+}
