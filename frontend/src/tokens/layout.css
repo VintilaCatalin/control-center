@@ -1,10 +1,12 @@
 /* Font stacks, --gap and the two radii are ported from
    panel/index.html:67-80 - same typographic identity as the old app.
 
-   The spacing and type scales are new: the old app never had one, it used
-   ad hoc px values per rule (8px here, 11px there, 21px, 58px...). These
-   give new components a small deliberate scale to draw from instead of
-   picking a fresh number each time. */
+   Type sizes live only in typography.css. layout.css used to declare a
+   parallel --fs-* scale (--fs-caption 11px, --fs-body 15px, --fs-display
+   58px…) that typography.css silently overwrote on import — two sources of
+   truth that made “which floor am I on?” impossible to answer. --fs-label
+   remains here as Weather’s last Milestone-1 holdout until that widget
+   migrates fully. */
 :root {
   --display: 'Bahnschrift SemiBold Condensed', 'Bahnschrift Condensed', 'Bahnschrift',
     'DIN Alternate', system-ui, sans-serif;
@@ -32,11 +34,8 @@
   --workspace-page-title-weight: 720;
   --workspace-page-title-tracking: -0.035em;
 
-  --fs-caption: 0.6875rem; /* 11px */
+  /* Weather-only until that surface migrates to typography.css roles. */
   --fs-label: 0.8125rem; /* 13px */
-  --fs-body: 0.9375rem; /* 15px */
-  --fs-title: 1.3125rem; /* 21px */
-  --fs-display: 3.625rem; /* 58px */
 }
 
 @media (max-width: 780px) {

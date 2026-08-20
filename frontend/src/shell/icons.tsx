@@ -109,6 +109,15 @@ export function ReadingIcon() {
   );
 }
 
+export function LibraryIcon() {
+  return (
+    <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M5 4h14a1 1 0 0 1 1 1v15l-4-2.5L12 20l-4-1.5L5 20V5a1 1 0 0 1 1-1z" />
+      <path d="M9 8h6M9 12h4" />
+    </svg>
+  );
+}
+
 export function HomelabIcon() {
   return (
     <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

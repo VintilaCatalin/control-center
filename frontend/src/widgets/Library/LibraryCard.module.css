@@ -1,0 +1,140 @@
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border-radius: var(--r-tile);
+  overflow: hidden;
+  border: 1px solid var(--rim);
+  background: color-mix(in oklab, var(--graphite) 42%, transparent);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform var(--dur-base) var(--ease),
+    border-color var(--dur-fast) var(--ease),
+    box-shadow var(--dur-base) var(--ease);
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: var(--card-accent, transparent);
+  z-index: 2;
+  pointer-events: none;
+}
+
+.card:hover,
+.card:focus-visible {
+  transform: translateY(-3px);
+  border-color: var(--rim-lit);
+  box-shadow: var(--lift);
+  outline: none;
+}
+
+.media {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  background: linear-gradient(145deg, var(--graphite-raised), var(--graphite));
+}
+
+.media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--dur-slow) var(--ease);
+}
+
+.card:hover .media img {
+  transform: scale(1.04);
+}
+
+.mediaFallback {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  color: var(--text-tertiary);
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+}
+
+.favorite {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: rgba(4, 6, 9, 0.55);
+  color: var(--accent);
+  backdrop-filter: blur(8px);
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: var(--space-3);
+  min-width: 0;
+}
+
+.title {
+  composes: callout from '../../tokens/typography.module.css';
+  color: var(--text-primary);
+  font-weight: 640;
+  line-height: 1.35;
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.meta {
+  composes: caption from '../../tokens/typography.module.css';
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-tertiary);
+  min-width: 0;
+}
+
+.domain {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.excerpt {
+  composes: caption from '../../tokens/typography.module.css';
+  color: var(--text-secondary);
+  line-height: 1.45;
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.tag {
+  composes: caption from '../../tokens/typography.module.css';
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(var(--overlay-tint), 0.06);
+  color: var(--text-tertiary);
+  font-weight: 560;
+}

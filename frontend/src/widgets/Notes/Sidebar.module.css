@@ -11,7 +11,7 @@
 .action:first-child:hover { border-color: var(--tasks-line-strong); }
 .action svg { justify-self: center; color: var(--text-tertiary); }
 .action span, .rowLabel { overflow: hidden; font-size: var(--fs-footnote); font-weight: 570; text-overflow: ellipsis; white-space: nowrap; }
-.action kbd { color: var(--text-tertiary); font-family: inherit; font-size: 10px; font-weight: 600; }
+.action kbd { color: var(--text-tertiary); font-family: inherit; font-size: var(--fs-caption); font-weight: 600; }
 .scroll { display: flex; min-height: 0; flex-direction: column; }
 .eyebrow { margin: 0; padding: 0 10px 7px; color: var(--text-tertiary); font-size: var(--fs-caption); font-weight: 700; letter-spacing: .07em; text-transform: uppercase; }
 .collection { min-height: 39px; margin: 1px 0; }

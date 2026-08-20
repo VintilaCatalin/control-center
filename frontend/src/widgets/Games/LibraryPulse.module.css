@@ -17,19 +17,19 @@
 .featuredStory .thumbnail { width: 128px; height: 96px; }
 .compactStory .thumbnail { width: 96px; height: 64px; border-radius: 10px; box-shadow: 0 5px 13px rgba(0,0,0,.12); }
 .thumbnail img { width: 100%; height: 100%; object-fit: cover; }
-.sourceBadge { position: absolute; left: 6px; bottom: 6px; padding: 2px 6px; border: 1px solid rgba(255,255,255,.13); border-radius: 6px; background: rgba(7,9,12,.76); color: rgba(255,255,255,.9); font-size: 9px; font-weight: 680; letter-spacing: .025em; backdrop-filter: blur(8px); }
+.sourceBadge { position: absolute; left: 6px; bottom: 6px; padding: 2px 6px; border: 1px solid rgba(255,255,255,.13); border-radius: 6px; background: rgba(7,9,12,.76); color: rgba(255,255,255,.9); font-size: var(--fs-caption); font-weight: 680; letter-spacing: .025em; backdrop-filter: blur(8px); }
 .fallbackArt { display: grid; width: 100%; height: 100%; place-items: center; background: color-mix(in oklab, var(--accent) 14%, var(--tasks-control)); color: var(--accent); font-family: var(--font-display); font-size: 1.6rem; font-weight: 720; }
 .storyCopy { display: flex; min-width: 0; flex-direction: column; gap: 4px; }
 .context { display: flex; min-width: 0; align-items: baseline; gap: 8px; overflow: hidden; font-size: var(--fs-caption); white-space: nowrap; }
 .gameName { overflow: hidden; color: var(--accent); font-weight: 660; text-overflow: ellipsis; }
-.storyDate { flex: none; color: var(--text-tertiary); font-size: 10px; font-weight: 570; letter-spacing: .015em; }
+.storyDate { flex: none; color: var(--text-tertiary); font-size: var(--fs-caption); font-weight: 570; letter-spacing: .015em; }
 .storyCopy strong { display: -webkit-box; overflow: hidden; color: var(--text-primary); font-size: var(--fs-footnote); font-weight: 650; line-height: 1.38; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .featuredStory .storyCopy strong { font-size: .94rem; -webkit-line-clamp: 3; }
 .compactStory .storyCopy strong { -webkit-line-clamp: 2; }
 .summary { display: -webkit-box; overflow: hidden; color: var(--text-secondary); font-size: var(--fs-caption); line-height: 1.45; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .compactStory .summary { -webkit-line-clamp: 2; }
 .lead .summary { -webkit-line-clamp: 3; }
-.provider { color: var(--text-tertiary); font-size: 10px; font-weight: 570; }
+.provider { color: var(--text-tertiary); font-size: var(--fs-caption); font-weight: 570; }
 .arrow { color: var(--text-tertiary); font-size: 1.3rem; opacity: .55; }
 .story:hover .arrow { color: var(--accent); opacity: 1; }
 .empty { display: grid; min-height: 160px; place-items: center; padding: 24px; color: var(--text-tertiary); font-size: var(--fs-footnote); line-height: 1.5; text-align: center; }

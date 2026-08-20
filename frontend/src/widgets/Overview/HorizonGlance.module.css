@@ -9,7 +9,7 @@
 .item:disabled { cursor: default; }
 .date { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .date strong { overflow: hidden; color: var(--text-secondary); font: 630 var(--fs-caption)/1.1 var(--font-text); text-overflow: ellipsis; white-space: nowrap; }
-.date small { color: var(--text-tertiary); font: 520 10px/1 var(--font-text); font-variant-numeric: tabular-nums; }
+.date small { color: var(--text-tertiary); font: 520 var(--fs-caption)/1 var(--font-text); font-variant-numeric: tabular-nums; }
 .track { position: relative; align-self: stretch; display: flex; justify-content: center; }
 .track i { position: relative; z-index: 1; align-self: center; width: 7px; height: 7px; border: 2px solid var(--glass); border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 1px color-mix(in oklab, var(--accent) 46%, transparent); }
 .track i[data-kind='event'] { background: color-mix(in oklab, var(--accent) 40%, #7fa8df); }
@@ -18,7 +18,7 @@
 .copy { display: flex; flex-direction: column; min-width: 0; gap: 4px; padding-left: 7px; }
 .copy strong { overflow: hidden; color: var(--text-primary); font: 610 var(--fs-footnote)/1.2 var(--font-text); text-overflow: ellipsis; white-space: nowrap; }
 .copy small { overflow: hidden; color: var(--text-tertiary); font: 510 var(--fs-caption)/1.1 var(--font-text); text-overflow: ellipsis; white-space: nowrap; }
-.kind { margin-left: 10px; color: var(--text-tertiary); font: 620 10px/1 var(--font-text); letter-spacing: .055em; text-transform: uppercase; }
+.kind { margin-left: 10px; color: var(--text-tertiary); font: 620 var(--fs-caption)/1 var(--font-text); letter-spacing: .055em; text-transform: uppercase; }
 .empty { display: flex; flex: 1; flex-direction: column; align-items: center; justify-content: center; gap: 6px; text-align: center; }
 .empty strong { color: var(--text-primary); font: 650 var(--fs-callout)/1.2 var(--font-text); }
 .empty span { color: var(--text-tertiary); font: 510 var(--fs-footnote)/1.4 var(--font-text); }
@@ -31,11 +31,11 @@
   .item { grid-template-columns: 43px 13px minmax(0, 1fr); min-height: 47px; padding-right: 0; }
   .item:nth-child(n + 5) { display: none; }
   .date { gap: 2px; }
-  .date strong { font-size: 11px; }
-  .date small { font-size: 9px; }
+  .date strong { font-size: var(--fs-caption); }
+  .date small { font-size: var(--fs-caption); }
   .track i { width: 6px; height: 6px; }
   .copy { gap: 3px; padding-left: 6px; }
   .copy strong { font-size: var(--fs-caption); }
-  .copy small { font-size: 10px; }
+  .copy small { font-size: var(--fs-caption); }
   .kind { display: none; }
 }

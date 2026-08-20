@@ -1,0 +1,176 @@
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 100%;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-height: 52px;
+  padding: 2px 10px 14px;
+}
+
+.brandGlyph {
+  display: grid;
+  place-items: center;
+  width: 21px;
+  flex: none;
+  color: var(--accent);
+}
+
+.brandCopy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.brandLabel {
+  composes: headline from '../../tokens/typography.module.css';
+  color: var(--text-primary);
+  font-weight: 660;
+  line-height: 1.2;
+}
+
+.brandHint {
+  composes: caption from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  line-height: 1.25;
+}
+
+.search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 36px;
+  padding: 0 var(--space-3);
+  margin: 0 var(--space-2) var(--space-3);
+  border-radius: 999px;
+  border: 1px solid var(--rim);
+  background: rgba(var(--overlay-tint), 0.04);
+  color: var(--text-tertiary);
+  transition: border-color var(--dur-fast) var(--ease);
+}
+
+.search:focus-within {
+  border-color: color-mix(in oklab, var(--accent) 55%, var(--rim));
+  color: var(--text-secondary);
+}
+
+.searchInput {
+  composes: callout from '../../tokens/typography.module.css';
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: none;
+  color: var(--text-primary);
+  font-size: 0.92em;
+}
+
+.searchInput::placeholder {
+  color: var(--text-tertiary);
+}
+
+.searchInput:focus {
+  outline: none;
+}
+
+.groupLabel {
+  composes: eyebrow from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  padding: var(--space-4) var(--space-2) 6px;
+}
+
+.item {
+  composes: callout from '../../tokens/typography.module.css';
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  height: 40px;
+  padding: 0 var(--space-3);
+  border: none;
+  border-radius: 10px;
+  background: none;
+  color: var(--text-secondary);
+  font-weight: 560;
+  font-size: 0.95em;
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease);
+}
+
+.item:hover {
+  color: var(--text-primary);
+  background: rgba(var(--overlay-tint), 0.06);
+}
+
+.itemActive {
+  color: var(--text-primary);
+  background: color-mix(in oklab, var(--accent) 18%, transparent);
+}
+
+.itemChild {
+  padding-left: calc(var(--space-3) + 14px);
+  height: 36px;
+  font-size: 0.92em;
+  font-weight: 540;
+}
+
+.icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 19px;
+  color: inherit;
+}
+
+.itemActive .icon {
+  color: var(--accent);
+}
+
+.swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  flex-shrink: 0;
+  box-shadow: inset 0 0 0 1px rgba(var(--overlay-tint), 0.12);
+}
+
+.label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+}
+
+.count {
+  composes: caption from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+.nav[data-collapsed] .brand {
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.nav[data-collapsed] .brandCopy,
+.nav[data-collapsed] .label,
+.nav[data-collapsed] .count,
+.nav[data-collapsed] .groupLabel,
+.nav[data-collapsed] .search {
+  display: none;
+}
+
+.nav[data-collapsed] .item {
+  justify-content: center;
+  padding: 0;
+}

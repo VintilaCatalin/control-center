@@ -179,7 +179,7 @@
 
 .time {
   color: var(--text-tertiary);
-  font-size: 10px;
+  font-size: var(--fs-caption);
   font-variant-numeric: tabular-nums;
   font-weight: 560;
 }

@@ -36,7 +36,7 @@ from backend.collectors.files import collect_files
 from backend.collectors.games import collect_apps, collect_games, collect_ui
 from backend.collectors.hardware import collect_hardware
 from backend.collectors.homelab import collect_homelab
-from backend.collectors.lights import collect_lights
+from backend.collectors.library import collect_library
 from backend.collectors.media import collect_audio, collect_media
 from backend.collectors.media_extras import collect_photo, collect_popular, collect_upcoming
 from backend.collectors.notes import collect_notes
@@ -54,6 +54,7 @@ from backend.routes import (
     media as routes_media,
     media_extras as routes_media_extras,
     notes as routes_notes,
+    library as routes_library,
     plex as routes_plex,
     reading as routes_reading,
     settings as routes_settings,
@@ -66,7 +67,7 @@ INTERVALS = {
     "weather": 900, "games": 600, "wallpapers": 60, "feeds": 900,
     "homelab": 15, "downloads": 8, "upcoming": 900, "notes": 20, "ui": 5, "tasks": 10,
     "photo": 20, "popular": 1800, "audio": 15, "calendar": 900,
-    "files": 20, "reading": 900,
+    "files": 20, "reading": 900, "library": 120,
 }
 
 COLLECTORS = {
@@ -78,6 +79,7 @@ COLLECTORS = {
     "photo": collect_photo, "popular": collect_popular,
     "ui": collect_ui, "audio": collect_audio,
     "calendar": collect_calendar, "files": collect_files, "reading": collect_reading,
+    "library": collect_library,
 }
 
 class Snapshot:
@@ -158,7 +160,7 @@ def make_handler(snapshot):
     # sequential-if-chain behaviour do_GET always had, just spread across
     # modules instead of one 220-line method.
     GET_MODULES = [
-        routes_games, routes_settings, routes_reading, routes_notes, routes_plex,
+        routes_games, routes_settings, routes_reading, routes_notes, routes_library, routes_plex,
         routes_media_extras, routes_wallpapers, routes_files,
         routes_core,  # static fallback MUST be tried last
     ]

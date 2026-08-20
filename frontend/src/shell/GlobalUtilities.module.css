@@ -74,16 +74,15 @@
   composes: caption from '../tokens/typography.module.css';
   position: static;
   margin-left: auto;
-  min-width: 16px;
-  height: 17px;
-  padding: 0 4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
   display: grid;
   place-items: center;
   border-radius: 999px;
   background: var(--accent);
   color: #0a0c10;
   font-weight: 700;
-  font-size: 10px;
 }
 
 .utilityLabel {

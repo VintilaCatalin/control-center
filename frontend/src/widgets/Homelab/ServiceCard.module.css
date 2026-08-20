@@ -57,7 +57,6 @@
   flex: none;
   color: var(--text-tertiary);
   font-variant-numeric: tabular-nums;
-  font-size: 10px;
 }
 
 .tag {
@@ -65,7 +64,6 @@
   flex: none;
   padding: 1px 6px;
   border-radius: 999px;
-  font-size: 9px;
 }
 
 .tagRunning {

@@ -1,0 +1,130 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: var(--ink);
+  overflow-y: auto;
+}
+
+.backBtn {
+  composes: callout from '../../tokens/typography.module.css';
+  position: fixed;
+  top: var(--space-4);
+  left: var(--space-4);
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 var(--space-3) 0 var(--space-2);
+  border-radius: 999px;
+  border: none;
+  background: rgba(2, 3, 5, 0.5);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  font-weight: 560;
+  cursor: pointer;
+}
+
+.actions {
+  position: fixed;
+  top: var(--space-4);
+  right: var(--space-4);
+  z-index: 2;
+  display: flex;
+  gap: var(--space-2);
+}
+
+.openBtn {
+  composes: callout from '../../tokens/typography.module.css';
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(var(--overlay-tint), 0.18);
+  background: rgba(2, 3, 5, 0.5);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  font-weight: 620;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.hero {
+  position: relative;
+  min-height: clamp(240px, 42vh, 420px);
+  background: linear-gradient(160deg, var(--graphite-raised), var(--graphite));
+}
+
+.hero img {
+  width: 100%;
+  height: clamp(240px, 42vh, 420px);
+  object-fit: cover;
+}
+
+.heroShade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, var(--ink) 8%, rgba(7, 9, 13, 0.35) 55%, rgba(7, 9, 13, 0.12) 100%);
+}
+
+.panel {
+  position: relative;
+  z-index: 1;
+  width: min(720px, 92vw);
+  margin: -72px auto 80px;
+  padding: 0 var(--space-4);
+}
+
+.eyebrow {
+  composes: eyebrow from '../../tokens/typography.module.css';
+  color: var(--accent);
+}
+
+.title {
+  composes: title1 from '../../tokens/typography.module.css';
+  margin: 10px 0 0;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.meta {
+  composes: callout from '../../tokens/typography.module.css';
+  margin-top: 12px;
+  color: var(--text-tertiary);
+}
+
+.excerpt {
+  composes: body from '../../tokens/typography.module.css';
+  margin-top: 22px;
+  color: var(--text-secondary);
+  line-height: 1.65;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 24px;
+}
+
+.tag {
+  composes: caption from '../../tokens/typography.module.css';
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(var(--overlay-tint), 0.06);
+  color: var(--text-secondary);
+  font-weight: 560;
+}
+
+.favorite {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 18px;
+  color: var(--accent);
+  composes: footnote from '../../tokens/typography.module.css';
+  font-weight: 620;
+}

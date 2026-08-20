@@ -31,6 +31,7 @@ const REFRESH_RATES: { label: string; seconds: number }[] = [
   { label: 'Games library', seconds: 600 },
   { label: 'Weather', seconds: 900 },
   { label: 'Reading feeds', seconds: 900 },
+  { label: 'Library (Raindrop)', seconds: 120 },
   { label: 'Calendar', seconds: 900 },
   { label: 'Top Wanted (Overseerr)', seconds: 1800 },
 ];
@@ -42,6 +43,7 @@ const APP_LABELS: Record<string, string> = {
   notes: 'Notes',
   plex: 'Plex',
   reading: 'Reading',
+  library: 'Library',
   homelab: 'Homelab',
 };
 

@@ -51,6 +51,14 @@ export const INTEGRATIONS: IntegrationDef[] = [
     testUrlKey: 'ha_url',
   },
   {
+    id: 'raindrop',
+    name: 'Raindrop.io',
+    blurb: 'Saved links from your phone — collections and bookmarks in Library.',
+    keys: ['raindrop_token'],
+    status: (s) => (!s?.library?.configured ? 'not_connected' : s.library.error ? 'error' : 'connected'),
+    errorText: (s) => s?.library?.error ?? undefined,
+  },
+  {
     id: 'plex',
     name: 'Plex',
     blurb: 'Now playing, recently added and library browsing.',

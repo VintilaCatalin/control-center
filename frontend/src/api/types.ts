@@ -520,6 +520,37 @@ export interface ReadingData {
   fetched_at: number;
 }
 
+// Raindrop.io bookmark library — synced via backend/collectors/library.py.
+export interface LibraryCollection {
+  id: string;
+  title: string;
+  count: number;
+  color?: string | null;
+  cover?: string | null;
+  parentId?: string | null;
+}
+
+export interface LibraryItem {
+  id: string;
+  title: string;
+  url: string;
+  excerpt: string;
+  cover?: string | null;
+  domain: string;
+  tags: string[];
+  collectionId: string;
+  created?: string;
+  important: boolean;
+  type: string;
+}
+
+export interface LibraryData {
+  configured: boolean;
+  collections: LibraryCollection[];
+  recent: LibraryItem[];
+  error?: string | null;
+}
+
 // A single {t, v} sample - the shape every history array in HomelabData
 // uses, whether it came from server.py's own in-memory ring buffer
 // (_metric_series) or was reshaped from a Netdata /api/v1/data response.
@@ -808,6 +839,7 @@ export interface Snapshot {
   tasks?: TasksData;
   plex?: PlexData;
   reading?: ReadingData;
+  library?: LibraryData;
   homelab?: HomelabData;
   downloads?: DownloadsData;
   upcoming?: UpcomingData;

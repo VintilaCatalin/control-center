@@ -97,6 +97,7 @@ DEFAULTS = {
     "ha_url": "",
     "panel_lights": "",
     "plex_url": "", "plex_token": "", "plex_open": "app", "plex_limit": "40",
+    "raindrop_token": "",
     "steam_path": r"C:\Program Files (x86)\Steam", "games_limit": "18", "extra_games": "",
     "games_ignore": "",
     "xbox_enabled": "true", "xbox_paths": r"C:\XboxGames",
@@ -140,7 +141,7 @@ INTERVALS = {
     "weather": 900, "games": 600, "wallpapers": 60, "feeds": 900,
     "homelab": 15, "downloads": 8, "upcoming": 900, "notes": 20, "ui": 5, "tasks": 10,
     "photo": 20, "popular": 1800, "audio": 15, "desktops": 3, "calendar": 900,
-    "files": 20, "reading": 900,
+    "files": 20, "reading": 900, "library": 120,
 }
 
 SETTINGS_SCHEMA = [
@@ -169,7 +170,7 @@ SETTINGS_SCHEMA = [
         {"key": "reduced_motion", "label": "Reduce motion", "type": "bool",
          "hint": "Turns off decorative animation across the app (charts, transitions, hover motion)"},
         {"key": "default_app", "label": "Open on launch", "type": "select",
-         "options": ["overview", "games", "scene", "notes", "tasks", "plex", "reading", "homelab"],
+         "options": ["overview", "games", "scene", "notes", "tasks", "plex", "reading", "library", "homelab"],
          "hint": "Which application is showing the moment Control Center starts"},
         {"key": "background_mode", "label": "App background", "type": "select",
          "options": ["wallpaper", "color", "image"],
@@ -191,6 +192,10 @@ SETTINGS_SCHEMA = [
         {"key": "plex_open", "label": "Open items in", "type": "select",
          "options": ["app", "web"]},
         {"key": "plex_limit", "label": "Items per library", "type": "number"},
+    ]},
+    {"group": "Library", "keys": [
+        {"key": "raindrop_token", "label": "Raindrop token", "type": "secret",
+         "hint": "app.raindrop.io → Settings → Integrations → Create app → Test token"},
     ]},
     {"group": "Games", "keys": [
         {"key": "griddb_key", "label": "SteamGridDB key", "type": "secret",
@@ -264,7 +269,7 @@ SETTINGS_SCHEMA = [
     ]},
 ]
 
-SECRET_KEYS = {"plex_token", "griddb_key", "wallhaven_key",
+SECRET_KEYS = {"plex_token", "griddb_key", "wallhaven_key", "raindrop_token",
                "qbit_pass", "sonarr_key", "radarr_key", "portainer_token"}
 
 # Where each setting came from, so --diag can prove it rather than guess.

@@ -114,7 +114,7 @@
 
 .stat small {
   color: var(--text-tertiary);
-  font-size: 9px;
+  font-size: var(--fs-caption);
   font-weight: 560;
   line-height: 1.2;
 }
@@ -143,7 +143,7 @@
 
 .sectionTitle {
   color: var(--text-tertiary);
-  font-size: 10px;
+  font-size: var(--fs-eyebrow);
   font-weight: 660;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -172,7 +172,7 @@
 .hourLabel {
   max-width: 100%;
   color: var(--text-tertiary);
-  font-size: 9px;
+  font-size: var(--fs-caption);
   font-weight: 560;
   overflow: hidden;
   text-overflow: ellipsis;
