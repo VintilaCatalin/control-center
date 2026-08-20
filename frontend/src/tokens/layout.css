@@ -24,9 +24,21 @@
   --space-5: 1.5rem;
   --space-6: 2.5rem;
 
+  /* Shared centred workspace measure for focused, document-like apps. */
+  --workspace-content-width: 73.75rem;
+  --workspace-page-gutter: clamp(34px, 7vw, 104px);
+  --workspace-page-top: clamp(32px, 5vw, 68px);
+  --workspace-page-title-size: clamp(2rem, 3vw, 2.8rem);
+  --workspace-page-title-weight: 720;
+  --workspace-page-title-tracking: -0.035em;
+
   --fs-caption: 0.6875rem; /* 11px */
   --fs-label: 0.8125rem; /* 13px */
   --fs-body: 0.9375rem; /* 15px */
   --fs-title: 1.3125rem; /* 21px */
   --fs-display: 3.625rem; /* 58px */
+}
+
+@media (max-width: 780px) {
+  :root { --workspace-page-gutter: 22px; }
 }

@@ -84,6 +84,10 @@ def read_note(cfg, rel):
 
 def write_note(cfg, rel, text):
     target = note_path(cfg, rel)
+    # Saving is an edit, not an implicit create. Without this guard a late
+    # debounced save from a note that was just moved/renamed could recreate
+    # a stale duplicate at the old path.
+    if not target.is_file(): return {"ok": False, "error": "note not found"}
     target.parent.mkdir(parents=True, exist_ok=True)
     tmp = target.with_suffix(target.suffix + ".panel-tmp")
     tmp.write_text(str(text), encoding="utf-8", newline="\n")
@@ -105,7 +109,114 @@ def rename_note(cfg, rel, new_name):
     if dest.exists() and dest != target: return {"ok": False, "error": "a note with that name already exists"}
     target.rename(dest)
     rel_dest = dest.relative_to(notes_root(cfg).resolve())
-    return {"ok": True, "rel": str(rel_dest).replace("\\", "/")}
+    rel_dest_str = str(rel_dest).replace("\\", "/")
+    _replace_pinned_rel(str(rel or ""), rel_dest_str)
+    return {"ok": True, "rel": rel_dest_str}
+
+def move_note(cfg, rel, folder=""):
+    """Move an existing note without rewriting its contents.
+
+    Folder names arrive from the current vault folder picker, but this still
+    validates every path component at the write boundary. note_path() then
+    performs the final resolved-path containment check as defence in depth.
+    """
+    target = note_path(cfg, rel)
+    if not target.is_file(): return {"ok": False, "error": "note not found"}
+    clean_folder = str(folder or "").strip().replace("\\", "/").strip("/")
+    if clean_folder:
+        parts = clean_folder.split("/")
+        if any(not part or part in (".", "..") or re.search(r'[<>:"|?*]', part) for part in parts):
+            return {"ok": False, "error": "invalid folder"}
+    rel_dest = f"{clean_folder}/{target.name}" if clean_folder else target.name
+    dest = note_path(cfg, rel_dest)
+    if dest == target: return {"ok": True, "rel": rel_dest}
+    if dest.exists(): return {"ok": False, "error": "a note with that name already exists in that folder"}
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    target.rename(dest)
+    _replace_pinned_rel(str(rel or ""), rel_dest)
+    return {"ok": True, "rel": rel_dest}
+
+def remove_folder(cfg, folder, destination=""):
+    """Remove a logical Notes folder without deleting note content.
+
+    Notes are moved first (subfolder structure is preserved), every target is
+    collision-checked before mutation, and directories are only removed when
+    genuinely empty. Attachments or unrelated files are therefore untouched.
+    """
+    source = _safe_folder_path(cfg, folder, allow_root=False)
+    dest_root = _safe_folder_path(cfg, destination, allow_root=True)
+    if not source.is_dir(): return {"ok": False, "error": "folder not found"}
+    if dest_root == source or source in dest_root.parents:
+        return {"ok": False, "error": "choose a destination outside this folder"}
+
+    extensions = (".md", ".markdown", ".txt")
+    sources = [path for path in source.rglob("*") if path.is_file() and path.suffix.lower() in extensions
+               and not any(part.startswith(".") for part in path.relative_to(source).parts)]
+    moves = []
+    for path in sources:
+        relative = path.relative_to(source)
+        target = (dest_root / relative).resolve()
+        if target.exists():
+            return {"ok": False, "error": f'a note named "{relative.name}" already exists at the destination'}
+        moves.append((path, target))
+
+    root = notes_root(cfg).resolve()
+    moved = []
+    for path, target in moves:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        old_rel = str(path.relative_to(root)).replace("\\", "/")
+        path.rename(target)
+        new_rel = str(target.relative_to(root)).replace("\\", "/")
+        _replace_pinned_rel(old_rel, new_rel)
+        moved.append({"from": old_rel, "to": new_rel})
+
+    directories = [path for path in source.rglob("*") if path.is_dir()]
+    for directory in sorted(directories, key=lambda path: len(path.parts), reverse=True) + [source]:
+        try: directory.rmdir()
+        except OSError: pass
+    return {"ok": True, "moved": moved}
+
+def rename_folder(cfg, folder, new_name):
+    """Rename one folder atomically, preserving every file inside it."""
+    source = _safe_folder_path(cfg, folder, allow_root=False)
+    if not source.is_dir(): return {"ok": False, "error": "folder not found"}
+    clean_name = re.sub(r'[<>:"/\\|?*]', "", str(new_name or "").strip())
+    if not clean_name or clean_name in (".", ".."):
+        return {"ok": False, "error": "folder name can't be empty"}
+    target = source.with_name(clean_name)
+    if target == source: return {"ok": True, "folder": str(source.relative_to(notes_root(cfg).resolve())).replace("\\", "/")}
+    if target.exists(): return {"ok": False, "error": "a folder with that name already exists"}
+
+    root = notes_root(cfg).resolve()
+    note_paths = [path for path in source.rglob("*") if path.is_file() and path.suffix.lower() in (".md", ".markdown", ".txt")]
+    old_rels = [str(path.relative_to(root)).replace("\\", "/") for path in note_paths]
+    source.rename(target)
+    for old_rel in old_rels:
+        relative = Path(old_rel).relative_to(Path(folder.replace("\\", "/")))
+        new_rel = str((target.relative_to(root) / relative)).replace("\\", "/")
+        _replace_pinned_rel(old_rel, new_rel)
+    return {"ok": True, "folder": str(target.relative_to(root)).replace("\\", "/")}
+
+def _safe_folder_path(cfg, folder, allow_root=False):
+    if not str(cfg.get("notes_dir") or "").strip():
+        raise ValueError("no notes folder configured")
+    clean = str(folder or "").strip().replace("\\", "/").strip("/")
+    if not clean:
+        if allow_root: return notes_root(cfg).resolve()
+        raise ValueError("folder required")
+    parts = clean.split("/")
+    if any(not part or part in (".", "..") or re.search(r'[<>:"|?*]', part) for part in parts):
+        raise ValueError("invalid folder")
+    root = notes_root(cfg).resolve()
+    target = (root / clean).resolve()
+    if root not in target.parents: raise ValueError("outside the notes folder")
+    return target
+
+def _replace_pinned_rel(old_rel, new_rel):
+    def mutate(store):
+        pinned = store.get("pinned_notes") or []
+        store["pinned_notes"] = [new_rel if item == old_rel else item for item in pinned]
+    edit_store(mutate)
 
 def new_note(cfg, name, folder=""):
     stem = re.sub(r'[<>:"/\\|?*]', "", str(name or "").strip()) or datetime.now().strftime("Note %Y-%m-%d %H%M")
@@ -115,7 +226,9 @@ def new_note(cfg, name, folder=""):
         rel = f"{folder}/{stem} 2.md" if folder else f"{stem} 2.md"
         target = note_path(cfg, rel)
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(f"# {stem}\n\n", encoding="utf-8", newline="\n")
+    # The filename is already the note's title in Control Center and Obsidian.
+    # Seeding another H1 only duplicates the title at the top of the editor.
+    target.write_text("", encoding="utf-8", newline="\n")
     return {"ok": True, "rel": rel}
 
 def pin_note(cfg, rel, pinned):

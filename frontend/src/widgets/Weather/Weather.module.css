@@ -1,247 +1,260 @@
 .root {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: 14px;
   font-family: var(--body);
 }
 
 .hero {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-}
-
-.heroIcon {
   display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  width: 76px;
-  height: 76px;
-  border-radius: 22px;
-  color: var(--accent);
-  background: radial-gradient(circle at 30% 25%, color-mix(in oklab, var(--accent) 22%, transparent), transparent 70%), rgba(var(--overlay-tint), 0.05);
-  border: 1px solid var(--rim);
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto auto;
+  align-items: center;
+  gap: 3px var(--space-4);
 }
 
-.heroText {
+.locationBlock {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
   min-width: 0;
 }
 
 .place {
-  composes: eyebrow from '../../tokens/typography.module.css';
-  color: var(--mist);
-  letter-spacing: 0.09em;
-}
-
-.temp {
-  font-family: var(--display);
-  font-stretch: 87.5%;
-  font-weight: 580;
-  font-size: calc(var(--fs-display) * 1.3);
-  line-height: 1;
-  color: var(--paper);
-  text-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
-}
-
-.temp sup {
-  font-size: var(--fs-headline);
-  font-weight: 500;
-  color: var(--mist);
-  vertical-align: super;
+  color: var(--text-primary);
+  font-size: var(--fs-callout);
+  font-weight: 660;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .conditionLabel {
-  composes: callout from '../../tokens/typography.module.css';
+  margin-top: 2px;
+  color: var(--text-tertiary);
+  font-size: var(--fs-caption);
+  font-weight: 540;
+}
+
+.current {
+  grid-row: 1 / 3;
+  grid-column: 2;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--accent);
+}
+
+.temp {
+  color: var(--text-primary);
+  font-family: var(--display);
+  font-size: 2.55rem;
+  font-stretch: 88%;
+  font-weight: 620;
+  line-height: 0.95;
+  letter-spacing: -0.045em;
+  font-variant-numeric: tabular-nums;
+}
+
+.temp sup {
+  margin-left: 2px;
+  color: var(--text-tertiary);
+  font-family: var(--body);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  vertical-align: top;
+}
+
+.todayRange {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  color: var(--text-tertiary);
+  font-size: var(--fs-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+.todayRange strong {
   color: var(--text-secondary);
-  font-weight: 560;
 }
 
 .stats {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border: 1px solid var(--rim);
+  border-radius: 11px;
+  background: rgba(var(--overlay-tint), 0.035);
 }
 
 .stat {
-  composes: caption from '../../tokens/typography.module.css';
   display: flex;
   align-items: center;
-  gap: 5px;
-  color: var(--mist);
+  gap: 8px;
+  min-width: 0;
+  padding: 9px 10px;
+  color: var(--text-tertiary);
+}
+
+.stat + .stat {
+  border-left: 1px solid var(--rim);
 }
 
 .stat svg {
-  flex-shrink: 0;
-  opacity: 0.8;
+  flex: 0 0 auto;
+  color: var(--accent);
+  opacity: 0.82;
 }
 
-/* ---- hourly strip ---- */
+.stat > span {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.stat small {
+  color: var(--text-tertiary);
+  font-size: 9px;
+  font-weight: 560;
+  line-height: 1.2;
+}
+
+.stat strong {
+  margin-top: 1px;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-weight: 650;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.section + .section {
+  padding-top: 12px;
+  border-top: 1px solid var(--rim);
+}
+
+.sectionTitle {
+  color: var(--text-tertiary);
+  font-size: 10px;
+  font-weight: 660;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
 
 .hoursRow {
-  display: flex;
-  gap: var(--space-1);
-  padding: var(--space-2) 0;
-  margin: 0 calc(var(--space-1) * -1);
-  overflow-x: auto;
-  border-top: 1px solid var(--rim);
-  border-bottom: 1px solid var(--rim);
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 3px;
 }
 
 .hour {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-  width: 40px;
-  padding: var(--space-1);
-  color: var(--mist);
+  display: grid;
+  place-items: center;
+  gap: 5px;
+  min-width: 0;
+  padding: 5px 2px 6px;
+  border-radius: 8px;
+  color: var(--text-secondary);
+}
+
+.hour:first-child {
+  background: rgba(var(--overlay-tint), 0.055);
 }
 
 .hourLabel {
-  font-size: var(--fs-caption);
-  text-transform: lowercase;
+  max-width: 100%;
+  color: var(--text-tertiary);
+  font-size: 9px;
+  font-weight: 560;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.hourTemp {
+.hour strong {
+  color: var(--text-secondary);
   font-size: var(--fs-caption);
-  font-weight: 600;
-  color: var(--paper);
+  font-variant-numeric: tabular-nums;
 }
-
-/* ---- 5-day outlook ---- */
 
 .days {
   display: flex;
-  justify-content: space-between;
-  gap: var(--space-1);
+  flex-direction: column;
 }
 
 .day {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 24px auto;
   align-items: center;
-  gap: 7px;
-  width: 46px;
-  padding: var(--space-2) var(--space-1);
-  border-radius: var(--r-tile);
-  color: var(--mist);
-  transition:
-    background var(--dur-fast) var(--ease),
-    transform var(--dur-fast) var(--ease),
-    color var(--dur-fast) var(--ease);
+  gap: var(--space-3);
+  min-height: 31px;
+  color: var(--text-tertiary);
 }
 
-.day:hover {
-  background: var(--rim);
-  color: var(--paper);
-  transform: translateY(-2px);
+.day + .day {
+  border-top: 1px solid color-mix(in oklab, var(--rim) 65%, transparent);
 }
 
 .dayLabel {
+  color: var(--text-secondary);
   font-size: var(--fs-caption);
-  font-weight: 650;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  font-weight: 610;
 }
 
-.dayHigh {
-  font-family: var(--display);
-  font-size: var(--fs-title);
-  font-weight: 600;
-  /* Explicit, not inherited from .day - the old app kept this bright
-     against the muted label/low regardless of hover (index.html:284-289),
-     and that hierarchy is worth keeping, not flattening. */
-  color: var(--paper);
-}
-
-.dayLow {
+.dayTemps {
+  display: grid;
+  grid-template-columns: 30px 30px;
+  justify-items: end;
   font-size: var(--fs-caption);
-  opacity: 0.55;
+  font-variant-numeric: tabular-nums;
 }
 
-/* A per-day high/low sits on one shared scale across the whole 5-day
-   window (see Weather.tsx's trackMin/trackMax) - a narrow range reads as
-   a short bar, a wide swing reads as a tall one, at a glance, the same
-   idea most weather apps use instead of two bare numbers stacked. */
-.rangeTrack {
-  position: relative;
-  width: 4px;
-  height: 42px;
-  border-radius: 999px;
-  background: rgba(var(--overlay-tint), 0.08);
+.dayTemps strong {
+  color: var(--text-primary);
 }
 
-.rangeBar {
-  position: absolute;
-  left: 0;
-  right: 0;
-  border-radius: 999px;
-  background: linear-gradient(180deg, color-mix(in oklab, var(--warn) 70%, var(--accent)), var(--accent) 60%, color-mix(in oklab, #6fa8e0 70%, var(--accent)));
+.dayTemps span {
+  color: var(--text-tertiary);
 }
 
-/* ---- loading skeleton ---- */
-
-.skel {
-  display: inline-block;
+.skeleton {
+  display: block;
   border-radius: 6px;
   background: linear-gradient(90deg, var(--rim) 25%, var(--rim-lit) 50%, var(--rim) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.6s ease-in-out infinite;
 }
 
-.skelLabel {
-  width: 24px;
-  height: 9px;
-}
-.skelIcon {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-}
-.skelHigh {
-  width: 20px;
-  height: 15px;
-}
-.skelTemp {
-  width: 100px;
-  height: 50px;
-  border-radius: 12px;
-}
-.skelMeta {
-  width: 150px;
-  height: 11px;
-  margin-top: var(--space-2);
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .skel {
-    animation: none;
-    opacity: 0.6;
-  }
-}
-
-/* ---- error / empty message ---- */
+.skeletonPlace { width: 128px; height: 34px; }
+.skeletonTemp { grid-column: 2; grid-row: 1 / 3; width: 92px; height: 46px; }
+.skeletonStat { height: 43px; border-radius: 0; }
+.skeletonRows { width: 100%; height: 72px; border-radius: 10px; }
 
 .message {
+  min-height: 150px;
   align-items: center;
-  gap: var(--space-2);
+  justify-content: center;
+  color: var(--text-tertiary);
   font-size: var(--fs-label);
-  color: var(--mist);
 }
 
 .messageError {
   color: var(--warn);
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton { animation: none; opacity: 0.6; }
 }

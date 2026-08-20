@@ -12,7 +12,7 @@ from urllib.parse import parse_qs
 
 from backend.core import edit_store, extract_icon, launch_game, load_store, save_store
 from backend.collectors.games import (
-    _griddb_art, _xbox_roots, griddb_covers, griddb_icons, fetch_steam_news, save_cover,
+    _griddb_art, _xbox_roots, griddb_covers, griddb_icons, fetch_game_news, save_cover,
 )
 
 
@@ -42,11 +42,14 @@ def handle_get(handler, path, route, snapshot):
         handler._send(json.dumps(griddb_icons(snapshot.cfg, name)))
         return True
     if path == "/api/games/news":
-        appid = (parse_qs(route.query).get("appid") or [""])[0]
-        if not appid.isdigit():
+        q = parse_qs(route.query)
+        appid = (q.get("appid") or [""])[0]
+        name = (q.get("name") or [""])[0]
+        source = (q.get("source") or ["steam"])[0]
+        if source == "steam" and not appid.isdigit():
             handler._send(json.dumps({"ok": False, "items": [], "error": "bad appid"}), code=400)
             return True
-        handler._send(json.dumps(fetch_steam_news(appid)))
+        handler._send(json.dumps(fetch_game_news(name, source, appid)))
         return True
     if path == "/api/art":
         wanted = (parse_qs(route.query).get("path") or [""])[0]

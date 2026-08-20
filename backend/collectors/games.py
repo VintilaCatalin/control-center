@@ -4,15 +4,17 @@ Extracted verbatim from the pre-modularization panel/server.py.
 """
 
 import json
+import hashlib
 import os
 import re
 import subprocess
 import time
 from pathlib import Path
+from urllib.parse import urlencode
 import requests
 
 from backend.core import COVER_DIR, DEFAULT_LAYOUTS, DEFAULT_VIEWS, csv_list, effective_layout, load_store, truthy
-from backend.collectors.reading import _strip_html
+from backend.collectors.reading import _feed_items, _strip_html
 
 
 def _steam_libraries(steam_path):
@@ -520,6 +522,16 @@ def collect_games(cfg, _shared):
 _STEAM_NEWS_CACHE = {}
 _STEAM_NEWS_TTL = 900  # matches the other slow-moving/rate-sensitive external calls in this file
 
+def _news_id(game_key, url):
+    return hashlib.sha1(f"{game_key}|{url}".encode()).hexdigest()[:16]
+
+def _news_thumb(contents):
+    match = re.search(r'<img[^>]+src=["\']([^"\']+)', str(contents or ""), re.I)
+    if not match: return None
+    url = match.group(1).replace("&amp;", "&")
+    if url.startswith("//"): url = "https:" + url
+    return url if url.startswith(("http://", "https://")) else None
+
 def fetch_steam_news(appid, count=5):
     """Steam's own ISteamNews API - public, no key needed, and only ever
     called for games with source == "steam" (the appid IS collect_games'
@@ -527,7 +539,7 @@ def fetch_steam_news(appid, count=5):
     one 'reliable source that already exists' the games-activity feature
     asked for; Xbox/Battle.net/Riot titles have no equivalent, so this
     stays Steam-only rather than inventing something shakier for them."""
-    cache_key = str(appid)
+    cache_key = f"en-v2:{appid}"
     cached = _STEAM_NEWS_CACHE.get(cache_key)
     if cached and time.time() - cached["at"] < _STEAM_NEWS_TTL:
         return cached["value"]
@@ -541,9 +553,67 @@ def fetch_steam_news(appid, count=5):
         value = {"ok": False, "items": [], "error": str(e)[:140]}
         _STEAM_NEWS_CACHE[cache_key] = {"at": time.time(), "value": value}
         return value
-    items = [{"title": n.get("title") or "", "url": n.get("url") or "",
-              "date": n.get("date"), "summary": _strip_html(n.get("contents"), limit=220),
-              "author": n.get("author") or ""} for n in raw_items if n.get("title")]
+    items = [{"id": _news_id(cache_key, n.get("url") or n.get("gid") or n.get("title")),
+              "title": n.get("title") or "", "url": n.get("url") or "",
+              "date": n.get("date"), "summary": _strip_html(n.get("contents"), limit=320),
+              "author": n.get("author") or "", "provider": n.get("feedlabel") or "Steam Community",
+              "thumb": _news_thumb(n.get("contents")), "origin": "first_party"}
+             for n in raw_items if _english_news_title(n.get("title"))]
     value = {"ok": True, "items": items}
     _STEAM_NEWS_CACHE[cache_key] = {"at": time.time(), "value": value}
+    return value
+
+_GAME_NEWS_CACHE = {}
+_FOREIGN_NEWS_SCRIPT = re.compile(r"[\u0400-\u052f\u0600-\u06ff\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af]")
+
+def _english_news_title(title):
+    title = str(title or "").strip()
+    return bool(title and not _FOREIGN_NEWS_SCRIPT.search(title))
+
+def _usable_game_news_title(game_name, title):
+    """Keep Pulse predictable: English-script coverage whose headline
+    actually names the installed game. Google locale parameters influence
+    ranking but do not guarantee language or relevance on their own.
+    """
+    title = str(title or "").strip()
+    if not _english_news_title(title):
+        return False
+    normalized_game = re.sub(r"[^a-z0-9]+", "", str(game_name or "").lower())
+    normalized_title = re.sub(r"[^a-z0-9]+", "", title.lower())
+    return bool(normalized_game and normalized_game in normalized_title)
+
+def fetch_game_news(name, source, game_id="", count=4):
+    """Updates for every installed-library source.
+
+    Steam has a real first-party news API. The other launchers do not expose
+    an equivalent keyless installed-game feed, so they use an exact-title
+    Google News RSS search and retain the publisher/origin in every item.
+    This is discovery, never presented as first-party platform news.
+    """
+    clean_name = str(name or "").strip()
+    clean_source = str(source or "").strip().lower()
+    if clean_source == "steam" and str(game_id).isdigit():
+        return fetch_steam_news(str(game_id), count=count)
+    if not clean_name:
+        return {"ok": False, "items": [], "error": "game name required"}
+
+    cache_key = f"en-v2:{clean_source}:{clean_name.lower()}:{count}"
+    cached = _GAME_NEWS_CACHE.get(cache_key)
+    if cached and time.time() - cached["at"] < _STEAM_NEWS_TTL:
+        return cached["value"]
+    query = f'"{clean_name}" (game OR gaming) when:14d'
+    url = "https://news.google.com/rss/search?" + urlencode({"q": query, "hl": "en-US", "gl": "US", "ceid": "US:en"})
+    try:
+        requested = max(1, min(int(count), 8))
+        raw_items = _feed_items(url, limit=min(24, max(8, requested * 3)))
+        items = [{"id": _news_id(cache_key, item.get("url") or item.get("title")),
+                  "title": item.get("title") or "", "url": item.get("url") or "",
+                  "date": item.get("when"), "summary": _strip_html(item.get("blurb"), limit=320),
+                  "author": item.get("author") or "", "provider": item.get("source_label") or item.get("domain") or "News",
+                  "thumb": item.get("thumb"), "origin": "web"}
+                 for item in raw_items if item.get("url") and _usable_game_news_title(clean_name, item.get("title"))][:requested]
+        value = {"ok": True, "items": items}
+    except Exception as error:
+        value = {"ok": False, "items": [], "error": str(error)[:140]}
+    _GAME_NEWS_CACHE[cache_key] = {"at": time.time(), "value": value}
     return value

@@ -2,16 +2,17 @@
    redesign. Comfortable measure, real paragraph rhythm, headings that
    read as section breaks rather than developer-doc markers. No card,
    no border - the document is the surface. */
-/* 80ch, not 66ch - a stricter "ideal reading measure" cap looked
-   cramped once the editor sat right next to it at a much wider measure
-   (see DocumentView.module.css's .editor, which had its own cap
-   removed for exactly that complaint). Both now share this same
-   max-width so switching Read<->Edit never changes the column's width
-   out from under you. */
+/* The rendered document deliberately inherits the editor's exact body
+   measure and rhythm. Switching modes should reveal formatting, not
+   make the underlying note jump to a different typographic canvas. */
 .doc {
-  composes: body from "../../tokens/typography.module.css";
-  max-width: 80ch;
-  color: var(--text-secondary);
+  width: 100%;
+  color: var(--notes-body-color, var(--text-secondary));
+  font-family: var(--font-text);
+  font-size: var(--notes-body-size, var(--fs-body));
+  font-weight: var(--notes-body-weight, var(--fw-body));
+  line-height: var(--notes-body-line-height, var(--lh-body));
+  letter-spacing: var(--notes-body-tracking, var(--ls-body));
 }
 
 /* Larger spacing only between real section breaks (h1/h2) - h3/h4 sit
@@ -58,7 +59,7 @@
 }
 
 .p {
-  margin: 0 0 var(--space-3);
+  margin: 0 0 var(--notes-paragraph-gap, var(--space-3));
 }
 
 .p:last-child {
@@ -270,9 +271,33 @@
 }
 
 .tableWrap {
+  position: relative;
   margin: 0 0 var(--space-4);
   overflow-x: auto;
 }
+
+.editTable {
+  position: sticky;
+  left: 100%;
+  z-index: 1;
+  display: block;
+  width: max-content;
+  margin: 0 0 -29px auto;
+  padding: 5px 9px;
+  border: 1px solid var(--tasks-line);
+  border-radius: 8px;
+  background: var(--tasks-raised);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-weight: 620;
+  opacity: 0;
+  cursor: pointer;
+  transition: opacity var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+}
+
+.tableWrap:hover .editTable,
+.editTable:focus-visible { opacity: 1; }
+.editTable:hover { background: var(--tasks-hover); color: var(--text-primary); }
 
 .table {
   border-collapse: collapse;

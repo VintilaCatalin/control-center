@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { newNote } from '../../api/actions/notes';
 import { Sheet } from '../../primitives/Sheet/Sheet';
 import { ChevronDownIcon } from './icons';
@@ -20,6 +20,10 @@ export function NewNoteSheet({ open, onClose, folders, defaultFolder, onCreated 
   const [newFolderName, setNewFolderName] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (open) setFolderChoice(defaultFolder ?? '');
+  }, [open, defaultFolder]);
 
   function reset() {
     setName('');
@@ -46,6 +50,8 @@ export function NewNoteSheet({ open, onClose, folders, defaultFolder, onCreated 
       }
       onCreated(res.rel);
       handleClose();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Couldn't create that note");
     } finally {
       setBusy(false);
     }
@@ -72,7 +78,7 @@ export function NewNoteSheet({ open, onClose, folders, defaultFolder, onCreated 
         <span className={styles.label}>Title</span>
         <input
           type="text"
-          className={styles.input}
+          className={`${styles.input} ${styles.titleInput}`}
           value={name}
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
@@ -81,16 +87,16 @@ export function NewNoteSheet({ open, onClose, folders, defaultFolder, onCreated 
       </div>
 
       <div className={styles.field}>
-        <span className={styles.label}>Collection</span>
+        <span className={styles.label}>Folder</span>
         <span className={styles.selectWrap}>
           <select className={styles.select} value={folderChoice} onChange={(e) => setFolderChoice(e.target.value)}>
-            <option value="">No collection (vault root)</option>
+            <option value="">No folder</option>
             {folders.map((f) => (
               <option key={f} value={f}>
                 {f}
               </option>
             ))}
-            <option value={NEW_FOLDER}>New collection…</option>
+            <option value={NEW_FOLDER}>New folder…</option>
           </select>
           <span className={styles.selectChevron}>
             <ChevronDownIcon />
@@ -100,7 +106,7 @@ export function NewNoteSheet({ open, onClose, folders, defaultFolder, onCreated 
 
       {folderChoice === NEW_FOLDER && (
         <div className={styles.field}>
-          <span className={styles.label}>Collection name</span>
+          <span className={styles.label}>Folder name</span>
           <input type="text" className={styles.input} value={newFolderName} onChange={(e) => setNewFolderName(e.target.value)} autoFocus />
         </div>
       )}

@@ -6,43 +6,23 @@ import { WeatherIcon } from './WeatherIcon';
 import styles from './Weather.module.css';
 
 const fade = {
-  initial: { opacity: 0, y: 6 },
+  initial: { opacity: 0, y: 5 },
   animate: { opacity: 1, y: 0 },
-  exit: { opacity: 0, y: -6 },
 };
 
 export function Weather() {
   const { snapshot, loading, error } = useSnapshotData();
 
-  // No snapshot has ever arrived yet.
   if (!snapshot && loading) return <WeatherSkeleton />;
+  if (!snapshot && error) return <WeatherMessage tone="error">Can't reach the panel backend</WeatherMessage>;
+  if (snapshot?.errors?.weather) return <WeatherMessage tone="error">Weather unavailable</WeatherMessage>;
 
-  // No snapshot has ever arrived, and the request failed - can't reach
-  // the backend at all.
-  if (!snapshot && error) {
-    return <WeatherMessage tone="error">Can't reach the panel backend</WeatherMessage>;
-  }
+  const weather = snapshot?.weather;
+  if (!weather) return <WeatherMessage tone="quiet">Fetching weather…</WeatherMessage>;
 
-  const collectorError = snapshot?.errors?.weather;
-  if (collectorError) {
-    return <WeatherMessage tone="error">Weather unavailable</WeatherMessage>;
-  }
-
-  const w = snapshot?.weather;
-  if (!w) {
-    return <WeatherMessage tone="quiet">Fetching weather…</WeatherMessage>;
-  }
-
-  const days = w.days.slice(1, 6);
-  const hours = w.hours ?? [];
-
-  // A shared scale across the whole 5-day window, not per-day - so each
-  // day's bar height is actually comparable to its neighbours (a 3-degree
-  // range next to a 12-degree range should look narrow next to wide, not
-  // both stretched to fill their own box).
-  const trackMin = days.length ? Math.min(...days.map((d) => d.low)) : 0;
-  const trackMax = days.length ? Math.max(...days.map((d) => d.high)) : 1;
-  const span = Math.max(1, trackMax - trackMin);
+  const today = weather.days[0];
+  const hours = (weather.hours ?? []).slice(0, 5);
+  const days = weather.days.slice(1, 4);
 
   return (
     <AnimatePresence mode="wait">
@@ -53,65 +33,72 @@ export function Weather() {
         animate={fade.animate}
         transition={{ duration: duration.slow, ease }}
       >
-        <div className={styles.hero}>
-          <div className={styles.heroIcon}>
-            <WeatherIcon icon={w.icon} isDay={w.is_day} size={52} />
+        <header className={styles.hero}>
+          <div className={styles.locationBlock}>
+            <span className={styles.place}>{weather.place}</span>
+            <span className={styles.conditionLabel}>{weather.label}</span>
           </div>
-          <div className={styles.heroText}>
-            <span className={styles.place}>{w.place}</span>
+          <div className={styles.current}>
+            <WeatherIcon icon={weather.icon} isDay={weather.is_day} size={39} />
             <div className={styles.temp}>
-              {w.temp}
-              <sup>°{w.unit}</sup>
+              {weather.temp}<sup>°{weather.unit}</sup>
             </div>
-            <span className={styles.conditionLabel}>{w.label}</span>
           </div>
-        </div>
+          {today && (
+            <div className={styles.todayRange}>
+              <span>Today</span>
+              <strong>{today.high}°</strong>
+              <span>{today.low}°</span>
+            </div>
+          )}
+        </header>
 
         <div className={styles.stats}>
           <span className={styles.stat}>
             <FeelsIcon />
-            Feels {w.feels}°
+            <span><small>Feels like</small><strong>{weather.feels}°</strong></span>
           </span>
           <span className={styles.stat}>
             <DropletIcon />
-            {w.humidity}%
+            <span><small>Humidity</small><strong>{weather.humidity}%</strong></span>
           </span>
           <span className={styles.stat}>
             <WindIcon />
-            {w.wind} km/h
+            <span><small>Wind</small><strong>{weather.wind} km/h</strong></span>
           </span>
         </div>
 
         {hours.length > 0 && (
-          <div className={styles.hoursRow}>
-            {hours.map((h) => (
-              <div key={h.time} className={styles.hour}>
-                <span className={styles.hourLabel}>{h.label}</span>
-                <WeatherIcon icon={h.icon} isDay={w.is_day} size={16} />
-                <span className={styles.hourTemp}>{h.temp}°</span>
-              </div>
-            ))}
-          </div>
+          <section className={styles.section} aria-label="Hourly forecast">
+            <div className={styles.sectionTitle}>Next hours</div>
+            <div className={styles.hoursRow}>
+              {hours.map((hour) => (
+                <div key={hour.time} className={styles.hour}>
+                  <span className={styles.hourLabel}>{hour.label}</span>
+                  <WeatherIcon icon={hour.icon} isDay={weather.is_day} size={17} />
+                  <strong>{hour.temp}°</strong>
+                </div>
+              ))}
+            </div>
+          </section>
         )}
 
         {days.length > 0 && (
-          <div className={styles.days}>
-            {days.map((d) => {
-              const top = ((trackMax - d.high) / span) * 100;
-              const height = Math.max(10, ((d.high - d.low) / span) * 100);
-              return (
-                <div key={d.date} className={styles.day}>
-                  <span className={styles.dayLabel}>{d.label}</span>
-                  <WeatherIcon icon={d.icon} size={17} />
-                  <span className={styles.dayHigh}>{d.high}°</span>
-                  <div className={styles.rangeTrack}>
-                    <div className={styles.rangeBar} style={{ top: `${top}%`, height: `${height}%` }} />
-                  </div>
-                  <span className={styles.dayLow}>{d.low}°</span>
+          <section className={styles.section} aria-label="Three day forecast">
+            <div className={styles.sectionTitle}>Next days</div>
+            <div className={styles.days}>
+              {days.map((day) => (
+                <div key={day.date} className={styles.day}>
+                  <span className={styles.dayLabel}>{day.label}</span>
+                  <WeatherIcon icon={day.icon} size={18} />
+                  <span className={styles.dayTemps}>
+                    <strong>{day.high}°</strong>
+                    <span>{day.low}°</span>
+                  </span>
                 </div>
-              );
-            })}
-          </div>
+              ))}
+            </div>
+          </section>
         )}
       </motion.div>
     </AnimatePresence>
@@ -122,29 +109,19 @@ function WeatherSkeleton() {
   return (
     <div className={styles.root} aria-busy="true" aria-label="Loading weather">
       <div className={styles.hero}>
-        <span className={`${styles.skel} ${styles.skelIcon}`} style={{ width: 76, height: 76, borderRadius: 22 }} />
-        <span className={`${styles.skel} ${styles.skelTemp}`} />
+        <span className={`${styles.skeleton} ${styles.skeletonPlace}`} />
+        <span className={`${styles.skeleton} ${styles.skeletonTemp}`} />
       </div>
-      <div className={styles.days}>
-        {[0, 1, 2, 3, 4].map((i) => (
-          <div key={i} className={styles.day}>
-            <span className={`${styles.skel} ${styles.skelLabel}`} />
-            <span className={`${styles.skel} ${styles.skelIcon}`} />
-            <span className={`${styles.skel} ${styles.skelHigh}`} />
-          </div>
-        ))}
+      <div className={styles.stats}>
+        {[0, 1, 2].map((item) => <span key={item} className={`${styles.skeleton} ${styles.skeletonStat}`} />)}
       </div>
+      <span className={`${styles.skeleton} ${styles.skeletonRows}`} />
+      <span className={`${styles.skeleton} ${styles.skeletonRows}`} />
     </div>
   );
 }
 
-function WeatherMessage({
-  tone,
-  children,
-}: {
-  tone: 'error' | 'quiet';
-  children: React.ReactNode;
-}) {
+function WeatherMessage({ tone, children }: { tone: 'error' | 'quiet'; children: React.ReactNode }) {
   return (
     <motion.div
       className={`${styles.root} ${styles.message} ${tone === 'error' ? styles.messageError : ''}`}

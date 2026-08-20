@@ -1,132 +1,267 @@
 .stage {
+  container-type: size;
   position: relative;
   height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
+  min-height: 0;
+  overflow: hidden;
+  isolation: isolate;
+  background: var(--graphite);
 }
 
-.artLayer {
-  position: absolute;
-  inset: 0;
-  background-position: center;
-  background-size: cover;
-  background-color: var(--graphite-raised);
-}
-
-.artFallback {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: radial-gradient(120% 100% at 50% 0%, var(--graphite-raised), var(--graphite));
-  color: var(--text-tertiary);
-}
-
-/* Positioning only, no background - keeps Skeleton's own shimmer
-   background from fighting with artLayer's background-color in the
-   cascade. */
+.artLayer,
+.artFallback,
+.artShade,
 .skeletonArt {
   position: absolute;
   inset: 0;
 }
 
+.artLayer {
+  inset: -28px;
+  background-position: center;
+  background-size: cover;
+  filter: blur(30px) saturate(1.16);
+  opacity: 0.44;
+  transform: scale(1.08);
+}
+
+.artFallback {
+  background:
+    radial-gradient(95% 120% at 8% 95%, color-mix(in oklab, var(--accent) 16%, transparent), transparent 64%),
+    var(--graphite);
+}
+
 .artShade {
-  position: absolute;
-  inset: 0;
-  /* Strong enough that title/subtitle stay legible over any photo, not
-     just typical ones - a busy bright area under the text shouldn't be
-     able to fight it. */
-  background: linear-gradient(
-    to top,
-    rgba(2, 3, 5, 0.96),
-    rgba(2, 3, 5, 0.72) 42%,
-    rgba(2, 3, 5, 0.15) 75%,
-    transparent
-  );
+  z-index: 0;
+  background:
+    linear-gradient(90deg, rgba(7, 9, 11, 0.5), rgba(7, 9, 11, 0.78) 60%, rgba(7, 9, 11, 0.9)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 32%);
   pointer-events: none;
 }
 
-.eyebrow {
-  composes: eyebrow from '../../tokens/typography.module.css';
+.layout {
   position: relative;
-  z-index: 2;
-  padding: var(--space-5) var(--space-5) 0;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(128px, 0.82fr) minmax(0, 1.28fr);
+  align-items: center;
+  gap: clamp(16px, 4cqw, 26px);
+  width: 100%;
+  height: 100%;
+  padding: 43px clamp(18px, 4cqw, 24px) 19px;
+}
+
+.cover {
+  position: relative;
+  align-self: center;
+  justify-self: center;
+  display: grid;
+  place-items: center;
+  width: min(100%, 184px);
+  max-height: 100%;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 18px;
+  background-color: color-mix(in oklab, var(--graphite-raised) 90%, var(--accent));
+  background-position: center;
+  background-size: cover;
   color: var(--text-tertiary);
+  box-shadow: 0 13px 30px rgba(0, 0, 0, 0.27), inset 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.coverHighlight {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(150deg, rgba(255, 255, 255, 0.11), transparent 31%, rgba(0, 0, 0, 0.12));
+  pointer-events: none;
 }
 
 .content {
-  position: relative;
-  z-index: 2;
-  margin-top: auto;
-  padding: var(--space-4) var(--space-5) var(--space-5);
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  max-width: 410px;
+}
+
+.statusRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 18px;
+  margin-bottom: 8px;
+}
+
+.nowStatus,
+.source {
+  composes: caption from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  font-weight: 620;
+}
+
+.nowStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.nowStatus i {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: currentColor;
+  box-shadow: 0 0 0 3px rgba(var(--overlay-tint), 0.045);
+}
+
+.nowStatusPlaying {
+  color: var(--accent);
+}
+
+.nowStatusPlaying i {
+  animation: breathe 2.4s var(--ease) infinite;
+}
+
+.source::before {
+  content: '·';
+  margin-right: var(--space-2);
+  color: var(--text-tertiary);
+}
+
+.trackMeta {
+  min-width: 0;
 }
 
 .title {
-  composes: title2 from '../../tokens/typography.module.css';
   color: var(--text-primary);
-  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.55);
-  white-space: nowrap;
+  font-family: var(--display);
+  font-size: clamp(1.18rem, 5cqw, 1.72rem);
+  font-stretch: 90%;
+  font-weight: 680;
+  line-height: 1.08;
+  letter-spacing: -0.025em;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.34);
 }
 
 .subtitle {
-  composes: subhead from '../../tokens/typography.module.css';
+  margin-top: 6px;
   color: var(--text-secondary);
-  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.55);
-  margin-top: var(--space-2);
-  white-space: nowrap;
+  font-size: var(--fs-callout);
+  font-weight: 590;
+  line-height: 1.3;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.album {
+  margin-top: 2px;
+  color: var(--text-tertiary);
+  font-size: var(--fs-caption);
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.timeline {
+  margin-top: clamp(14px, 3.8cqh, 22px);
 }
 
 .timeRow {
   display: flex;
   justify-content: space-between;
-  margin-top: var(--space-4);
+  margin-top: 2px;
 }
 
 .time {
-  composes: footnote from '../../tokens/typography.module.css';
   color: var(--text-tertiary);
+  font-size: 10px;
   font-variant-numeric: tabular-nums;
+  font-weight: 560;
 }
 
 .scrubTrack {
   position: relative;
-  height: 4px;
-  border-radius: 4px;
-  background: rgba(var(--overlay-tint), 0.16);
-  margin-top: var(--space-2);
-  overflow: hidden;
+  height: 12px;
+  border-radius: 999px;
   cursor: pointer;
-  transition: height var(--dur-fast) var(--ease);
+  outline: none;
 }
 
-.scrubTrack:hover {
-  height: 6px;
+.scrubTrack::before {
+  content: '';
+  position: absolute;
+  inset: 4px 0;
+  border-radius: 999px;
+  background: rgba(var(--overlay-tint), 0.16);
 }
 
 .scrubFill {
   position: absolute;
-  inset: 0 auto 0 0;
-  border-radius: 4px;
+  top: 4px;
+  left: 0;
+  height: 4px;
+  border-radius: 999px;
   background: var(--accent);
+  box-shadow: 0 0 12px color-mix(in oklab, var(--accent) 35%, transparent);
+}
+
+.scrubFill span {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--paper);
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.38);
+  opacity: 0;
+  transform: translate(50%, -50%) scale(0.6);
+  transition: opacity var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
+}
+
+.scrubTrack:hover .scrubFill span,
+.scrubTrack:focus-visible .scrubFill span {
+  opacity: 1;
+  transform: translate(50%, -50%) scale(1);
+}
+
+.scrubTrack:focus-visible::before {
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--accent) 55%, transparent);
 }
 
 .controls {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: var(--space-3);
-  margin-top: var(--space-5);
+  gap: var(--space-2);
+  margin-top: clamp(9px, 2.3cqh, 15px);
 }
 
-/* ---- empty / error message ---- */
+.transportButton {
+  background: transparent !important;
+  border-color: transparent !important;
+  color: var(--text-secondary) !important;
+}
+
+.transportButton:hover {
+  background: rgba(var(--overlay-tint), 0.08) !important;
+  color: var(--text-primary) !important;
+}
+
+.playButton {
+  border-color: color-mix(in oklab, var(--accent) 54%, var(--rim)) !important;
+  background: color-mix(in oklab, var(--accent) 88%, var(--paper)) !important;
+  color: var(--on-accent, #071009) !important;
+  box-shadow: 0 7px 18px color-mix(in oklab, var(--accent) 22%, transparent), inset 0 1px rgba(255, 255, 255, 0.18) !important;
+}
+
+.playButton:hover {
+  transform: translateY(-1px) scale(1.025);
+}
 
 .message {
   position: relative;
@@ -136,10 +271,24 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  text-align: center;
   height: 100%;
   padding: var(--space-6);
+  text-align: center;
   color: var(--text-tertiary);
+  background:
+    radial-gradient(60% 75% at 50% 38%, color-mix(in oklab, var(--accent) 8%, transparent), transparent),
+    var(--graphite);
+}
+
+.messageIcon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  margin-bottom: var(--space-1);
+  border: 1px solid var(--rim);
+  border-radius: 16px;
+  background: rgba(var(--overlay-tint), 0.045);
 }
 
 .messageTitle {
@@ -152,25 +301,84 @@
   color: var(--text-tertiary);
 }
 
-.messageError {
+.messageError,
+.messageError .messageIcon {
   color: var(--warn);
 }
 
-/* ---- loading skeleton ---- */
-
 .skeletonContent {
-  position: relative;
-  z-index: 2;
-  margin-top: auto;
-  padding: var(--space-4) var(--space-5) var(--space-5);
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
+  min-width: 0;
 }
 
 .skeletonControls {
   display: flex;
-  justify-content: center;
-  gap: var(--space-3);
-  margin-top: var(--space-4);
+  gap: var(--space-2);
+  margin-top: auto;
+}
+
+@keyframes breathe {
+  0%, 100% { opacity: 0.65; transform: scale(0.86); }
+  50% { opacity: 1; transform: scale(1); }
+}
+
+@container (max-width: 430px) {
+  .artLayer {
+    inset: 0;
+    filter: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .artShade {
+    background: linear-gradient(0deg, rgba(4, 6, 8, 0.96), rgba(4, 6, 8, 0.68) 72%, rgba(4, 6, 8, 0.24));
+  }
+
+  .layout {
+    display: flex;
+    align-items: flex-end;
+    padding-top: 50px;
+  }
+
+  .cover,
+  .skeletonCover {
+    display: none;
+  }
+
+  .content,
+  .skeletonContent {
+    width: 100%;
+    max-width: none;
+  }
+
+  .title {
+    font-size: clamp(1.12rem, 7cqw, 1.55rem);
+  }
+}
+
+@container (max-height: 250px) {
+  .layout {
+    padding-top: 38px;
+    padding-bottom: 12px;
+  }
+
+  .album {
+    display: none;
+  }
+
+  .timeline {
+    margin-top: 9px;
+  }
+
+  .controls {
+    margin-top: 5px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nowStatusPlaying i {
+    animation: none;
+  }
 }

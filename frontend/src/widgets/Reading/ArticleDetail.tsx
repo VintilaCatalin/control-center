@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { fetchArticleText, saveItem } from '../../api/actions/reading';
 import type { ReadingItem } from '../../api/types';
 import { Skeleton } from '../../primitives/Skeleton/Skeleton';
@@ -13,6 +14,8 @@ import styles from './ArticleDetail.module.css';
 interface ArticleDetailProps {
   item: ReadingItem;
   onClose: () => void;
+  backLabel?: string;
+  saveable?: boolean;
 }
 
 function formatDate(published: number | null): string | null {
@@ -26,7 +29,7 @@ function formatDate(published: number | null): string | null {
 // column, and nothing else competing for attention. Opens instantly with
 // whatever the feed already had (thumb/title/blurb) and hydrates with
 // trafilatura's full text in the background - see fetchArticleText.
-export function ArticleDetail({ item, onClose }: ArticleDetailProps) {
+export function ArticleDetail({ item, onClose, backLabel = 'Back to Reading', saveable = true }: ArticleDetailProps) {
   const [extraction, setExtraction] = useState<{ ok: boolean; html?: string; word_count?: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(item.saved);
@@ -76,7 +79,7 @@ export function ArticleDetail({ item, onClose }: ArticleDetailProps) {
   const dateLabel = formatDate(item.published);
   const readMinutes = extraction?.ok && extraction.word_count ? Math.max(1, Math.round(extraction.word_count / 200)) : item.read_minutes;
 
-  return (
+  return createPortal(
     <motion.div
       className={styles.overlay}
       initial={{ opacity: 0, y: 12 }}
@@ -89,9 +92,9 @@ export function ArticleDetail({ item, onClose }: ArticleDetailProps) {
           relative to it scrolls away with the article. These stay fixed
           to the overlay itself (which fills the viewport) so they're
           reachable the whole time you're reading, not just at the top. */}
-      <button type="button" className={styles.backBtn} onClick={onClose} aria-label="Back to Reading">
+      <button type="button" className={styles.backBtn} onClick={onClose} aria-label={backLabel}>
         <BackIcon />
-        <span>Back to Reading</span>
+        <span>{backLabel}</span>
       </button>
       <div className={styles.heroActions}>
         <a
@@ -104,7 +107,7 @@ export function ArticleDetail({ item, onClose }: ArticleDetailProps) {
         >
           <ExternalLinkIcon />
         </a>
-        <SaveButton saved={saved} onToggle={handleToggleSave} inline />
+        {saveable && <SaveButton saved={saved} onToggle={handleToggleSave} inline />}
       </div>
 
       <div className={styles.scroll}>
@@ -166,6 +169,7 @@ export function ArticleDetail({ item, onClose }: ArticleDetailProps) {
           )}
         </div>
       </div>
-    </motion.div>
+    </motion.div>,
+    document.body,
   );
 }

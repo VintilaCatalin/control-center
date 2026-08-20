@@ -4,9 +4,9 @@
   flex: 1;
   min-width: 0;
   min-height: 0;
-  margin: 14px;
+  margin: var(--space-4);
   border: 1px solid var(--tasks-line);
-  border-radius: 22px;
+  border-radius: var(--r-card);
   background: var(--tasks-canvas);
   box-shadow: var(--tasks-shadow), var(--tasks-inner);
   isolation: isolate;
@@ -44,12 +44,12 @@
 .fab {
   position: absolute;
   z-index: 9;
-  right: 24px;
-  bottom: 24px;
+  right: var(--space-6);
+  bottom: var(--space-6);
   display: grid;
   place-items: center;
-  width: 46px;
-  height: 46px;
+  width: 54px;
+  height: 54px;
   padding: 0;
   overflow: hidden;
   border: 1px solid color-mix(in oklab, var(--accent) 34%, var(--tasks-line));
@@ -65,13 +65,13 @@
 .fab:hover { border-color: color-mix(in oklab, var(--accent) 55%, var(--tasks-line)); background: color-mix(in oklab, var(--accent) 17%, var(--tasks-raised)); box-shadow: 0 13px 28px rgba(0,0,0,.26), inset 0 1px 0 rgba(var(--overlay-tint), .11); }
 .fab span { position: relative; display: grid; place-items: center; }
 .fab:focus-visible { outline: 3px solid color-mix(in oklab, var(--accent) 32%, transparent); outline-offset: 3px; }
-.fabWithInspector { right: calc(min(408px, 36vw) + 24px); }
+.fabWithInspector { right: calc(min(408px, 36vw) + var(--space-6)); }
 
 @media (max-width: 1000px) {
   .withInspector { grid-template-columns: minmax(0, 1fr); }
   .inspectorSlot { position: absolute; z-index: 5; inset: 0; pointer-events: none; }
   .inspectorSlot > * { pointer-events: auto; }
-  .fabWithInspector { right: 24px; opacity: 0; pointer-events: none; }
+  .fabWithInspector { right: var(--space-6); opacity: 0; pointer-events: none; }
 }
 
 @media (max-width: 620px) {

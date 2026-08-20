@@ -38,6 +38,15 @@
   color: var(--text-tertiary);
 }
 
+.titleInput {
+  height: 56px;
+  min-height: 56px;
+  padding-inline: 15px;
+  font-size: 1.08rem;
+  font-weight: 630;
+  letter-spacing: -0.01em;
+}
+
 .textarea {
   composes: body from '../../tokens/typography.module.css';
   resize: vertical;

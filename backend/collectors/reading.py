@@ -80,7 +80,8 @@ def _feed_items(url, limit=12):
         items.append(pack(text(node, "title"), text(node, "link"), stamp,
                           (thumb.get("url") if thumb is not None else _enclosure_image_url(enclosure)),
                           body, {"comments": comments, "points": points,
-                                 "author": text(node, "{http://purl.org/dc/elements/1.1/}creator")}))
+                                 "author": text(node, "{http://purl.org/dc/elements/1.1/}creator"),
+                                 "source_label": text(node, "source")}))
 
     if not items:
         for node in root.findall("atom:entry", ns)[:limit]:

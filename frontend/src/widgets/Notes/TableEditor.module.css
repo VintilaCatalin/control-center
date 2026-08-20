@@ -1,0 +1,20 @@
+.scroller { overflow-x: auto; padding: 2px; }
+.grid { width: 100%; min-width: 620px; border-spacing: 0; border-collapse: separate; }
+.grid th, .grid td { min-width: 150px; padding: 0; border-right: 1px solid var(--popup-divider); border-bottom: 1px solid var(--popup-divider); background: var(--popup-control); }
+.grid th:first-child, .grid td:first-child { border-left: 1px solid var(--popup-divider); }
+.grid thead th { border-top: 1px solid var(--popup-divider); background: color-mix(in oklab, var(--popup-control) 88%, var(--accent) 12%); }
+.grid thead th:first-child { border-radius: 10px 0 0; }
+.grid input, .grid textarea { width: 100%; border: 0; background: transparent; color: var(--text-primary); font: inherit; }
+.grid input { height: 42px; padding: 0 11px; font-size: var(--fs-footnote); font-weight: 650; }
+.grid textarea { display: block; min-height: 58px; padding: 10px 11px; resize: vertical; font-size: var(--fs-footnote); line-height: 1.42; }
+.grid input:focus, .grid textarea:focus { position: relative; z-index: 1; outline: 2px solid color-mix(in oklab, var(--accent) 50%, transparent); outline-offset: -2px; background: color-mix(in oklab, var(--accent) 6%, var(--popup-control)); }
+.columnTools { display: flex; align-items: center; justify-content: space-between; min-height: 28px; padding: 0 6px 5px 10px; }
+.columnTools select { border: 0; background: transparent; color: var(--text-tertiary); font-size: var(--fs-caption); cursor: pointer; }
+.columnTools select option { background: var(--native-popup-bg); color: var(--text-primary); }
+.columnTools button, .removeRow { display: grid; width: 24px; height: 24px; place-items: center; border: 0; border-radius: 6px; background: transparent; color: var(--text-tertiary); cursor: pointer; }
+.columnTools button:hover:not(:disabled), .removeRow:hover { background: var(--popup-hover); color: var(--warn); }
+.columnTools button:disabled { opacity: .25; cursor: default; }
+.endcap { min-width: 72px !important; width: 72px; border-right: 0 !important; border-bottom: 0 !important; background: transparent !important; text-align: center; }
+.addColumn, .addRow { border: 0; background: transparent; color: var(--accent); font-size: var(--fs-caption); font-weight: 650; cursor: pointer; }
+.addRow { margin-top: 13px; padding: 7px 3px; }
+.addColumn:hover, .addRow:hover { color: var(--text-primary); }

@@ -1,17 +1,26 @@
 import { fetchJSON, postAction } from '../client';
 
 export interface SteamNewsItem {
+  id: string;
   title: string;
   url: string;
   date: number | null;
   summary: string;
   author: string;
+  provider?: string;
+  thumb?: string | null;
+  origin?: 'first_party' | 'web';
 }
 
 // server.py's fetch_steam_news() - Steam's own public ISteamNews API, only
 // ever called with a Steam appid (GameData.id for source === 'steam').
 export function fetchSteamNews(appid: string): Promise<{ ok: boolean; items: SteamNewsItem[]; error?: string }> {
   return fetchJSON(`/api/games/news?appid=${encodeURIComponent(appid)}`);
+}
+
+export function fetchGameNews(game: { id: string; name: string; source: string }): Promise<{ ok: boolean; items: SteamNewsItem[]; error?: string }> {
+  const query = new URLSearchParams({ appid: game.id, name: game.name, source: game.source });
+  return fetchJSON(`/api/games/news?${query.toString()}`);
 }
 
 // Named wrappers over the games routes (server.py:2575-2664) - the

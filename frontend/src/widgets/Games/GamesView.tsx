@@ -9,6 +9,7 @@ import { Skeleton } from '../../primitives/Skeleton/Skeleton';
 import { AddGameSheet } from './AddGameSheet';
 import { FavoritesStrip } from './FavoritesStrip';
 import { GameTile } from './GameTile';
+import { LibraryPulse } from './LibraryPulse';
 import styles from './GamesView.module.css';
 import { PlaytimeAnalytics } from './PlaytimeAnalytics';
 import { RenameShelfSheet } from './RenameShelfSheet';
@@ -126,6 +127,12 @@ export function GamesView() {
   }
 
   const panels: PanelDef[] = [
+    {
+      id: 'pulse',
+      label: 'Library Pulse',
+      minSize: { w: 4, h: 8 },
+      content: <LibraryPulse games={data?.games ?? []} favorites={data?.favorites ?? []} recent={data?.recent ?? []} />,
+    },
     {
       id: 'playtime',
       label: 'Activity',

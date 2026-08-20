@@ -14,42 +14,55 @@ import styles from './NowPlaying.module.css';
 function formatTime(seconds: number): string {
   const sign = seconds < 0 ? '-' : '';
   const abs = Math.abs(Math.round(seconds));
-  const m = Math.floor(abs / 60);
-  const s = abs % 60;
-  return `${sign}${m}:${s.toString().padStart(2, '0')}`;
+  const minutes = Math.floor(abs / 60);
+  const remainder = abs % 60;
+  return `${sign}${minutes}:${remainder.toString().padStart(2, '0')}`;
+}
+
+function sourceLabel(app?: string): string | null {
+  if (!app) return null;
+  const value = app.toLocaleLowerCase();
+  if (value.includes('spotify')) return 'Spotify';
+  if (value.includes('plex')) return 'Plex';
+  if (value.includes('musicbee')) return 'MusicBee';
+  if (value.includes('vlc')) return 'VLC';
+  if (
+    value.includes('chrome') ||
+    value.includes('edge') ||
+    value.includes('brave') ||
+    value.includes('firefox')
+  ) {
+    return 'Browser';
+  }
+  return null;
 }
 
 export function NowPlaying() {
   const { snapshot, loading, error } = useSnapshotData();
-  const m = snapshot?.media;
-
+  const media = snapshot?.media;
   const [optimisticPlaying, setOptimisticPlaying] = useState<boolean | null>(null);
   const [seekOverride, setSeekOverride] = useState<number | null>(null);
+  const playing = optimisticPlaying ?? media?.playing ?? false;
 
-  const playing = optimisticPlaying ?? m?.playing ?? false;
-
-  // Reconcile the optimistic flip once the server confirms it (or give up
-  // after 3s so a failed request never leaves the button permanently wrong).
   useEffect(() => {
     if (optimisticPlaying === null) return;
-    if (m?.playing === optimisticPlaying) {
+    if (media?.playing === optimisticPlaying) {
       setOptimisticPlaying(null);
       return;
     }
-    const t = setTimeout(() => setOptimisticPlaying(null), 3000);
-    return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [m?.playing, optimisticPlaying]);
+    const timer = setTimeout(() => setOptimisticPlaying(null), 3000);
+    return () => clearTimeout(timer);
+  }, [media?.playing, optimisticPlaying]);
 
   useEffect(() => {
     if (seekOverride === null) return;
-    const t = setTimeout(() => setSeekOverride(null), 2500);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setSeekOverride(null), 2500);
+    return () => clearTimeout(timer);
   }, [seekOverride]);
 
-  const tickingPosition = useTickingProgress(m?.position, m?.duration, playing);
+  const tickingPosition = useTickingProgress(media?.position, media?.duration, playing);
   const displayPosition = seekOverride ?? tickingPosition;
-  const progress = m?.duration ? Math.min(1, displayPosition / m.duration) : 0;
+  const progress = media?.duration ? Math.min(1, displayPosition / media.duration) : 0;
 
   function handleToggle() {
     const next = !playing;
@@ -57,61 +70,45 @@ export function NowPlaying() {
     postAction('/api/media/control', { action: 'toggle' }).catch(() => setOptimisticPlaying(null));
   }
 
-  function handlePrev() {
-    postAction('/api/media/control', { action: 'prev' });
+  function handlePrevious() {
+    postAction('/api/media/control', { action: 'prev' }).catch(() => {});
   }
 
   function handleNext() {
-    postAction('/api/media/control', { action: 'next' });
+    postAction('/api/media/control', { action: 'next' }).catch(() => {});
   }
 
-  function handleSeek(pct: number) {
-    if (!m?.duration) return;
-    const pos = Math.round(pct * m.duration);
-    setSeekOverride(pos);
-    postAction('/api/media/control', { action: 'seek', position: pos }).catch(() =>
+  function handleSeek(percentage: number) {
+    if (!media?.duration) return;
+    const position = Math.round(percentage * media.duration);
+    setSeekOverride(position);
+    postAction('/api/media/control', { action: 'seek', position }).catch(() =>
       setSeekOverride(null),
     );
   }
 
-  // No snapshot has ever arrived yet.
   if (!snapshot && loading) return <NowPlayingSkeleton />;
-
-  // No snapshot has ever arrived, and the request failed.
   if (!snapshot && error) {
-    return (
-      <Message tone="error" icon={<MusicNoteIcon size={26} />} title="Now Playing">
-        Can't reach the panel backend
-      </Message>
-    );
+    return <Message tone="error" title="Now Playing">Can't reach the panel backend</Message>;
   }
-
   if (snapshot?.errors?.media) {
-    return (
-      <Message tone="error" icon={<MusicNoteIcon size={26} />} title="Now Playing">
-        Media status unavailable
-      </Message>
-    );
+    return <Message tone="error" title="Now Playing">Media status unavailable</Message>;
+  }
+  if (!media?.title) {
+    return <Message tone="quiet" title="Nothing playing">Start something and it will appear here</Message>;
   }
 
-  if (!m?.title) {
-    return (
-      <Message tone="quiet" icon={<MusicNoteIcon size={26} />} title="Nothing playing">
-        Start something and it'll show up here
-      </Message>
-    );
-  }
-
-  const trackKey = `${m.title}|${m.artist ?? ''}|${m.album ?? ''}`;
+  const trackKey = `${media.title}|${media.artist ?? ''}|${media.album ?? ''}`;
+  const source = sourceLabel(media.app);
 
   return (
     <div className={styles.stage}>
-      {m.art ? (
+      {media.art ? (
         <AnimatePresence>
           <motion.div
-            key={trackKey}
+            key={`wash-${trackKey}`}
             className={styles.artLayer}
-            style={{ backgroundImage: `url("${m.art}")` }}
+            style={{ backgroundImage: `url("${media.art}")` }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -119,50 +116,80 @@ export function NowPlaying() {
           />
         </AnimatePresence>
       ) : (
-        <div className={styles.artFallback}>
-          <MusicNoteIcon size={32} />
-        </div>
+        <div className={styles.artFallback} />
       )}
       <div className={styles.artShade} />
 
-      <div className={styles.eyebrow}>Now Playing</div>
+      <div className={styles.layout}>
+        <motion.div
+          key={`cover-${trackKey}`}
+          className={styles.cover}
+          style={media.art ? { backgroundImage: `url("${media.art}")` } : undefined}
+          initial={{ opacity: 0, scale: 0.97 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: duration.slow, ease }}
+        >
+          {!media.art && <MusicNoteIcon size={38} />}
+          <span className={styles.coverHighlight} />
+        </motion.div>
 
-      <div className={styles.content}>
-        <AnimatePresence initial={false}>
-          <motion.div
-            key={trackKey}
-            initial={{ opacity: 0, y: 4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: duration.base, ease }}
-          >
-            <div className={styles.title}>{m.title}</div>
-            <div className={styles.subtitle}>
-              {[m.artist, m.album].filter(Boolean).join(' · ')}
-              {!playing ? ' · Paused' : ''}
+        <div className={styles.content}>
+          <div className={styles.statusRow}>
+            <span className={`${styles.nowStatus} ${playing ? styles.nowStatusPlaying : ''}`}>
+              <i />
+              {playing ? 'Playing' : 'Paused'}
+            </span>
+            {source && <span className={styles.source}>{source}</span>}
+          </div>
+
+          <AnimatePresence initial={false} mode="wait">
+            <motion.div
+              key={trackKey}
+              className={styles.trackMeta}
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -3 }}
+              transition={{ duration: duration.base, ease }}
+            >
+              <div className={styles.title}>{media.title}</div>
+              {media.artist && <div className={styles.subtitle}>{media.artist}</div>}
+              {media.album && <div className={styles.album}>{media.album}</div>}
+            </motion.div>
+          </AnimatePresence>
+
+          {!!media.duration && (
+            <div className={styles.timeline}>
+              <ScrubBar progress={progress} onSeek={handleSeek} />
+              <div className={styles.timeRow}>
+                <span className={styles.time}>{formatTime(displayPosition)}</span>
+                <span className={styles.time}>{formatTime(displayPosition - media.duration)}</span>
+              </div>
             </div>
-          </motion.div>
-        </AnimatePresence>
+          )}
 
-        {!!m.duration && (
-          <>
-            <ScrubBar progress={progress} onSeek={handleSeek} />
-            <div className={styles.timeRow}>
-              <span className={styles.time}>{formatTime(displayPosition)}</span>
-              <span className={styles.time}>{formatTime(displayPosition - m.duration)}</span>
-            </div>
-          </>
-        )}
-
-        <div className={styles.controls}>
-          <IconButton icon={<PrevIcon />} label="Previous" size="md" onClick={handlePrev} />
-          <IconButton
-            icon={playing ? <PauseIcon /> : <PlayIcon />}
-            label={playing ? 'Pause' : 'Play'}
-            size="lg"
-            onClick={handleToggle}
-          />
-          <IconButton icon={<NextIcon />} label="Next" size="md" onClick={handleNext} />
+          <div className={styles.controls}>
+            <IconButton
+              className={styles.transportButton}
+              icon={<PrevIcon size={18} />}
+              label="Previous"
+              size="md"
+              onClick={handlePrevious}
+            />
+            <IconButton
+              className={styles.playButton}
+              icon={playing ? <PauseIcon size={19} /> : <PlayIcon size={19} />}
+              label={playing ? 'Pause' : 'Play'}
+              size="lg"
+              onClick={handleToggle}
+            />
+            <IconButton
+              className={styles.transportButton}
+              icon={<NextIcon size={18} />}
+              label="Next"
+              size="md"
+              onClick={handleNext}
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -173,14 +200,18 @@ function NowPlayingSkeleton() {
   return (
     <div className={styles.stage} aria-busy="true" aria-label="Loading now playing">
       <Skeleton width="100%" height="100%" radius={0} className={styles.skeletonArt} />
-      <div className={styles.skeletonContent}>
-        <Skeleton width="70%" height={22} />
-        <Skeleton width="45%" height={15} />
-        <Skeleton width="100%" height={4} radius={4} />
-        <div className={styles.skeletonControls}>
-          <Skeleton width={40} height={40} radius={999} />
-          <Skeleton width={48} height={48} radius={999} />
-          <Skeleton width={40} height={40} radius={999} />
+      <div className={styles.layout}>
+        <Skeleton width="100%" height="100%" radius={18} className={styles.skeletonCover} />
+        <div className={styles.skeletonContent}>
+          <Skeleton width="34%" height={11} />
+          <Skeleton width="82%" height={24} />
+          <Skeleton width="55%" height={15} />
+          <Skeleton width="100%" height={4} radius={4} />
+          <div className={styles.skeletonControls}>
+            <Skeleton width={40} height={40} radius={999} />
+            <Skeleton width={48} height={48} radius={999} />
+            <Skeleton width={40} height={40} radius={999} />
+          </div>
         </div>
       </div>
     </div>
@@ -189,18 +220,16 @@ function NowPlayingSkeleton() {
 
 function Message({
   tone,
-  icon,
   title,
   children,
 }: {
   tone: 'error' | 'quiet';
-  icon: React.ReactNode;
   title: string;
   children: React.ReactNode;
 }) {
   return (
     <div className={`${styles.message} ${tone === 'error' ? styles.messageError : ''}`}>
-      {icon}
+      <span className={styles.messageIcon}><MusicNoteIcon size={28} /></span>
       <div className={styles.messageTitle}>{title}</div>
       <div className={styles.messageSub}>{children}</div>
     </div>

@@ -6,5 +6,6 @@
 // is what actually side-steps that block.
 export function readingThumbUrl(url?: string | null): string | undefined {
   if (!url) return undefined;
+  if (url.startsWith('/api/')) return url;
   return `/api/reading/thumb?url=${encodeURIComponent(url)}`;
 }

@@ -407,9 +407,10 @@ DEFAULT_LAYOUTS = {
     # default sizes put Steam/Xbox/Other side by side, roughly proportional
     # to how many games each shelf tends to hold.
     "games": {
-        "order": ["favorites", "playtime", "shelf-steam", "shelf-xbox", "shelf-other"],
+        "order": ["favorites", "playtime", "pulse", "shelf-steam", "shelf-xbox", "shelf-other"],
         "sizes": {
-            "favorites": {"w": 5, "h": 6}, "playtime": {"w": 3, "h": 6},
+            "favorites": {"w": 1, "h": 7}, "playtime": {"w": 3, "h": 7},
+            "pulse": {"w": 4, "h": 13},
             "shelf-steam": {"w": 4, "h": 8}, "shelf-xbox": {"w": 2, "h": 8},
             "shelf-other": {"w": 2, "h": 8},
         },

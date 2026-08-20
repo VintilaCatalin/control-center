@@ -10,33 +10,42 @@ interface QuickCaptureProps {
   onCreated: (rel: string) => void;
 }
 
-const CAPTURE_FOLDER = 'Quick Notes';
+// Quick Capture behaves like an inbox. Root notes surface in Unfiled and
+// can be organised later without hiding them in a synthetic folder.
+const CAPTURE_FOLDER = '';
 
 // capture -> save -> continue: one field, autofocused, Enter to save,
-// the first line becomes the title the same way new_note() already
-// seeds every note's opening heading. Chrome comes from the shared
+// the first line becomes the title while the remaining lines become the
+// body. Chrome comes from the shared
 // Overlay now (same surface/radius/motion as Search and Tasks) -
 // only the body content is bespoke to this interaction.
 export function QuickCapture({ open, onClose, onCreated }: QuickCaptureProps) {
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (open) setText('');
+    if (open) { setText(''); setError(null); }
   }, [open]);
 
   async function handleCapture() {
     const trimmed = text.trim();
     if (!trimmed || busy) return;
     setBusy(true);
+    setError(null);
     try {
       const firstLine = trimmed.split('\n')[0].replace(/^#+\s*/, '').slice(0, 80).trim();
       const rest = trimmed.slice(trimmed.indexOf('\n') + 1).trim();
       const res = await newNote(firstLine || 'Quick note', CAPTURE_FOLDER);
-      if (!res.ok || !res.rel) return;
-      if (rest) await saveNote(res.rel, `# ${firstLine || 'Quick note'}\n\n${rest}\n`);
+      if (!res.ok || !res.rel) throw new Error(res.error ?? "Couldn't create this note");
+      if (rest) {
+        const saved = await saveNote(res.rel, `${rest}\n`);
+        if (!saved.ok) throw new Error("Couldn't save this note");
+      }
       onCreated(res.rel);
       onClose();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Couldn't save this note");
     } finally {
       setBusy(false);
     }
@@ -57,7 +66,7 @@ export function QuickCapture({ open, onClose, onCreated }: QuickCaptureProps) {
       icon={<CaptureIcon />}
       footer={
         <div className={styles.hint}>
-          <span>Enter to save · Shift+Enter for a new line</span>
+          <span>{error ?? 'Enter to save · Shift+Enter for a new line'}</span>
           {busy && <span>Saving…</span>}
         </div>
       }

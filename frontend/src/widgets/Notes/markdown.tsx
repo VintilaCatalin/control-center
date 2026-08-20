@@ -2,6 +2,7 @@ import { marked, type Token, type Tokens } from 'marked';
 import { Fragment, type ReactNode } from 'react';
 import { highlightCode } from './highlight';
 import { CheckIcon } from './icons';
+import { parseMarkdownTable } from './markdownTable';
 import styles from './Markdown.module.css';
 
 // [[Wikilink]] isn't standard markdown - marked has no idea what to do
@@ -20,10 +21,45 @@ function preprocessWikilinks(src: string): string {
   });
 }
 
+// Older notes can contain an otherwise valid GFM table directly after a
+// paragraph. Marked requires a blank line at that boundary and otherwise
+// emits the pipe rows as ordinary text. Add the missing boundary only in the
+// render input (never the saved note), and only when our table parser proves
+// the next two lines are a real header + separator pair. Fenced code remains
+// byte-for-byte untouched.
+function normalizeLegacyTableBoundaries(src: string): string {
+  const lines = src.replace(/\r\n/g, '\n').split('\n');
+  const rendered: string[] = [];
+  let fence: '`' | '~' | null = null;
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
+    const fenceMatch = line.match(/^\s*(`{3,}|~{3,})/);
+    if (fenceMatch) {
+      const marker = fenceMatch[1][0] as '`' | '~';
+      if (!fence) fence = marker;
+      else if (fence === marker) fence = null;
+      rendered.push(line);
+      continue;
+    }
+
+    const beginsTable = !fence
+      && index < lines.length - 1
+      && line === line.trimStart()
+      && lines[index + 1] === lines[index + 1].trimStart()
+      && parseMarkdownTable(`${line}\n${lines[index + 1]}`) !== null;
+    if (beginsTable && rendered.length && rendered[rendered.length - 1].trim()) rendered.push('');
+    rendered.push(line);
+  }
+
+  return rendered.join('\n');
+}
+
 interface MarkdownProps {
   text: string;
   onWikiLink: (name: string) => void;
   onToggleTask?: (raw: string, checked: boolean) => void;
+  onEditTable?: (raw: string) => void;
 }
 
 // A small hand-written token-to-React renderer, not dangerouslySetInnerHTML
@@ -31,12 +67,12 @@ interface MarkdownProps {
 // keyed to the shared typography tokens (see Markdown.module.css), which
 // is what actually makes this read as a premium reading surface instead
 // of "rendered markdown with a stylesheet on it".
-export function Markdown({ text, onWikiLink, onToggleTask }: MarkdownProps) {
-  const tokens = marked.lexer(preprocessWikilinks(text));
+export function Markdown({ text, onWikiLink, onToggleTask, onEditTable }: MarkdownProps) {
+  const tokens = marked.lexer(preprocessWikilinks(normalizeLegacyTableBoundaries(text)));
   return (
     <div className={styles.doc}>
       {tokens.map((t, i) => (
-        <Block key={i} token={t} onWikiLink={onWikiLink} onToggleTask={onToggleTask} />
+        <Block key={i} token={t} onWikiLink={onWikiLink} onToggleTask={onToggleTask} onEditTable={onEditTable} />
       ))}
     </div>
   );
@@ -46,10 +82,12 @@ function Block({
   token,
   onWikiLink,
   onToggleTask,
+  onEditTable,
 }: {
   token: Token;
   onWikiLink: (name: string) => void;
   onToggleTask?: (raw: string, checked: boolean) => void;
+  onEditTable?: (raw: string) => void;
 }) {
   switch (token.type) {
     case 'heading': {
@@ -72,7 +110,7 @@ function Block({
       return (
         <blockquote className={styles.quote}>
           {quote.tokens.map((c, i) => (
-            <Block key={i} token={c} onWikiLink={onWikiLink} onToggleTask={onToggleTask} />
+            <Block key={i} token={c} onWikiLink={onWikiLink} onToggleTask={onToggleTask} onEditTable={onEditTable} />
           ))}
         </blockquote>
       );
@@ -95,7 +133,7 @@ function Block({
         <List token={token as Tokens.List} onWikiLink={onWikiLink} onToggleTask={onToggleTask} />
       );
     case 'table':
-      return <Table token={token as Tokens.Table} onWikiLink={onWikiLink} />;
+      return <Table token={token as Tokens.Table} onWikiLink={onWikiLink} onEdit={onEditTable ? () => onEditTable(token.raw) : undefined} />;
     case 'hr':
       return <hr className={styles.hr} />;
     case 'space':
@@ -143,9 +181,10 @@ function List({
   );
 }
 
-function Table({ token, onWikiLink }: { token: Tokens.Table; onWikiLink: (name: string) => void }) {
+function Table({ token, onWikiLink, onEdit }: { token: Tokens.Table; onWikiLink: (name: string) => void; onEdit?: () => void }) {
   return (
     <div className={styles.tableWrap}>
+      {onEdit && <button type="button" className={styles.editTable} onClick={onEdit}>Edit table</button>}
       <table className={styles.table}>
         <thead>
           <tr>

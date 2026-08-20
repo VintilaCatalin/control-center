@@ -1,320 +1,172 @@
-import { AnimatePresence, motion } from 'framer-motion';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
 import type { NoteEntry } from '../../api/types';
-import { duration, ease } from '../../tokens/motion';
-import { buildFolderTree, collectAllTreePaths, collectSubtreePaths, type FolderNode } from './folderTree';
-import { CaptureIcon, ChevronIcon, ClockIcon, FolderIcon, FolderPlusIcon, NoteIcon, SearchIcon, StackIcon, StarIcon } from './icons';
+import { GlyphPicker } from '../../primitives/GlyphPicker/GlyphPicker';
+import { GlyphIcon } from '../../primitives/GlyphPicker/glyphs';
+import { Menu, type MenuItem } from '../../primitives/Menu/Menu';
+import { useMenu } from '../../primitives/Menu/useMenu';
+import { buildFolderTree, collectAllTreePaths, type FolderNode } from './folderTree';
+import { CaptureIcon, ChevronIcon, ClockIcon, NoteIcon, SearchIcon, StackIcon, StarIcon } from './icons';
 import styles from './Sidebar.module.css';
+
+export type NotesCollection = 'recent' | 'all' | 'pinned' | 'unfiled' | `folder:${string}`;
 
 interface SidebarProps {
   notes: NoteEntry[];
   folders: string[];
-  selectedRel: string | null;
-  onSelect: (rel: string) => void;
-  onTogglePin: (rel: string, pinned: boolean) => void;
+  activeCollection: NotesCollection;
+  onOpenCollection: (collection: NotesCollection) => void;
   onOpenSearch: () => void;
   onQuickCapture: () => void;
   onAddFolder: () => void;
+  onMoveNote: (rel: string, folder: string) => void;
+  onRemoveFolder: (folder: string) => void;
+  onRenameFolder: (folder: string) => void;
   collapsed?: boolean;
 }
 
-type SectionId = 'recent' | 'pinned' | 'all';
-
-// A real navigation column, not a list of tiny text rows - every top
-// action and section header carries an icon, has real click-target
-// height, and real vertical rhythm between groups. Search/Capture are
-// nav rows that open full app-level overlays (see SearchOverlay/
-// QuickCapture) rather than living as squeezed-in inline controls;
-// New Note lives outside this component entirely now (the floating
-// button in NotesShell) so this column is purely "find/organize", not
-// "find + create + capture" crammed into one row.
-export function Sidebar({ notes, folders, selectedRel, onSelect, onTogglePin, onOpenSearch, onQuickCapture, onAddFolder, collapsed }: SidebarProps) {
-  // Recent starts collapsed - a compact nav item until asked for, not a
-  // permanently-expanded block. Pinned is genuinely independent data too,
-  // not just a separately-rendered view of the same list: a pinned note
-  // that's also recently touched shows up in Pinned only, so the two
-  // sections never duplicate the same row.
-  const [open, setOpen] = useState<Set<SectionId>>(new Set(['pinned']));
-
-  const pinned = useMemo(() => notes.filter((n) => n.pinned), [notes]);
-  const recent = useMemo(() => notes.filter((n) => !n.pinned).slice(0, 6), [notes]);
-  const tree = useMemo(() => buildFolderTree(folders, notes), [folders, notes]);
-  // The set of paths to seed "start collapsed" from - deliberately the
-  // tree's OWN paths, not the raw `folders` prop. server.py's folders
-  // list only contains folders that directly hold a note; an ancestor
-  // folder holding only subfolders (no notes of its own) is missing
-  // from it even though buildFolderTree still creates a real node for
-  // it, so seeding from `folders` directly left exactly those
-  // note-less ancestor folders expanded on first load (see
-  // folderTree.ts's collectAllTreePaths for the full explanation).
-  const allTreePaths = useMemo(() => collectAllTreePaths(tree), [tree]);
-
-  // Every folder starts collapsed - opening Notes shouldn't dump the
-  // whole vault tree open. `knownFolders` tracks which paths have
-  // already been folded into `collapsedFolders` once, so a later poll
-  // tick (the tree is rebuilt fresh every time notes/folders arrive,
-  // even when unchanged) only collapses genuinely *new* folders instead
-  // of re-collapsing ones the user just expanded by hand.
-  const [collapsedFolders, setCollapsedFolders] = useState<Set<string>>(() => new Set(allTreePaths));
-  const knownFolders = useRef<Set<string>>(new Set(allTreePaths));
+export function Sidebar({ notes, folders, activeCollection, onOpenCollection, onOpenSearch, onQuickCapture, onAddFolder, onMoveNote, onRemoveFolder, onRenameFolder, collapsed }: SidebarProps) {
+  // Older Quick Capture builds filed notes into a synthetic "Quick Notes"
+  // folder. Treat it as a legacy inbox so those files surface in Unfiled
+  // without moving user data behind their back.
+  const tree = useMemo(() => buildFolderTree(folders.filter((folder) => folder !== 'Quick Notes'), notes.filter((note) => note.folder !== 'Quick Notes')), [folders, notes]);
+  const pinnedCount = notes.filter((note) => note.pinned).length;
+  const unfiledCount = notes.filter((note) => !note.folder || note.folder === 'Quick Notes').length;
+  const [collapsedFolders, setCollapsedFolders] = useState<Set<string>>(new Set());
+  const [dropTarget, setDropTarget] = useState<string | null>(null);
+  const [folderIcons, setFolderIcons] = useState<Record<string, string>>(readFolderIcons);
+  const [iconPicker, setIconPicker] = useState<{ folder: string; x: number; y: number } | null>(null);
+  const initializedTree = useRef(false);
+  const folderMenu = useMenu();
+  const [menuFolder, setMenuFolder] = useState<string | null>(null);
 
   useEffect(() => {
-    const fresh = allTreePaths.filter((f) => !knownFolders.current.has(f));
-    if (fresh.length === 0) return;
-    fresh.forEach((f) => knownFolders.current.add(f));
-    setCollapsedFolders((prev) => new Set([...prev, ...fresh]));
-  }, [allTreePaths]);
+    if (initializedTree.current || !tree.length) return;
+    setCollapsedFolders(new Set(collectAllTreePaths(tree)));
+    initializedTree.current = true;
+  }, [tree]);
 
-  // Notes with no folder ('' - vault root) never appear inside a
-  // FolderRow (there's no tree node for ""), so without this they only
-  // ever showed up in Recent/Pinned/All Notes - invisible on a normal
-  // day if a root note wasn't touched recently. Rendered as its own
-  // always-visible group above the folder tree, not folded into it.
-  const rootNotes = useMemo(() => notes.filter((n) => !n.folder), [notes]);
-
-  function toggleSection(id: SectionId) {
-    setOpen((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+  function toggleFolder(path: string) {
+    setCollapsedFolders((current) => {
+      const next = new Set(current);
+      if (next.has(path)) next.delete(path);
+      else next.add(path);
       return next;
     });
   }
 
-  // Expanding only reveals this one level (children stay in whatever
-  // state they're already in, same as most file trees). Collapsing
-  // takes the whole subtree with it - without that, an expanded child
-  // folder was invisibly preserved open underneath its collapsed
-  // parent, and reappeared open the moment the parent was reopened.
-  function toggleFolder(node: FolderNode) {
-    setCollapsedFolders((prev) => {
-      const next = new Set(prev);
-      if (next.has(node.path)) next.delete(node.path);
-      else collectSubtreePaths(node).forEach((p) => next.add(p));
+  function openIconPicker(path: string, event: MouseEvent<HTMLButtonElement>) {
+    event.stopPropagation();
+    const box = event.currentTarget.getBoundingClientRect();
+    setIconPicker({ folder: path, x: box.left, y: box.bottom + 8 });
+  }
+
+  function setFolderIcon(path: string, icon: string) {
+    setFolderIcons((current) => {
+      const next = { ...current, [path]: icon };
+      localStorage.setItem('control-center.notes.folder-icons.v1', JSON.stringify(next));
       return next;
     });
   }
 
-  const rowProps = { selectedRel, onSelect, onTogglePin };
+  const folderMenuItems: MenuItem[] = menuFolder ? [
+    { label: 'Change icon…', icon: <GlyphIcon icon={folderIcons[menuFolder] || 'folder'} />, onClick: () => setIconPicker({ folder: menuFolder, x: folderMenu.x, y: folderMenu.y }) },
+    { label: 'Rename…', onClick: () => onRenameFolder(menuFolder) },
+    { sep: true },
+    { label: 'Remove folder…', danger: true, onClick: () => onRemoveFolder(menuFolder) },
+  ] : [];
 
   return (
-    <nav className={styles.sidebar} data-collapsed={collapsed ? '' : undefined}>
-      <div className={styles.brand}>
+    <nav className={styles.sidebar} data-collapsed={collapsed ? '' : undefined} aria-label="Notes navigation">
+      <button type="button" className={styles.brand} onClick={() => onOpenCollection('recent')} title={collapsed ? 'Notes' : undefined}>
         <span className={styles.brandGlyph}><NoteIcon size={18} /></span>
         <span className={styles.brandCopy}>
           <strong>Notes</strong>
           <small>{notes.length} {notes.length === 1 ? 'note' : 'notes'}</small>
         </span>
+      </button>
+
+      <div className={styles.actions}>
+        <button type="button" className={styles.action} onClick={onOpenSearch} title={collapsed ? 'Find a note' : undefined}>
+          <SearchIcon />
+          <span>Find a note</span>
+          {!collapsed && <kbd>Ctrl K</kbd>}
+        </button>
+        <button type="button" className={styles.action} onClick={onQuickCapture} title={collapsed ? 'Quick capture' : undefined}>
+          <CaptureIcon />
+          <span>Quick capture</span>
+        </button>
       </div>
 
-      <div className={styles.top}>
-        <button type="button" className={`${styles.navRow} ${styles.searchRow}`} onClick={onOpenSearch} title={collapsed ? 'Find a note' : undefined}>
-          <span className={styles.navIcon}>
-            <SearchIcon />
-          </span>
-          <span className={styles.navLabel}>Find a note</span>
-        </button>
-        <button type="button" className={`${styles.navRow} ${styles.captureRow}`} onClick={onQuickCapture} title={collapsed ? 'Quick Capture' : undefined}>
-          <span className={`${styles.navIcon} ${styles.captureIcon}`}>
-            <CaptureIcon />
-          </span>
-          <span className={styles.navLabel}>Quick Capture</span>
-        </button>
-        {collapsed && (
-          <button type="button" className={styles.navRow} onClick={onAddFolder} title="Add folder">
-            <span className={styles.navIcon}>
-              <FolderPlusIcon />
-            </span>
-            <span className={styles.navLabel}>Add folder</span>
-          </button>
-        )}
-      </div>
-
-      {/* The folder tree/sections have no meaningful icon-only form (file
-          trees don't collapse into a rail the way a flat nav list does) -
-          collapsed mode shows just the actions above; expanding is how
-          you get back to browsing, same as any collapsed nav. */}
       {!collapsed && (
         <div className={styles.scroll}>
-          <div className={styles.groupLabel}>Library</div>
-          {pinned.length > 0 && (
-            <Section id="pinned" icon={<StarIcon />} label="Pinned" count={pinned.length} open={open.has('pinned')} onToggle={toggleSection}>
-              <Rows notes={pinned} {...rowProps} />
-            </Section>
-          )}
-
-          <Section id="recent" icon={<ClockIcon />} label="Recent" count={recent.length} open={open.has('recent')} onToggle={toggleSection}>
-            <Rows notes={recent} {...rowProps} />
-          </Section>
-
-          <Section id="all" icon={<StackIcon />} label="All Notes" count={notes.length} open={open.has('all')} onToggle={toggleSection}>
-            <Rows notes={notes} {...rowProps} />
-          </Section>
+          <p className={styles.eyebrow}>Library</p>
+          <CollectionRow active={activeCollection === 'recent'} icon={<ClockIcon />} label="Recent" count={Math.min(notes.length, 12)} onClick={() => onOpenCollection('recent')} />
+          <CollectionRow active={activeCollection === 'all'} icon={<StackIcon />} label="All notes" count={notes.length} onClick={() => onOpenCollection('all')} />
+          <CollectionRow active={activeCollection === 'pinned'} icon={<StarIcon />} label="Pinned" count={pinnedCount} onClick={() => onOpenCollection('pinned')} />
+          <CollectionRow active={activeCollection === 'unfiled'} icon={<NoteIcon />} label="Unfiled" count={unfiledCount} onClick={() => onOpenCollection('unfiled')} dropActive={dropTarget === ''} onDragEnter={() => setDropTarget('')} onDragLeave={() => setDropTarget(null)} onDrop={(rel) => { setDropTarget(null); onMoveNote(rel, ''); }} />
 
           <div className={styles.foldersHead}>
-            <span className={styles.foldersCopy}>
-              <strong>Folders</strong>
-              <small>Collections and loose notes</small>
-            </span>
-            <button type="button" className={styles.addFolderBtn} onClick={onAddFolder} title="Add folder">
-              <FolderPlusIcon />
-            </button>
+            <p className={styles.eyebrow}>Folders</p>
+            <button type="button" className={styles.addFolder} onClick={onAddFolder} title="New folder" aria-label="New folder"><span aria-hidden="true">+</span></button>
           </div>
-          {tree.length === 0 && rootNotes.length === 0 ? (
-            <div className={styles.emptyFolders}>
-              <strong>No folders yet</strong>
-              <span>Create one to organize related notes.</span>
-              <button type="button" onClick={onAddFolder}>Create folder</button>
+          {tree.length ? (
+            <div className={styles.folderTree}>
+              {tree.map((node) => <FolderRow key={node.path} node={node} depth={0} activeCollection={activeCollection} collapsedFolders={collapsedFolders} onToggle={toggleFolder} onOpenCollection={onOpenCollection} onMoveNote={onMoveNote} dropTarget={dropTarget} setDropTarget={setDropTarget} folderIcons={folderIcons} onOpenIconPicker={openIconPicker} onOpenMenu={(path, event) => { setMenuFolder(path); folderMenu.openAt(event); }} />)}
             </div>
-          ) : <>
-            {tree.map((node) => (
-              <FolderRow key={node.path} node={node} depth={0} collapsed={collapsedFolders} onToggle={toggleFolder} {...rowProps} showIcon />
-            ))}
-            {rootNotes.length > 0 && <div className={styles.looseNotes}><Rows notes={rootNotes} {...rowProps} /></div>}
-          </>}
+          ) : (
+            <button type="button" className={styles.emptyFolders} onClick={onAddFolder}>
+              <strong>No folders yet</strong>
+              <span>Create one when a note needs a home.</span>
+            </button>
+          )}
         </div>
       )}
+      <Menu open={folderMenu.open} x={folderMenu.x} y={folderMenu.y} items={folderMenuItems} onClose={folderMenu.close} />
+      <GlyphPicker open={!!iconPicker} x={iconPicker?.x ?? 0} y={iconPicker?.y ?? 0} value={iconPicker ? folderIcons[iconPicker.folder] || 'folder' : 'folder'} onChange={(icon) => { if (iconPicker) setFolderIcon(iconPicker.folder, icon); }} onClose={() => setIconPicker(null)} />
     </nav>
   );
 }
 
-function Section({
-  id,
-  icon,
-  label,
-  count,
-  open,
-  onToggle,
-  children,
-}: {
-  id: SectionId;
-  icon: React.ReactNode;
-  label: string;
-  count: number;
-  open: boolean;
-  onToggle: (id: SectionId) => void;
-  children: React.ReactNode;
-}) {
+function CollectionRow({ active, icon, label, count, onClick, dropActive, onDragEnter, onDragLeave, onDrop }: { active: boolean; icon: React.ReactNode; label: string; count: number; onClick: () => void; dropActive?: boolean; onDragEnter?: () => void; onDragLeave?: () => void; onDrop?: (rel: string) => void }) {
   return (
-    <div className={styles.section}>
-      <button type="button" className={styles.sectionHead} aria-expanded={open} onClick={() => onToggle(id)}>
-        <ChevronIcon open={open} />
-        <span className={styles.navIcon}>{icon}</span>
-        <span className={styles.sectionLabel}>{label}</span>
-        <span className={styles.sectionCount}>{count}</span>
-      </button>
-      <AnimatePresence initial={false}>
-        {open && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: duration.base, ease }}
-            style={{ overflow: 'hidden' }}
-          >
-            <div className={styles.sectionBody}>{children}</div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+    <button type="button" className={`${styles.collection} ${active ? styles.active : ''} ${dropActive ? styles.dropActive : ''}`} onClick={onClick} aria-current={active ? 'page' : undefined} onDragOver={onDrop ? (event) => { event.preventDefault(); event.dataTransfer.dropEffect = 'move'; } : undefined} onDragEnter={onDrop ? (event) => { event.preventDefault(); onDragEnter?.(); } : undefined} onDragLeave={onDrop ? onDragLeave : undefined} onDrop={onDrop ? (event) => { event.preventDefault(); const rel = event.dataTransfer.getData('application/x-control-center-note'); if (rel) onDrop(rel); } : undefined}>
+      <span className={styles.rowIcon}>{icon}</span>
+      <span className={styles.rowLabel}>{label}</span>
+      <span className={styles.count}>{count}</span>
+    </button>
   );
 }
 
-function FolderRow({
-  node,
-  depth,
-  collapsed,
-  onToggle,
-  showIcon,
-  ...rowProps
-}: {
-  node: FolderNode;
-  depth: number;
-  collapsed: Set<string>;
-  onToggle: (node: FolderNode) => void;
-  showIcon?: boolean;
-} & Pick<SidebarProps, 'selectedRel' | 'onSelect' | 'onTogglePin'>) {
-  const isOpen = !collapsed.has(node.path);
-  return (
-    <div>
-      <button type="button" className={styles.folderRow} style={{ paddingLeft: 10 + depth * 16 }} onClick={() => onToggle(node)}>
-        <ChevronIcon open={isOpen} size={10} />
-        {showIcon && (
-          <span className={styles.folderIcon}>
-            <FolderIcon />
-          </span>
-        )}
-        <span className={styles.folderName}>{node.name}</span>
-        <span className={styles.folderCount}>{node.notes.length}</span>
-      </button>
-      <AnimatePresence initial={false}>
-        {isOpen && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: duration.fast, ease }}
-            style={{ overflow: 'hidden' }}
-          >
-            <Rows notes={node.notes} depth={depth + 1} {...rowProps} />
-            {node.children.map((child) => (
-              <FolderRow key={child.path} node={child} depth={depth + 1} collapsed={collapsed} onToggle={onToggle} showIcon={showIcon} {...rowProps} />
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-
-function Rows({
-  notes,
-  depth = 0,
-  selectedRel,
-  onSelect,
-  onTogglePin,
-}: {
-  notes: NoteEntry[];
-  depth?: number;
-} & Pick<SidebarProps, 'selectedRel' | 'onSelect' | 'onTogglePin'>) {
+function FolderRow({ node, depth, activeCollection, collapsedFolders, onToggle, onOpenCollection, onMoveNote, dropTarget, setDropTarget, folderIcons, onOpenIconPicker, onOpenMenu }: { node: FolderNode; depth: number; activeCollection: NotesCollection; collapsedFolders: Set<string>; onToggle: (path: string) => void; onOpenCollection: (collection: NotesCollection) => void; onMoveNote: (rel: string, folder: string) => void; dropTarget: string | null; setDropTarget: (path: string | null) => void; folderIcons: Record<string, string>; onOpenIconPicker: (path: string, event: MouseEvent<HTMLButtonElement>) => void; onOpenMenu: (path: string, event: React.MouseEvent) => void }) {
+  const collection: NotesCollection = `folder:${node.path}`;
+  const hasChildren = node.children.length > 0;
+  const open = !collapsedFolders.has(node.path);
   return (
     <>
-      {notes.map((n) => (
-        <div
-          key={n.rel}
-          role="button"
-          tabIndex={0}
-          className={[styles.row, n.rel === selectedRel ? styles.rowActive : ''].filter(Boolean).join(' ')}
-          style={{ paddingLeft: 10 + depth * 16 + (depth > 0 ? 16 : 0) }}
-          onClick={() => onSelect(n.rel)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              onSelect(n.rel);
-            }
-          }}
-        >
-          <span className={styles.rowMain}>
-            <span className={styles.rowIcon}>
-              <NoteIcon size={14} />
-            </span>
-            <span className={styles.rowName}>{n.name}</span>
-          </span>
-          <span className={styles.rowMeta}>
-            <button
-              type="button"
-              className={[styles.pinBtn, n.pinned ? styles.pinBtnActive : ''].filter(Boolean).join(' ')}
-              onClick={(e) => {
-                e.stopPropagation();
-                onTogglePin(n.rel, !n.pinned);
-              }}
-              title={n.pinned ? 'Unpin' : 'Pin'}
-            >
-              <StarIcon filled={n.pinned} size={12} />
-            </button>
-          </span>
+      <div className={`${styles.folderLine} ${dropTarget === node.path ? styles.dropActive : ''}`} style={{ paddingLeft: depth * 15 }} onContextMenu={(event) => onOpenMenu(node.path, event)} onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = 'move'; }} onDragEnter={(event) => { event.preventDefault(); setDropTarget(node.path); }} onDragLeave={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDropTarget(null); }} onDrop={(event) => { event.preventDefault(); event.stopPropagation(); const rel = event.dataTransfer.getData('application/x-control-center-note'); setDropTarget(null); if (rel) onMoveNote(rel, node.path); }}>
+        {hasChildren ? <button type="button" className={styles.folderToggle} onClick={() => onToggle(node.path)} aria-label={`${open ? 'Collapse' : 'Expand'} ${node.name}`} aria-expanded={open}><ChevronIcon open={open} /></button> : <span className={styles.folderToggleSpace} />}
+        <div className={`${styles.collection} ${styles.folder} ${activeCollection === collection ? styles.active : ''}`}>
+          <button type="button" className={styles.folderGlyph} onClick={(event) => onOpenIconPicker(node.path, event)} aria-label={`Change ${node.name} icon`} title="Change folder icon"><GlyphIcon icon={folderIcons[node.path] || 'folder'} /></button>
+          <button type="button" className={styles.folderOpen} onClick={() => onOpenCollection(collection)} aria-current={activeCollection === collection ? 'page' : undefined}>
+            <span className={styles.rowLabel}>{node.name}</span>
+            <span className={styles.count}>{countNotes(node)}</span>
+          </button>
         </div>
-      ))}
+      </div>
+      {open && node.children.map((child) => <FolderRow key={child.path} node={child} depth={depth + 1} activeCollection={activeCollection} collapsedFolders={collapsedFolders} onToggle={onToggle} onOpenCollection={onOpenCollection} onMoveNote={onMoveNote} dropTarget={dropTarget} setDropTarget={setDropTarget} folderIcons={folderIcons} onOpenIconPicker={onOpenIconPicker} onOpenMenu={onOpenMenu} />)}
     </>
   );
+}
+
+function readFolderIcons(): Record<string, string> {
+  try {
+    const value = JSON.parse(localStorage.getItem('control-center.notes.folder-icons.v1') || '{}');
+    return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+  } catch {
+    return {};
+  }
+}
+
+function countNotes(node: FolderNode): number {
+  return node.notes.length + node.children.reduce((total, child) => total + countNotes(child), 0);
 }

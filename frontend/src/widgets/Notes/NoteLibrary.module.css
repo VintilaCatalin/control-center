@@ -1,0 +1,29 @@
+.library { position: relative; z-index: 1; width: 100%; height: 100%; overflow-y: auto; padding: var(--workspace-page-top) var(--workspace-page-gutter) 80px; }
+.header { display: flex; align-items: flex-end; justify-content: space-between; gap: 32px; max-width: var(--workspace-content-width); margin: 0 auto 40px; }
+.kicker { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; color: var(--accent); font-size: var(--fs-caption); font-weight: 700; letter-spacing: .075em; text-transform: uppercase; }
+.header h1 { margin: 0; color: var(--text-primary); font-family: var(--font-display); font-size: var(--workspace-page-title-size); font-weight: var(--workspace-page-title-weight); letter-spacing: var(--workspace-page-title-tracking); }
+.header p { margin: 8px 0 0; color: var(--text-secondary); font-size: var(--fs-callout); line-height: 1.5; }
+.newButton { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 15px; border: 1px solid color-mix(in oklab, var(--accent) 30%, var(--tasks-line)); border-radius: 11px; background: color-mix(in oklab, var(--accent) 10%, var(--tasks-control)); color: var(--text-primary); font-size: var(--fs-footnote); font-weight: 650; cursor: pointer; }
+.newButton svg { color: var(--accent); }
+.newButton:hover { background: color-mix(in oklab, var(--accent) 15%, var(--tasks-control)); }
+.list { max-width: var(--workspace-content-width); margin: 0 auto; border-top: 1px solid var(--tasks-line); }
+.note { position: relative; border-bottom: 1px solid var(--tasks-line); }
+.open { display: grid; grid-template-columns: 28px minmax(0, 1fr) minmax(110px, auto); align-items: center; gap: 14px; width: 100%; min-height: 76px; padding: 11px 48px 11px 5px; border: 0; background: transparent; color: inherit; text-align: left; cursor: pointer; transition: background var(--dur-fast) var(--ease); }
+.note:hover .open { background: linear-gradient(90deg, color-mix(in oklab, var(--accent) 6%, transparent), transparent 75%); }
+.noteIcon { display: grid; place-items: center; color: color-mix(in oklab, var(--accent) 62%, var(--text-tertiary)); }
+.copy { display: flex; min-width: 0; flex-direction: column; gap: 5px; }
+.copy strong { overflow: hidden; color: var(--text-primary); font-size: 1rem; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+.copy > span { overflow: hidden; color: var(--text-secondary); font-size: var(--fs-footnote); line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
+.meta { display: flex; align-items: flex-end; flex-direction: column; gap: 5px; color: var(--text-tertiary); font-size: var(--fs-caption); }
+.folderName { max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pin { position: absolute; top: 50%; right: 7px; display: grid; width: 32px; height: 32px; place-items: center; transform: translateY(-50%); border: 0; border-radius: 8px; background: transparent; color: var(--text-tertiary); opacity: 0; cursor: pointer; }
+.note:hover .pin, .pin:focus-visible, .pinned { opacity: 1; }
+.pin:hover { background: var(--tasks-hover); color: var(--text-primary); }
+.pinned { color: #e7bb57; }
+.empty { display: flex; max-width: 500px; min-height: 360px; margin: 0 auto; align-items: center; justify-content: center; flex-direction: column; text-align: center; }
+.emptyIcon { display: grid; place-items: center; margin-bottom: 16px; color: var(--accent); }
+.empty strong { color: var(--text-primary); font-size: 1.05rem; font-weight: 660; }
+.empty p { max-width: 360px; margin: 7px 0 18px; color: var(--text-secondary); font-size: var(--fs-footnote); line-height: 1.5; }
+.empty button { padding: 0; border: 0; background: transparent; color: var(--accent); font-size: var(--fs-footnote); font-weight: 650; cursor: pointer; }
+.newButton:focus-visible, .open:focus-visible, .pin:focus-visible, .empty button:focus-visible { outline: 2px solid color-mix(in oklab, var(--accent) 48%, transparent); outline-offset: 2px; }
+@media (max-width: 760px) { .library { padding-top: 28px; padding-bottom: 70px; } .header { align-items: flex-start; flex-direction: column; } .open { grid-template-columns: 24px minmax(0, 1fr); } .meta { display: none; } }

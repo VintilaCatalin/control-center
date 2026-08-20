@@ -28,9 +28,17 @@ export function FavoritesStrip({ games }: { games: GameData[] }) {
           <span className={styles.cover}>
             <GameCover game={g} />
           </span>
-          <span className={styles.name}>{g.name}</span>
+          <span className={styles.copy}>
+            <span className={styles.name}>{g.name}</span>
+            <span className={styles.meta}>{sourceLabel(g.source)}</span>
+          </span>
+          <span className={styles.arrow} aria-hidden="true">›</span>
         </button>
       ))}
     </div>
   );
+}
+
+function sourceLabel(source: GameData['source']): string {
+  return source === 'battlenet' ? 'Battle.net' : source === 'xbox' ? 'Xbox' : source === 'riot' ? 'Riot' : source === 'steam' ? 'Steam' : 'Library';
 }

@@ -25,6 +25,18 @@ export function renameNote(rel: string, name: string): Promise<{ ok: boolean; re
   return postAction('/api/note/rename', { rel, name });
 }
 
+export function moveNote(rel: string, folder = ''): Promise<{ ok: boolean; rel?: string; error?: string }> {
+  return postAction('/api/note/move', { rel, folder });
+}
+
+export function removeNoteFolder(folder: string, destination = ''): Promise<{ ok: boolean; moved?: { from: string; to: string }[]; error?: string }> {
+  return postAction('/api/note/folder/remove', { folder, destination });
+}
+
+export function renameNoteFolder(folder: string, name: string): Promise<{ ok: boolean; folder?: string; error?: string }> {
+  return postAction('/api/note/folder/rename', { folder, name });
+}
+
 // store.json annotation, not vault content - see server.py's pin_note().
 export function pinNote(rel: string, pinned: boolean): Promise<{ ok: boolean }> {
   return postAction('/api/note/pin', { rel, pinned });

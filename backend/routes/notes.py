@@ -7,7 +7,7 @@ do_GET/do_POST dispatch chains in the pre-modularization panel/server.py.
 import json
 from urllib.parse import parse_qs
 
-from backend.collectors.notes import delete_note, new_note, pin_note, read_note, rename_note, write_note
+from backend.collectors.notes import delete_note, move_note, new_note, pin_note, read_note, remove_folder, rename_folder, rename_note, write_note
 
 
 def handle_get(handler, path, route, snapshot):
@@ -30,6 +30,12 @@ def dispatch_post(cfg, path, body):
         return delete_note(cfg, body.get("rel"))
     if path == "/api/note/rename":
         return rename_note(cfg, body.get("rel"), body.get("name"))
+    if path == "/api/note/move":
+        return move_note(cfg, body.get("rel"), body.get("folder") or "")
+    if path == "/api/note/folder/remove":
+        return remove_folder(cfg, body.get("folder"), body.get("destination") or "")
+    if path == "/api/note/folder/rename":
+        return rename_folder(cfg, body.get("folder"), body.get("name"))
     if path == "/api/note/pin":
         return pin_note(cfg, body.get("rel"), bool(body.get("pinned", True)))
     return None

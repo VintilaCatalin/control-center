@@ -86,7 +86,7 @@
   position: fixed;
   z-index: 60;
   overflow: hidden;
-  width: 400px;
+  width: min(360px, calc(100vw - 24px));
   border-radius: 16px;
   border: 1px solid var(--rim);
   box-shadow: var(--lift), var(--inner);
@@ -116,5 +116,5 @@
 .content {
   position: relative;
   z-index: 1;
-  padding: 17px;
+  padding: 16px;
 }
