@@ -14,7 +14,7 @@ export function fetchSettings(): Promise<SettingsResponse> {
 // actually changed. An empty string clears a panel-set override back to
 // config.ini/default rather than writing a literal blank (see
 // server.py's own comment on this in the save route).
-export function saveSettings(values: Record<string, string>): Promise<{ ok: boolean }> {
+export function saveSettings(values: Record<string, string>): Promise<{ ok: boolean; saved?: string[]; skipped?: string[]; error?: string }> {
   return postAction('/api/settings/save', { values });
 }
 

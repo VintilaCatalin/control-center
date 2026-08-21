@@ -45,7 +45,7 @@ export function DesignSection({ heading, items, onOpen, onToggleSave, onDismiss 
               <div className={styles.actions}>
                 <SaveButton saved={item.saved} onToggle={() => onToggleSave(item)} variant="panel" small inline />
                 {onDismiss && (
-                  <button type="button" className={styles.dismissBtn} onClick={() => onDismiss(item)} title="Not interested">
+                  <button type="button" className={styles.dismissBtn} onClick={() => onDismiss(item)} aria-label="Not interested" title="Not interested">
                     ×
                   </button>
                 )}

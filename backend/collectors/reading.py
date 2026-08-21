@@ -9,10 +9,11 @@ import json
 import re
 import time
 from datetime import datetime, timedelta, timezone
-from urllib.parse import urlparse, parse_qs, urljoin
+from pathlib import Path
+from urllib.parse import urlparse, parse_qs, urljoin, quote
 import requests
 
-from backend.core import ARTICLE_DIR, CONFIG_DIR, YT_CHANNEL_FEED, YT_RE, _slug, edit_store, load_store
+from backend.core import ARTICLE_DIR, CONFIG_DIR, COVER_DIR, YT_CHANNEL_FEED, YT_RE, _slug, edit_store, load_store
 
 
 def _strip_html(text, limit=180):
@@ -22,6 +23,30 @@ def _strip_html(text, limit=180):
     return clean[:limit]
 
 _IMG_EXT_RE = re.compile(r"\.(jpe?g|png|gif|webp|avif|bmp)(?:$|\?)", re.I)
+
+# Known-good replacements when a host is chronically flaky (hnrss.org
+# regularly ConnectTimeouts even though the feed itself is fine).
+_FEED_URL_ALIASES = {
+    "https://hnrss.org/frontpage": "https://news.ycombinator.com/rss",
+}
+
+_HTTP_HEADERS = {"User-Agent": "desk-panel/1.0"}
+
+
+def _http_get(url, timeout=15, retries=2):
+    """GET with a short retry — flaky RSS hosts (hnrss) often fail the
+    first connect and succeed on the next try within a second."""
+    last = None
+    for attempt in range(max(1, retries)):
+        try:
+            return requests.get(url, timeout=timeout, headers=_HTTP_HEADERS)
+        except (requests.exceptions.ConnectTimeout, requests.exceptions.ReadTimeout,
+                requests.exceptions.ConnectionError) as e:
+            last = e
+            if attempt + 1 < retries:
+                time.sleep(0.35 * (attempt + 1))
+    raise last
+
 
 def _enclosure_image_url(enclosure):
     """<enclosure> is a generic "attached media" tag, not specifically an
@@ -40,7 +65,7 @@ def _enclosure_image_url(enclosure):
 def _feed_items(url, limit=12):
     import xml.etree.ElementTree as ET
     from email.utils import parsedate_to_datetime
-    r = requests.get(url, timeout=12, headers={"User-Agent": "desk-panel/1.0"})
+    r = _http_get(url, timeout=15)
     r.raise_for_status()
     root = ET.fromstring(r.content)
     ns = {"atom": "http://www.w3.org/2005/Atom", "media": "http://search.yahoo.com/mrss/",
@@ -346,9 +371,10 @@ FEED_PRESETS = [
         {"label": "Sidebar", "url": "https://sidebar.io/feed.xml"},
         {"label": "Godly", "url": "https://godly.website/rss.xml"},
         {"label": "Typewolf", "url": "https://www.typewolf.com/feed"},
+        {"label": "UX Collective", "url": "https://uxdesign.cc/feed"},
     ]},
     {"group": "Tech", "feeds": [
-        {"label": "Hacker News", "url": "https://hnrss.org/frontpage"},
+        {"label": "Hacker News", "url": "https://news.ycombinator.com/rss"},
         {"label": "Hacker News · 300+", "url": "https://hnrss.org/frontpage?points=300"},
         {"label": "Lobsters", "url": "https://lobste.rs/rss"},
         {"label": "Ars Technica", "url": "https://feeds.arstechnica.com/arstechnica/index"},
@@ -482,23 +508,6 @@ def _normalize_reading_item(source, raw):
         "saved": False, "read": False,
     }
 
-def _normalize_bookmark(b):
-    """Same shape as _normalize_reading_item() so ArticleDetail/ReadingCard
-    render a bookmark with zero special-casing - the only real difference
-    is where it came from (pasted by hand, not polled from a subscribed
-    source). Always `saved: True`: adding a bookmark IS the save action,
-    there's no separate un-saved state for something you pasted in."""
-    blurb = b.get("blurb") or ""
-    return {
-        "id": b["id"], "kind": "article", "source_id": "bookmark",
-        "source_label": b.get("source_label") or b.get("domain") or "Bookmark",
-        "topic": b.get("topic") or "interesting", "title": b.get("title") or b["url"],
-        "url": b["url"], "domain": b.get("domain") or "", "author": None,
-        "published": b.get("added_at"), "thumb": b.get("thumb"), "blurb": blurb,
-        "read_minutes": max(1, len(blurb) // 1000), "duration_seconds": None,
-        "saved": True, "read": False,
-    }
-
 _OG_IMAGE_CACHE_FILE = CONFIG_DIR / "og-image-cache.json"
 _OG_IMAGE_RE = re.compile(r'<meta[^>]+property=["\']og:image["\'][^>]+content=["\']([^"\']+)["\']', re.I)
 # Some feeds (Codrops among them) carry no image at all in their RSS -
@@ -579,6 +588,20 @@ def _backfill_thumbs(items):
 
 def collect_reading(cfg, _shared):
     store = load_store()
+    # Heal markdown-paste mangling (`https://…/feed](https://…`) once so
+    # a bad paste doesn't keep 404ing forever.
+    if any(
+        (cleaned := _sanitize_feed_url(source.get("url") or ""))
+        and cleaned != (source.get("url") or "")
+        for source in store.get("reading_sources") or []
+    ):
+        def heal(s):
+            for source in s.get("reading_sources") or []:
+                cleaned = _sanitize_feed_url(source.get("url") or "")
+                if cleaned and cleaned != (source.get("url") or ""):
+                    source["url"] = cleaned
+        edit_store(heal)
+        store = load_store()
     sources = [s for s in store["reading_sources"] if s.get("enabled")]
     saved_ids = {s["id"] for s in store["reading_saved"]}
     read_ids = {r["id"] for r in store["reading_read"]}
@@ -591,7 +614,11 @@ def collect_reading(cfg, _shared):
             else:
                 raw_items = _feed_items(source["url"], limit=20)
         except Exception as e:
-            errors[source["id"]] = str(e)[:120]
+            name = type(e).__name__
+            if "Timeout" in name or "ConnectionError" in name:
+                errors[source["id"]] = "timed out reaching the feed"
+            else:
+                errors[source["id"]] = str(e)[:120]
             continue
         for raw in raw_items:
             item = _normalize_reading_item(source, raw)
@@ -601,10 +628,15 @@ def collect_reading(cfg, _shared):
             items.append(item)
     _backfill_thumbs(items)
     items.sort(key=lambda i: i["published"] or 0, reverse=True)
-    bookmarks = sorted((_normalize_bookmark(b) for b in store["reading_bookmarks"]),
-                       key=lambda i: i["published"] or 0, reverse=True)
-    return {"items": items, "sources": store["reading_sources"], "topics": store["reading_topics"],
-            "books": store["books"], "bookmarks": bookmarks, "errors": errors, "fetched_at": time.time()}
+    # Re-read books at the end — a concurrent edit/sync during the slow RSS
+    # loop must not be overwritten by the stale snapshot we captured above.
+    fresh_store = load_store()
+    # Local paste-a-link bookmarks were retired — Saves are Raindrop-only.
+    # Keep an empty list so older clients that still read `bookmarks` don't break.
+    return {"items": items, "sources": fresh_store.get("reading_sources") or store["reading_sources"],
+            "topics": fresh_store.get("reading_topics") or store["reading_topics"],
+            "books": list(fresh_store.get("books") or []), "bookmarks": [],
+            "errors": errors, "fetched_at": time.time()}
 
 def _reading_set_membership(list_key, item_id, want):
     """Shared body for save/read/hide - each is just 'is this id in this
@@ -626,9 +658,33 @@ def reading_set_read(item_id, read):
 def reading_hide_item(item_id):
     return _reading_set_membership("reading_hidden", item_id, True)
 
+# Paste from browsers/docs often arrives as a Markdown link
+# (`[label](https://…)`) or a naked URL with trailing junk. Feed fetch
+# then 404s on the mangled string even though the real feed works.
+_MD_LINK_RE = re.compile(r"\[([^\]]*)\]\((https?://[^)\s]+)\)")
+_BARE_URL_RE = re.compile(r"https?://[^\s\]\>\"']+")
+
+def _sanitize_feed_url(raw):
+    text = str(raw or "").strip()
+    if not text:
+        return ""
+    md = _MD_LINK_RE.search(text)
+    if md:
+        text = md.group(2)
+    elif "](" in text:
+        match = _BARE_URL_RE.search(text)
+        if match:
+            text = match.group(0)
+    text = text.strip().rstrip(".,;)]}>\"'")
+    if not text.startswith(("http://", "https://")):
+        return ""
+    # Drop tracking junk; keep intentional query params (e.g. points=300).
+    aliased = _FEED_URL_ALIASES.get(text.rstrip("/")) or _FEED_URL_ALIASES.get(text)
+    return aliased or text
+
 def reading_add_source(payload):
     label = str(payload.get("label") or "").strip()
-    url = str(payload.get("url") or "").strip()
+    url = _sanitize_feed_url(payload.get("url"))
     if not label or not url: return {"ok": False, "error": "label and url required"}
     if payload.get("type") in ("rss", "youtube", "webpage"):
         source_type = payload["type"]
@@ -664,6 +720,10 @@ def reading_edit_source(source_id, patch):
                 s["topic"] = patch["topic"]
             if "enabled" in patch:
                 s["enabled"] = bool(patch["enabled"])
+            if "url" in patch:
+                cleaned = _sanitize_feed_url(patch.get("url"))
+                if cleaned:
+                    s["url"] = cleaned
             result = {"ok": True}
     edit_store(mutate)
     return result
@@ -714,6 +774,28 @@ def reading_set_topic_icon(topic_id, icon):
     edit_store(mutate)
     return result
 
+def reading_rename_topic(topic_id, label):
+    """Change the display label only — id stays stable so sources keep their topic."""
+    topic_id = str(topic_id or "")
+    label = str(label or "").strip()[:40]
+    if not label:
+        return {"ok": False, "error": "a name is required"}
+    result = {"ok": False, "error": "not found"}
+    def mutate(store):
+        nonlocal result
+        topics = store.get("reading_topics") or []
+        if any(t.get("id") != topic_id and (t.get("label") or "").lower() == label.lower() for t in topics):
+            result = {"ok": False, "error": "that topic already exists"}
+            return
+        for t in topics:
+            if t.get("id") != topic_id:
+                continue
+            t["label"] = label
+            result = {"ok": True, "topics": topics}
+            return
+    edit_store(mutate)
+    return result
+
 def reading_reorder_topics(ids):
     """Same "known ids in the given order, anything missing appended in
     its existing relative order" shape /api/views already uses (server.py/
@@ -748,8 +830,6 @@ def reading_remove_topic(topic_id):
         store["reading_topics"] = [t for t in topics if t.get("id") != topic_id]
         for s in store.get("reading_sources") or []:
             if s.get("topic") == topic_id: s["topic"] = "interesting"
-        for b in store.get("reading_bookmarks") or []:
-            if b.get("topic") == topic_id: b["topic"] = "interesting"
         result = {"ok": True, "topics": store["reading_topics"]}
     edit_store(mutate)
     return result
@@ -818,6 +898,738 @@ def search_open_library(query):
         })
     return {"ok": True, "results": results}
 
+
+def find_book_copies(title, author="", openlibrary_key=""):
+    """Find legitimate free/public reading copies for a shelf book.
+
+    Sources (only these - never pirate scrapers):
+      - Project Gutenberg via Gutendex (public-domain HTML/EPUB/PDF)
+      - Open Library + Internet Archive when ebook_access is public
+      - Open Library borrow links when the work is borrowable only
+
+    Returns a short ranked list the UI can paste into file_url, or the
+    user can still paste any Drive / bought / personal URL themselves.
+    """
+    title = str(title or "").strip()
+    author = str(author or "").strip()
+    ol_key = str(openlibrary_key or "").strip() or None
+    if not title and not ol_key:
+        return {"ok": True, "results": []}
+
+    results = []
+    seen = set()
+    errors = []
+
+    def _add(item):
+        url = (item.get("url") or "").strip()
+        if not url or url in seen:
+            return
+        seen.add(url)
+        results.append(item)
+
+    title_tokens = {t for t in re.findall(r"[a-z0-9]+", title.lower()) if len(t) > 3}
+
+    # --- Project Gutenberg (public domain) ---------------------------------
+    try:
+        q = " ".join(p for p in (title, author) if p)
+        r = requests.get(
+            "https://gutendex.com/books",
+            params={"search": q},
+            timeout=12,
+            headers={"User-Agent": "desk-panel/1.0"},
+        )
+        r.raise_for_status()
+        gut_books = 0
+        for book in (r.json().get("results") or [])[:8]:
+            if book.get("media_type") != "Text":
+                continue
+            # Prefer free/public-domain entries; skip clearly copyrighted.
+            if book.get("copyright") is True:
+                continue
+            formats = book.get("formats") or {}
+            authors = ", ".join(a.get("name") or "" for a in (book.get("authors") or []) if a.get("name"))
+            bt = book.get("title") or title
+            # Prefer HTML for in-app iframe reading; EPUB/PDF as fallbacks.
+            picks = []
+            for mime, label in (
+                ("text/html", "HTML"),
+                ("application/epub+zip", "EPUB"),
+                ("application/pdf", "PDF"),
+            ):
+                # Gutendex keys can include charset suffixes on text/html.
+                url = formats.get(mime)
+                if not url:
+                    for k, v in formats.items():
+                        if k.startswith(mime):
+                            url = v
+                            break
+                if url:
+                    picks.append((label, url))
+            if not picks:
+                continue
+            # One Gutenberg edition: HTML (+ EPUB if available). Two editions max.
+            for label, url in picks[:2]:
+                _add({
+                    "source": "Project Gutenberg",
+                    "title": bt,
+                    "author": authors or author or "",
+                    "format": label,
+                    "url": url,
+                    "kind": "read",
+                })
+            gut_books += 1
+            if gut_books >= 2:
+                break
+    except requests.exceptions.Timeout:
+        errors.append("Project Gutenberg timed out")
+    except Exception as e:
+        errors.append(f"Project Gutenberg: {str(e)[:100]}")
+
+    # --- Open Library / Internet Archive public scans ----------------------
+    try:
+        params = {"limit": 8}
+        if ol_key:
+            # Work keys look like /works/OL66554W - search by key is reliable.
+            params["q"] = f"key:{ol_key}" if ol_key.startswith("/") else f"key:/{ol_key}"
+        else:
+            params["q"] = " ".join(p for p in (title, author) if p)
+        r = requests.get(
+            "https://openlibrary.org/search.json",
+            params=params,
+            timeout=12,
+            headers={"User-Agent": "desk-panel/1.0"},
+        )
+        r.raise_for_status()
+        docs = r.json().get("docs") or []
+        ia_added = 0
+        borrow_added = 0
+        read_before_borrow = len(results)
+
+        def _ia_rank(ia_id):
+            il = ia_id.lower()
+            hits = sum(1 for t in title_tokens if t in il)
+            return (
+                0 if il.endswith("gut") or "gutenberg" in il else 1,
+                0 if "librivox" not in il else 3,
+                0 if not il.startswith("bwb_") else 2,
+                -hits,
+                len(il),
+            )
+
+        for d in docs[:8]:
+            doc_title = d.get("title") or title
+            doc_author = ", ".join(d.get("author_name") or []) or author
+            access = (d.get("ebook_access") or "").lower()
+            ia_ids = [i for i in (d.get("ia") or []) if isinstance(i, str) and i.strip()]
+            key = d.get("key")
+
+            if access == "public" and ia_ids and ia_added < 2:
+                # Prefer identifiers that look like text ebooks over audio/LibriVox.
+                ranked = sorted(ia_ids, key=_ia_rank)
+                for ia_id in ranked:
+                    if "librivox" in ia_id.lower():
+                        continue
+                    # Skip IA ids that share no title tokens when we have tokens
+                    # (filters random-language Gutenberg mirrors).
+                    if title_tokens and not any(t in ia_id.lower() for t in title_tokens):
+                        continue
+                    # /embed/ frames cleanly in the in-app reader; details
+                    # is the escape hatch "Open in browser" already uses.
+                    _add({
+                        "source": "Internet Archive",
+                        "title": doc_title,
+                        "author": doc_author,
+                        "format": "Read online",
+                        "url": f"https://archive.org/embed/{ia_id}",
+                        "kind": "read",
+                    })
+                    ia_added += 1
+                    if ia_added >= 2:
+                        break
+
+            # Borrow only for this work (when keyed), or as a last resort when
+            # no free public file turned up at all.
+            if access != "borrowable" or not key or borrow_added >= 1:
+                continue
+            if ol_key:
+                norm = ol_key if ol_key.startswith("/") else f"/{ol_key}"
+                if key != norm:
+                    continue
+            elif read_before_borrow + ia_added > 0 or len(results) > 0:
+                continue
+            _add({
+                "source": "Open Library",
+                "title": doc_title,
+                "author": doc_author,
+                "format": "Borrow",
+                "url": f"https://openlibrary.org{key}",
+                "kind": "borrow",
+            })
+            borrow_added += 1
+    except requests.exceptions.Timeout:
+        errors.append("Open Library timed out")
+    except Exception as e:
+        errors.append(f"Open Library: {str(e)[:100]}")
+
+    payload = {"ok": True, "results": results[:10]}
+    if errors and not results:
+        payload["ok"] = False
+        payload["error"] = "; ".join(errors)[:200]
+    elif errors:
+        payload["warning"] = "; ".join(errors)[:200]
+    return payload
+
+
+_BOOK_FILE_EXTS = {".epub", ".pdf", ".mobi", ".azw3", ".fb2", ".cbz", ".cbr"}
+# When Author/Title/ has several formats, keep one shelf entry (epub wins).
+_BOOK_FORMAT_PREF = {".epub": 0, ".pdf": 1, ".mobi": 2, ".azw3": 3, ".fb2": 4, ".cbz": 5, ".cbr": 6}
+
+
+def _books_root(cfg):
+    """Configured books folder, or a common mapped-NAS fallback when empty.
+
+    Fallback only applies when the path exists on this machine — never invents
+    a stranger's library for an unconfigured install.
+    """
+    raw = str((cfg or {}).get("books_dir") or "").strip()
+    if raw:
+        root = Path(raw).expanduser()
+        return root if root.is_dir() else None
+    for candidate in (Path(r"H:\media\books"), Path(r"Z:\data\media\books")):
+        if candidate.is_dir():
+            return candidate
+    return None
+
+
+def _norm_book_text(value):
+    return re.sub(r"[^a-z0-9]+", " ", str(value or "").lower()).strip()
+
+
+def _book_file_url(rel_s):
+    return f"/api/books/local?rel={quote(str(rel_s).replace(chr(92), '/'), safe='/')}"
+
+
+def _book_rel_key(rel):
+    return str(rel).replace("\\", "/").strip().lower()
+
+
+def _book_identity(author, title):
+    return f"{_norm_book_text(author)}|{_norm_book_text(title)}"
+
+
+def _resolve_books_root(cfg):
+    """Return resolved books root or (None, error_payload)."""
+    root = _books_root(cfg)
+    if not root:
+        return None, {
+            "ok": False,
+            "results": [],
+            "error": "No books folder — set Settings → Reading → Books folder (e.g. your NAS media/books)",
+        }
+    # Resolve once up front so mapped-drive paths (H:\…) and their UNC
+    # equivalents (\\nas\share\…) compare as the same tree. Mixing the two
+    # forms makes Path.relative_to raise and silently skip every file.
+    try:
+        return root.resolve(), None
+    except OSError as e:
+        return None, {"ok": False, "results": [], "error": f"Couldn’t open books folder ({str(e)[:120]})"}
+
+
+def _discover_local_book_files(root):
+    """Walk books_root; one candidate per Author/Title folder (best format wins).
+
+    Expected layout: Author / Book Title / file.epub
+    Loose files at the root become their own entry (stem = title).
+    """
+    by_folder = {}
+    try:
+        for path in root.rglob("*"):
+            if not path.is_file() or path.suffix.lower() not in _BOOK_FILE_EXTS:
+                continue
+            if any(part.startswith(".") for part in path.parts):
+                continue
+            try:
+                path = path.resolve()
+                rel = path.relative_to(root)
+            except (ValueError, OSError):
+                continue
+            folder_key = (
+                _book_rel_key(rel.parent) if rel.parent != Path(".") else _book_rel_key(rel)
+            )
+            pref = _BOOK_FORMAT_PREF.get(path.suffix.lower(), 99)
+            prev = by_folder.get(folder_key)
+            if prev is not None and pref >= prev["pref"]:
+                continue
+            parts = rel.parts
+            author = parts[0] if len(parts) >= 2 else ""
+            title = parts[1] if len(parts) >= 3 else path.stem
+            by_folder[folder_key] = {
+                "pref": pref,
+                "rel": rel,
+                "rel_s": rel.as_posix(),
+                "author": author,
+                "title": title,
+                "filename": path.name,
+                "ext": path.suffix.lower().lstrip("."),
+                "file_url": _book_file_url(rel.as_posix()),
+            }
+    except OSError:
+        return []
+    return list(by_folder.values())
+
+
+def search_local_books(cfg, title, author=""):
+    """Find matching ebooks already on disk under books_dir / NAS mount."""
+    root, err = _resolve_books_root(cfg)
+    if err:
+        return err
+
+    title_n = _norm_book_text(title)
+    author_n = _norm_book_text(author)
+    title_tokens = [t for t in title_n.split() if len(t) > 2]
+    author_tokens = [t for t in author_n.split() if len(t) > 2]
+    if not title_tokens and not author_tokens:
+        return {"ok": True, "results": []}
+
+    scored = []
+    for item in _discover_local_book_files(root):
+        hay = _norm_book_text(f"{item['author']} {item['title']} {item['filename']} {item['rel_s']}")
+        score = 0
+        if title_n and title_n in hay:
+            score += 100
+        for t in title_tokens:
+            if t in hay:
+                score += 12
+        for a in author_tokens:
+            if a in hay:
+                score += 18
+        # Need at least one real title token hit so "art" alone doesn't match everything.
+        if title_tokens and not any(t in hay for t in title_tokens):
+            continue
+        if score < 12:
+            continue
+        scored.append((score, {
+            "source": "My library",
+            "title": item["title"] or item["filename"],
+            "author": item["author"] or (author or ""),
+            "format": item["ext"].upper(),
+            "url": item["file_url"],
+            "rel": item["rel_s"],
+            "kind": "read",
+        }))
+
+    scored.sort(key=lambda x: (-x[0], x[1]["title"].lower()))
+    # Dedupe by rel
+    seen = set()
+    results = []
+    for _, item in scored:
+        if item["rel"] in seen:
+            continue
+        seen.add(item["rel"])
+        results.append(item)
+        if len(results) >= 8:
+            break
+
+    return {"ok": True, "results": results, "root": str(root)}
+
+
+def sync_local_books(cfg):
+    """Scan the books folder and put missing files on the shelf.
+
+    - New Author/Title folders → Want to Read entries with file_url wired.
+    - Existing shelf books (same author+title) missing a file → link the file.
+    - Already linked / already present → skipped.
+    """
+    root, err = _resolve_books_root(cfg)
+    if err:
+        return {
+            "ok": False,
+            "error": err.get("error") or "No books folder",
+            "added": 0,
+            "linked": 0,
+            "skipped": 0,
+            "scanned": 0,
+            "root": "",
+        }
+
+    discovered = _discover_local_book_files(root)
+    added = []
+    linked = []
+    skipped = 0
+    now = time.time()
+
+    def mutate(store):
+        nonlocal skipped
+        books = store.setdefault("books", [])
+        by_rel = {}
+        by_ident = {}
+        for book in books:
+            fu = str(book.get("file_url") or "").strip()
+            if "rel=" in fu:
+                try:
+                    qs = parse_qs(urlparse(fu).query)
+                    rel = (qs.get("rel") or [""])[0]
+                    if rel:
+                        by_rel[_book_rel_key(rel)] = book
+                except Exception:
+                    pass
+            ident = _book_identity(book.get("author"), book.get("title"))
+            if ident != "|":
+                by_ident[ident] = book
+
+        for item in discovered:
+            rel_key = _book_rel_key(item["rel_s"])
+            file_url = item["file_url"]
+            author = (item["author"] or "Unknown")[:150]
+            title = (item["title"] or item["filename"] or "Untitled")[:200]
+            ident = _book_identity(author, title)
+
+            existing = by_rel.get(rel_key)
+            if existing is None and ident != "|":
+                existing = by_ident.get(ident)
+
+            if existing is not None:
+                changed = False
+                if not str(existing.get("file_url") or "").strip():
+                    existing["file_url"] = file_url
+                    changed = True
+                if not str(existing.get("cover_url") or "").strip():
+                    cover = ensure_book_cover(
+                        cfg, existing.get("id"), rel=item["rel_s"],
+                        title=existing.get("title") or title,
+                        author=existing.get("author") or author,
+                    )
+                    if cover:
+                        existing["cover_url"] = cover
+                        changed = True
+                if changed:
+                    by_rel[rel_key] = existing
+                    by_ident[ident] = existing
+                    linked.append({
+                        "id": existing.get("id"),
+                        "title": existing.get("title") or title,
+                        "author": existing.get("author") or author,
+                    })
+                else:
+                    skipped += 1
+                continue
+
+            book_id = "local-" + hashlib.sha1(item["rel_s"].encode("utf-8")).hexdigest()[:12]
+            if any(b.get("id") == book_id for b in books):
+                book_id = "local-" + hashlib.sha1(
+                    f"{book_id}|{now}".encode("utf-8")
+                ).hexdigest()[:12]
+
+            entry = {
+                "id": book_id,
+                "title": title,
+                "author": author,
+                "cover_url": ensure_book_cover(
+                    cfg, book_id, rel=item["rel_s"], title=title, author=author,
+                ),
+                "status": "want",
+                "progress_pct": 0,
+                "pages": None,
+                "added_at": now,
+                "started_at": None,
+                "finished_at": None,
+                "openlibrary_key": None,
+                "notes": "",
+                "file_url": file_url,
+                "reading_cfi": None,
+            }
+            books.append(entry)
+            by_rel[rel_key] = entry
+            if ident != "|":
+                by_ident[ident] = entry
+            added.append({
+                "id": book_id,
+                "title": title,
+                "author": author,
+                "ext": item["ext"],
+            })
+
+        # Backfill covers for linked / existing rows that still lack artwork.
+        for book in books:
+            if str(book.get("cover_url") or "").strip():
+                continue
+            rel = _rel_from_file_url(book.get("file_url"))
+            if not rel:
+                continue
+            cover = ensure_book_cover(
+                cfg, book.get("id"), rel=rel,
+                title=book.get("title"), author=book.get("author"),
+            )
+            if cover:
+                book["cover_url"] = cover
+
+    edit_store(mutate)
+    return {
+        "ok": True,
+        "added": len(added),
+        "linked": len(linked),
+        "skipped": skipped,
+        "scanned": len(discovered),
+        "books": added,
+        "linked_books": linked,
+        "root": str(root),
+    }
+
+
+def _books_resolve(cfg, rel):
+    """Serve only files inside the books root (path-traversal safe)."""
+    root = _books_root(cfg)
+    if not root:
+        return None
+    try:
+        root = root.resolve()
+    except OSError:
+        return None
+    # rel is stored with forward slashes from search results
+    wanted = str(rel or "").replace("\\", "/").lstrip("/")
+    if not wanted or ".." in wanted.split("/"):
+        return None
+    target = (root / Path(*wanted.split("/"))).resolve()
+    try:
+        target.relative_to(root)
+    except ValueError:
+        return None
+    if not target.is_file() or target.suffix.lower() not in _BOOK_FILE_EXTS:
+        return None
+    return target
+
+
+def _book_cover_stem(book_id):
+    safe = re.sub(r"[^a-z0-9]+", "-", str(book_id or "").lower()).strip("-") or "book"
+    return f"book-{safe}"
+
+
+def _book_cover_api_url(path):
+    return "/api/cover?path=" + quote(str(path)) + f"&v={int(time.time())}"
+
+
+def _find_sidecar_cover(book_file: Path):
+    """Calibre / folder art next to the ebook file."""
+    folder = book_file.parent
+    names = (
+        "cover.jpg", "cover.jpeg", "cover.png", "cover.webp",
+        "folder.jpg", "folder.jpeg", "folder.png",
+        "Cover.jpg", "Cover.png",
+    )
+    for name in names:
+        candidate = folder / name
+        if candidate.is_file():
+            return candidate
+    # Any image that looks like cover art in the title folder
+    try:
+        for path in folder.iterdir():
+            if not path.is_file():
+                continue
+            if path.suffix.lower() not in {".jpg", ".jpeg", ".png", ".webp"}:
+                continue
+            if "cover" in path.stem.lower() or path.stem.lower() in {"folder", "artwork"}:
+                return path
+    except OSError:
+        pass
+    return None
+
+
+def _extract_epub_cover_bytes(epub_path: Path):
+    """Return (bytes, suffix) for the EPUB cover image, or None."""
+    import zipfile
+    from xml.etree import ElementTree as ET
+
+    try:
+        with zipfile.ZipFile(epub_path) as zf:
+            names = set(zf.namelist())
+            # container → OPF
+            try:
+                container = zf.read("META-INF/container.xml")
+                root = ET.fromstring(container)
+                ns = {"c": "urn:oasis:names:tc:opendocument:xmlns:container"}
+                rootfile = root.find(".//c:rootfile", ns)
+                if rootfile is None:
+                    rootfile = root.find(".//{urn:oasis:names:tc:opendocument:xmlns:container}rootfile")
+                opf_path = rootfile.get("full-path") if rootfile is not None else None
+            except Exception:
+                opf_path = None
+            if not opf_path:
+                for n in names:
+                    if n.lower().endswith(".opf"):
+                        opf_path = n
+                        break
+            if not opf_path or opf_path not in names:
+                return None
+
+            opf = ET.fromstring(zf.read(opf_path))
+            opf_dir = str(Path(opf_path).parent).replace("\\", "/")
+            if opf_dir == ".":
+                opf_dir = ""
+
+            def join_opf(href):
+                href = (href or "").replace("\\", "/")
+                if not opf_dir:
+                    return href
+                return f"{opf_dir.rstrip('/')}/{href.lstrip('/')}"
+
+            cover_id = None
+            cover_href = None
+            # EPUB3 properties="cover-image"
+            for item in opf.iter():
+                tag = item.tag.split("}")[-1] if "}" in item.tag else item.tag
+                if tag != "item":
+                    continue
+                props = (item.get("properties") or "").split()
+                if "cover-image" in props:
+                    cover_href = item.get("href")
+                    break
+            if not cover_href:
+                for meta in opf.iter():
+                    tag = meta.tag.split("}")[-1] if "}" in meta.tag else meta.tag
+                    if tag == "meta" and (meta.get("name") or "").lower() == "cover":
+                        cover_id = meta.get("content")
+                        break
+                if cover_id:
+                    for item in opf.iter():
+                        tag = item.tag.split("}")[-1] if "}" in item.tag else item.tag
+                        if tag == "item" and item.get("id") == cover_id:
+                            cover_href = item.get("href")
+                            break
+
+            if not cover_href:
+                # Heuristic: first image named cover*
+                for name in names:
+                    low = name.lower()
+                    if ("cover" in low) and low.endswith((".jpg", ".jpeg", ".png", ".gif", ".webp")):
+                        cover_href = name
+                        opf_dir = ""
+                        break
+
+            if not cover_href:
+                return None
+            member = cover_href if cover_href in names else join_opf(cover_href)
+            if member not in names:
+                # try basename match
+                base = Path(cover_href).name.lower()
+                member = next((n for n in names if Path(n).name.lower() == base), None)
+            if not member:
+                return None
+            data = zf.read(member)
+            suffix = Path(member).suffix.lower() or ".jpg"
+            if suffix not in {".jpg", ".jpeg", ".png", ".gif", ".webp"}:
+                suffix = ".jpg"
+            return data, suffix
+    except Exception:
+        return None
+
+
+def ensure_book_cover(cfg, book_id, rel=None, file_path=None, title=None, author=None):
+    """Cache a local cover into COVER_DIR and return /api/cover?path=… URL.
+
+    Falls back to Open Library cover URL when the file has no extractable art
+    (e.g. FB2).
+    """
+    if not book_id:
+        return None
+    stem = _book_cover_stem(book_id)
+    COVER_DIR.mkdir(parents=True, exist_ok=True)
+    for existing in COVER_DIR.glob(f"{stem}.*"):
+        if existing.is_file():
+            return _book_cover_api_url(existing)
+
+    target = file_path
+    if target is None and rel:
+        target = _books_resolve(cfg, rel)
+    if target is not None and Path(target).is_file():
+        target = Path(target)
+
+        src = _find_sidecar_cover(target)
+        data = None
+        suffix = ".jpg"
+        if src is not None:
+            try:
+                data = src.read_bytes()
+                suffix = src.suffix.lower() or ".jpg"
+            except OSError:
+                data = None
+
+        if data is None and target.suffix.lower() == ".epub":
+            extracted = _extract_epub_cover_bytes(target)
+            if extracted:
+                data, suffix = extracted
+
+        if data:
+            out = COVER_DIR / f"{stem}{suffix}"
+            try:
+                out.write_bytes(data)
+                return _book_cover_api_url(out)
+            except OSError:
+                pass
+
+    # Remote fallback — keeps FB2 / coverless EPUBs from looking empty on the shelf.
+    queries = []
+    title_s = str(title or "").strip()
+    author_s = str(author or "").strip()
+    if title_s or author_s:
+        # Soften censored filenames (Unfu-k / Unfu*k → Unfuck) so Open Library hits.
+        soft = re.sub(r"([A-Za-z])[\-\*]([A-Za-z])", r"\1\2", title_s)
+        soft = re.sub(r"[^\w\s]", " ", soft)
+        soft = re.sub(r"\s+", " ", soft).strip()
+        for q in (
+            f"{soft} {author_s}".strip(),
+            f"{author_s} {soft}".strip(),
+            soft,
+            f"{author_s} {title_s}".strip(),
+        ):
+            if q and q not in queries:
+                queries.append(q)
+    for q in queries:
+        try:
+            ol = search_open_library(q)
+            for hit in ol.get("results") or []:
+                if hit.get("cover_url"):
+                    return hit["cover_url"]
+        except Exception:
+            continue
+    return None
+
+
+def _rel_from_file_url(file_url):
+    fu = str(file_url or "").strip()
+    if "rel=" not in fu:
+        return ""
+    try:
+        qs = parse_qs(urlparse(fu).query)
+        return (qs.get("rel") or [""])[0]
+    except Exception:
+        return ""
+
+
+def backfill_book_covers(cfg):
+    """Fill missing cover_url for shelf books that have a local file."""
+    updated = 0
+
+    def mutate(store):
+        nonlocal updated
+        for book in store.get("books") or []:
+            if str(book.get("cover_url") or "").strip():
+                continue
+            rel = _rel_from_file_url(book.get("file_url"))
+            cover = ensure_book_cover(
+                cfg,
+                book.get("id"),
+                rel=rel or None,
+                title=book.get("title"),
+                author=book.get("author"),
+            )
+            if cover:
+                book["cover_url"] = cover
+                updated += 1
+
+    edit_store(mutate)
+    return updated
+
+
 def add_book(payload):
     title = str(payload.get("title") or "").strip()
     if not title: return {"ok": False, "error": "title required"}
@@ -842,6 +1654,7 @@ def add_book(payload):
         # not just a progress tracker - see edit_book() for how it's set/
         # changed later, and BookDetail.tsx's reader overlay for playback.
         "file_url": str(payload.get("file_url") or "").strip() or None,
+        "reading_cfi": None,
     }
     added = {"ok": True, "id": book_id}
     def mutate(store):
@@ -867,6 +1680,15 @@ def edit_book(book_id, patch):
                 if patch["status"] == "finished":
                     if not b.get("finished_at"): b["finished_at"] = time.time()
                     b["progress_pct"] = 100
+                # Manual demote back to Want → start over (unless caller
+                # already sent an explicit progress_pct / reading_cfi).
+                if patch["status"] == "want":
+                    if "progress_pct" not in patch:
+                        b["progress_pct"] = 0
+                    if "reading_cfi" not in patch:
+                        b["reading_cfi"] = None
+                    b["started_at"] = None
+                    b["finished_at"] = None
             if "progress_pct" in patch:
                 try: b["progress_pct"] = max(0, min(100, int(patch["progress_pct"])))
                 except (TypeError, ValueError): pass
@@ -874,6 +1696,10 @@ def edit_book(book_id, patch):
                 b["notes"] = str(patch.get("notes") or "")[:2000]
             if "file_url" in patch:
                 b["file_url"] = str(patch.get("file_url") or "").strip() or None
+            if "reading_cfi" in patch:
+                # EPUB.js CFI string — resume position for the in-app reader.
+                cfi = str(patch.get("reading_cfi") or "").strip()
+                b["reading_cfi"] = cfi[:1200] or None
             result = {"ok": True}
         return None
     edit_store(mutate)
@@ -882,55 +1708,6 @@ def edit_book(book_id, patch):
 def delete_book(book_id):
     def mutate(store):
         store["books"] = [b for b in store.get("books") or [] if b.get("id") != book_id]
-    edit_store(mutate)
-    return {"ok": True}
-
-def add_bookmark(payload):
-    """Raindrop-style 'paste a link' bookmark - fetches the page once,
-    pulls title/image/description via trafilatura's metadata extractor
-    (not the full-text extractor _extract_article uses; a bookmark needs
-    a card's worth of metadata, not the whole article body up front - the
-    reader still fetches full text on demand through the same
-    /api/reading/article path every other article uses, since
-    _normalize_bookmark gives it the same id/url shape)."""
-    url = str(payload.get("url") or "").strip()
-    if not url.startswith(("http://", "https://")):
-        return {"ok": False, "error": "that doesn't look like a URL"}
-    bookmark_id = hashlib.sha1(url.encode()).hexdigest()[:16]
-    topic = payload.get("topic") if payload.get("topic") in _reading_topic_ids() else "interesting"
-    domain = (urlparse(url).hostname or "").replace("www.", "")
-    title, image, excerpt, sitename = url, None, "", domain
-    try:
-        import trafilatura
-        r = requests.get(url, timeout=15, headers={"User-Agent": "desk-panel/1.0"})
-        r.raise_for_status()
-        if r.encoding is None or r.encoding.lower() == "iso-8859-1":
-            r.encoding = r.apparent_encoding
-        meta = trafilatura.extract_metadata(r.text, default_url=url).as_dict()
-        title = (meta.get("title") or "").strip() or url
-        image = meta.get("image") or None
-        excerpt = (meta.get("description") or "").strip()
-        sitename = (meta.get("sitename") or "").strip() or domain
-    except Exception as e:
-        errors_note = str(e)[:120]  # swallowed - a bookmark with just a URL as its title beats a hard failure
-        _ = errors_note
-    bookmark = {
-        "id": bookmark_id, "url": url, "title": title[:200], "domain": domain,
-        "source_label": sitename[:80], "thumb": image, "blurb": excerpt[:400],
-        "topic": topic, "added_at": time.time(),
-    }
-    result = {"ok": True, "id": bookmark_id}
-    def mutate(store):
-        existing = store.setdefault("reading_bookmarks", [])
-        if any(b.get("id") == bookmark_id for b in existing):
-            return  # already bookmarked - dedupe silently
-        existing.append(bookmark)
-    edit_store(mutate)
-    return result
-
-def delete_bookmark(bookmark_id):
-    def mutate(store):
-        store["reading_bookmarks"] = [b for b in store.get("reading_bookmarks") or [] if b.get("id") != bookmark_id]
     edit_store(mutate)
     return {"ok": True}
 

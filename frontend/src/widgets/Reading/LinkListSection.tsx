@@ -1,7 +1,7 @@
 import type { ReadingItem } from '../../api/types';
 import { SaveButton } from './SaveButton';
 import { relativeTime } from './time';
-import { TOPIC_COLORS } from './topics';
+import { topicColor as sharedTopicColor } from './topics';
 import styles from './LinkListSection.module.css';
 
 interface LinkListSectionProps {
@@ -24,7 +24,7 @@ export function LinkListSection({ heading, items, onOpen, onToggleSave, onDismis
       {heading && <h2 className={styles.heading}>{heading}</h2>}
       <div className={styles.list}>
         {items.map((item) => {
-          const color = item.topic in TOPIC_COLORS ? TOPIC_COLORS[item.topic as keyof typeof TOPIC_COLORS] : TOPIC_COLORS.interesting;
+          const color = sharedTopicColor(item.topic);
           return (
             <div key={item.id} className={styles.row}>
               <button type="button" className={styles.rowBody} onClick={() => onOpen(item)}>
@@ -39,7 +39,7 @@ export function LinkListSection({ heading, items, onOpen, onToggleSave, onDismis
               <div className={styles.rowActions}>
                 <SaveButton saved={item.saved} onToggle={() => onToggleSave(item)} variant="panel" small inline />
                 {onDismiss && (
-                  <button type="button" className={styles.dismissBtn} onClick={() => onDismiss(item)} title="Not interested">
+                  <button type="button" className={styles.dismissBtn} onClick={() => onDismiss(item)} aria-label="Not interested" title="Not interested">
                     ×
                   </button>
                 )}

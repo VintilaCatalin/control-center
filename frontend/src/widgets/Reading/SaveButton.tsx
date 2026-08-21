@@ -33,7 +33,7 @@ export function SaveButton({ saved, onToggle, variant = 'image', small, inline }
         .join(' ')}
       onClick={onToggle}
       aria-pressed={saved}
-      title={saved ? 'Saved' : 'Save for later'}
+      title={saved ? 'Saved to Raindrop' : 'Save to Raindrop'}
     >
       <BookmarkIcon filled={saved} />
     </button>

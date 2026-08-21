@@ -7,8 +7,9 @@ interface FeedSectionProps {
   items: ReadingItem[];
   onOpen: (item: ReadingItem) => void;
   onToggleSave: (item: ReadingItem) => void;
-  onRemove?: (item: ReadingItem) => void;
   onDismiss?: (item: ReadingItem) => void;
+  /** Single column for narrow 2-wide panels (Tech). */
+  narrow?: boolean;
 }
 
 // A plain vertical list under an optional heading - deliberately not an
@@ -18,14 +19,21 @@ interface FeedSectionProps {
 // suited). Every item gets the same FeedCard; the only variation is
 // which of its two compositions (image vs. typographic) it falls into
 // on its own.
-export function FeedSection({ heading, items, onOpen, onToggleSave, onRemove, onDismiss }: FeedSectionProps) {
+export function FeedSection({ heading, items, onOpen, onToggleSave, onDismiss, narrow }: FeedSectionProps) {
   if (items.length === 0) return null;
   return (
-    <section className={styles.section}>
+    <section className={[styles.section, narrow ? styles.narrow : ''].filter(Boolean).join(' ')}>
       {heading && <h2 className={styles.heading}>{heading}</h2>}
       <div className={styles.list}>
         {items.map((item) => (
-          <FeedCard key={item.id} item={item} onOpen={onOpen} onToggleSave={onToggleSave} onRemove={onRemove} onDismiss={onDismiss} />
+          <FeedCard
+            key={item.id}
+            item={item}
+            onOpen={onOpen}
+            onToggleSave={onToggleSave}
+            onDismiss={onDismiss}
+            compact={narrow}
+          />
         ))}
       </div>
     </section>

@@ -130,6 +130,13 @@
   color: var(--warn);
 }
 
+.setupNote {
+  composes: callout from '../../tokens/typography.module.css';
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
 .body {
   display: flex;
   flex-direction: column;

@@ -46,12 +46,15 @@ export function ContinueGlance() {
   const book = [...(snapshot?.reading?.books ?? [])].filter((item) => item.status === 'reading').sort((a, b) => (b.started_at ?? b.added_at) - (a.started_at ?? a.added_at))[0];
   const plex = (snapshot?.plex?.recent ?? []).find((item) => !!item.viewOffset) ?? snapshot?.plex?.recent?.[0];
   const note = [...(snapshot?.notes?.notes ?? [])].sort((a, b) => b.when - a.when)[0];
-  const reading = snapshot?.reading?.bookmarks?.[0] ?? snapshot?.reading?.items?.find((item) => item.saved && !item.read);
+  const reading = snapshot?.reading?.items?.find((item) => {
+    const urls = new Set(snapshot?.library?.saved_urls ?? []);
+    return urls.has(item.url) && !item.read;
+  });
   const items: ContinueItem[] = [];
   if (book) items.push(bookItem(book, () => navigateToApp('reading', { readingSection: 'books' })));
   if (plex) items.push(plexItem(plex, () => navigateToApp('plex')));
   if (note) items.push(noteItem(note, () => navigateToApp('notes')));
-  if (reading) items.push(readingItem(reading, () => navigateToApp('reading', { readingSection: reading.topic })));
+  if (reading) items.push(readingItem({ ...reading, saved: true }, () => navigateToApp('reading', { readingSection: 'saves' })));
   const [featured, ...supporting] = items.slice(0, 4);
 
   return <div className={styles.glance}>

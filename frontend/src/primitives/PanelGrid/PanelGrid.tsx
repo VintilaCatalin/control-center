@@ -33,6 +33,9 @@ export interface PanelDef {
   // fit. Omit for a panel that's fine at any size within the global bounds.
   minSize?: Size;
   maxSize?: Size;
+  // Soft default when this view has no saved size for the panel yet
+  // (dynamic layouts like plex-home / reading-foryou).
+  defaultSize?: Size;
   // An optional small control next to the panel's own label (e.g. Games'
   // per-shelf "..." menu) - distinct from the grid-level show/hide
   // toolbar, which manages panels as a set, not any one panel's own
@@ -80,10 +83,44 @@ function ResizeIcon() {
 // routes (server.py:2894-2926) via one additive DEFAULT_LAYOUTS entry per
 // view - no new backend logic.
 const LOCK_KEY_PREFIX = 'panelsLocked:';
+const LAYOUT_CACHE_PREFIX = 'panelLayout:';
+
+type LayoutCache = {
+  order?: string[];
+  sizes?: Record<string, Size>;
+  hidden?: string[];
+};
+
+function readLayoutCache(view: string): LayoutCache | null {
+  try {
+    const raw = localStorage.getItem(LAYOUT_CACHE_PREFIX + view);
+    if (!raw) return null;
+    return JSON.parse(raw) as LayoutCache;
+  } catch {
+    return null;
+  }
+}
+
+function writeLayoutCache(view: string, patch: LayoutCache) {
+  try {
+    const prev = readLayoutCache(view) ?? {};
+    localStorage.setItem(
+      LAYOUT_CACHE_PREFIX + view,
+      JSON.stringify({
+        order: patch.order ?? prev.order,
+        sizes: { ...(prev.sizes ?? {}), ...(patch.sizes ?? {}) },
+        hidden: patch.hidden ?? prev.hidden,
+      }),
+    );
+  } catch {
+    /* ignore */
+  }
+}
 
 export function PanelGrid({ view, panels, fallbackSize = { w: 2, h: 6 } }: PanelGridProps) {
   const { snapshot } = useSnapshotData();
   const saved = snapshot?.ui?.layouts?.[view];
+  const cached = readLayoutCache(view);
 
   const [localOrder, setLocalOrder] = useState<string[] | null>(null);
   const [localSizes, setLocalSizes] = useState<Record<string, Size> | null>(null);
@@ -114,16 +151,44 @@ export function PanelGrid({ view, panels, fallbackSize = { w: 2, h: 6 } }: Panel
 
   useEffect(() => {
     if (!localOrder && !localSizes && !localHidden) return;
-    const t = setTimeout(() => {
+
+    // Only drop optimistic overrides when the polled snapshot agrees.
+    // Never time them out — that was snapping For You panels back to
+    // defaults whenever /api/layout failed or ui lagged.
+    const savedSizes = saved?.sizes ?? {};
+    const sizesAgree =
+      !localSizes ||
+      Object.entries(localSizes).every(([id, size]) => {
+        const next = savedSizes[id];
+        return !!next && next.w === size.w && next.h === size.h;
+      });
+    const orderAgree =
+      !localOrder ||
+      (Array.isArray(saved?.order) &&
+        localOrder.length === saved.order.length &&
+        localOrder.every((id, i) => id === saved.order![i]));
+    const hiddenAgree =
+      !localHidden ||
+      (() => {
+        const remote = saved?.hidden ?? [];
+        return (
+          localHidden.length === remote.length && localHidden.every((id) => remote.includes(id))
+        );
+      })();
+
+    if (sizesAgree && orderAgree && hiddenAgree) {
       setLocalOrder(null);
       setLocalSizes(null);
       setLocalHidden(null);
-    }, 6000);
-    return () => clearTimeout(t);
-  }, [localOrder, localSizes, localHidden]);
+    }
+  }, [localOrder, localSizes, localHidden, saved?.sizes, saved?.order, saved?.hidden]);
 
   const knownIds = panels.map((p) => p.id);
-  const baseOrder = (saved?.order ?? knownIds).filter((id) => knownIds.includes(id));
+  const byId = new Map(panels.map((p) => [p.id, p]));
+  // Prefer server layout, then localStorage cache (survives refresh when
+  // the backend rejected / lagged), then the live panel list.
+  const remoteOrder = saved?.order?.length ? saved.order : cached?.order;
+  const baseOrder = (remoteOrder ?? knownIds).filter((id) => knownIds.includes(id));
   const effectiveOrder = localOrder ?? baseOrder;
   // Resilient to a panel that exists on the frontend but hasn't been
   // registered in the server's layout defaults yet - append it rather
@@ -131,13 +196,14 @@ export function PanelGrid({ view, panels, fallbackSize = { w: 2, h: 6 } }: Panel
   // "games" DEFAULT_LAYOUTS entry).
   const order = [...effectiveOrder, ...knownIds.filter((id) => !effectiveOrder.includes(id))];
   const sizes: Record<string, Size> = {
-    ...Object.fromEntries(knownIds.map((id) => [id, fallbackSize])),
+    ...Object.fromEntries(
+      knownIds.map((id) => [id, byId.get(id)?.defaultSize ?? fallbackSize]),
+    ),
+    ...(cached?.sizes ?? {}),
     ...(saved?.sizes ?? {}),
     ...(localSizes ?? {}),
   };
-  const hidden = localHidden ?? saved?.hidden ?? [];
-
-  const byId = new Map(panels.map((p) => [p.id, p]));
+  const hidden = localHidden ?? saved?.hidden ?? cached?.hidden ?? [];
   const visible = order.filter((id) => byId.has(id) && !hidden.includes(id));
 
   const gridRef = useRef<HTMLDivElement | null>(null);
@@ -160,21 +226,27 @@ export function PanelGrid({ view, panels, fallbackSize = { w: 2, h: 6 } }: Panel
     if (overId) {
       const current = commitReorder(order, id, overId);
       setLocalOrder(current);
-      reorderPanels(view, current);
+      writeLayoutCache(view, { order: current });
+      reorderPanels(view, current).catch(() => {});
     }
     setDragId(null);
     setOverId(null);
   }
 
   function handleResize(id: string, w: number, h: number) {
-    setLocalSizes((prev) => ({ ...(prev ?? sizes), [id]: { w, h } }));
-    resizePanel(view, id, w, h);
+    setLocalSizes((prev) => {
+      const next = { ...(prev ?? sizes), [id]: { w, h } };
+      writeLayoutCache(view, { sizes: { [id]: { w, h } } });
+      return next;
+    });
+    resizePanel(view, id, w, h).catch(() => {});
   }
 
   function handleHide(id: string, hide: boolean) {
     const next = hide ? [...hidden.filter((x) => x !== id), id] : hidden.filter((x) => x !== id);
     setLocalHidden(next);
-    hidePanel(view, id, hide);
+    writeLayoutCache(view, { hidden: next });
+    hidePanel(view, id, hide).catch(() => {});
   }
 
   // The show/hide control itself now lives in the global header (a
@@ -383,7 +455,7 @@ function Panel({
             <DragIcon />
           </span>
         )}
-        {!panel.bleed && !locked && <span className={styles.panelLabel} data-panel-label>{panel.label}</span>}
+        {!panel.bleed && <span className={styles.panelLabel} data-panel-label>{panel.label}</span>}
         {panel.headerAction && <div className={styles.panelHeaderAction}>{panel.headerAction}</div>}
       </div>
       <div className={styles.panelBody} data-panel-body>{panel.content}</div>

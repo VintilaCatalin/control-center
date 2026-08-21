@@ -37,6 +37,7 @@ from backend.collectors.games import collect_apps, collect_games, collect_ui
 from backend.collectors.hardware import collect_hardware
 from backend.collectors.homelab import collect_homelab
 from backend.collectors.library import collect_library
+from backend.collectors.lights import collect_lights
 from backend.collectors.media import collect_audio, collect_media
 from backend.collectors.media_extras import collect_photo, collect_popular, collect_upcoming
 from backend.collectors.notes import collect_notes
@@ -117,6 +118,31 @@ class Snapshot:
             with self.lock:
                 if self.errors.get(key) != message:
                     self.errors[key] = message
+                    self.error_version += 1
+
+    def refresh_reading_books(self):
+        """After books add/edit/delete/sync — update shelf without re-polling RSS.
+
+        Full collect_reading() can take minutes and used to race with status
+        edits (bookmark → Reading), wiping them from the live snapshot.
+        """
+        try:
+            from backend.core import load_store
+            books = list((load_store().get("books") or []))
+            with self.lock:
+                reading = dict(self.data.get("reading") or {})
+                reading["books"] = books
+                self.data["reading"] = reading
+                self.versions["reading"] = self.versions.get("reading", 0) + 1
+                self.stamps["reading"] = time.time()
+                if "reading" in self.errors:
+                    self.errors.pop("reading", None)
+                    self.error_version += 1
+        except Exception as e:
+            message = str(e)[:200]
+            with self.lock:
+                if self.errors.get("reading") != message:
+                    self.errors["reading"] = message
                     self.error_version += 1
     def loop(self):
         # First pass in parallel. Sequentially, one feed on a 12s timeout held up
@@ -231,9 +257,15 @@ def make_handler(snapshot):
                 return self._send(json.dumps(result))
             if route.path.startswith("/api/books/"):
                 body = self._body()
-                result = routes_reading.dispatch_books(route.path, body)
+                result = routes_reading.dispatch_books(route.path, body, snapshot.cfg)
                 if result is None: return self._send("not found", "text/plain", 404)
-                snapshot.refresh("reading")
+                # Light books-only refresh — do not re-run the full RSS collector.
+                snapshot.refresh_reading_books()
+                return self._send(json.dumps(result))
+            if route.path.startswith("/api/library/"):
+                body = self._body()
+                result = routes_library.dispatch_post(route.path, body, snapshot)
+                if result is None: return self._send("not found", "text/plain", 404)
                 return self._send(json.dumps(result))
             if (route.path.startswith("/api/games/") or route.path.startswith("/api/apps/")
                     or route.path.startswith("/api/settings/") or route.path.startswith("/api/pages")

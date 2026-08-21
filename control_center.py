@@ -246,16 +246,53 @@ def stop_server(port=PORT):
     return False
 
 
+def close_window():
+    """Close the Control Center Chromium --app window only.
+
+    It runs under its own --user-data-dir (PROFILE / panel-profile), so this
+    never touches the user's main Brave/Chrome/Edge session.
+    """
+    subprocess.run(
+        ["powershell", "-NoProfile", "-NonInteractive", "-Command",
+         "Get-CimInstance Win32_Process | Where-Object "
+         "{ $_.CommandLine -like '*panel-profile*' } | "
+         "ForEach-Object { Stop-Process -Id $_.ProcessId -Force }"],
+        capture_output=True,
+        creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+    )
+    # Wait until FindWindow no longer sees the old title, otherwise a
+    # following open_window() would just focus a dying process.
+    for _ in range(25):
+        if not find_window():
+            return
+        time.sleep(0.1)
+
+
+def wait_http(port=PORT, timeout=12.0):
+    """Port-open is not enough — wait until the React shell actually serves.
+
+    Without this, --restart can open Chromium against a half-booted backend
+    and land on a black root until the user Ctrl+R's.
+    """
+    import urllib.error
+    import urllib.request
+
+    url = f"http://127.0.0.1:{port}/"
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        try:
+            with urllib.request.urlopen(url, timeout=1.0) as res:
+                if 200 <= getattr(res, "status", 200) < 500:
+                    return True
+        except (urllib.error.URLError, TimeoutError, OSError):
+            pass
+        time.sleep(0.2)
+    return False
+
+
 def stop(port=PORT):
     killed = stop_server(port)
-    # The panel window runs on its own profile directory, so this only ever
-    # closes the panel and never your main browser.
-    subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-Command",
-                    "Get-CimInstance Win32_Process | Where-Object "
-                    "{ $_.CommandLine -like '*panel-profile*' } | "
-                    "ForEach-Object { Stop-Process -Id $_.ProcessId -Force }"],
-                   capture_output=True,
-                   creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+    close_window()
     print("backend stopped" if killed else "backend still up - check port " + str(port))
 
 
@@ -275,7 +312,7 @@ def main():
     ap.add_argument("--server-only", action="store_true")
     ap.add_argument("--stop", action="store_true")
     ap.add_argument("--restart", action="store_true",
-                    help="kill the running backend first, then start fresh")
+                    help="kill backend + window, then start fresh")
     ap.add_argument("--diag", action="store_true",
                     help="run server.py --diag (it lives there, not here)")
     ap.add_argument("--port", type=int, default=PORT)
@@ -297,10 +334,17 @@ def main():
         return stop(args.port)
 
     if args.restart:
+        # Must close the app window too. Leaving it focused against a dead
+        # backend produced a black shell until a manual Ctrl+R.
         stop_server(args.port)
+        close_window()
+        time.sleep(0.35)
 
     if not start_server(args.port):
         return
+
+    if not wait_http(args.port):
+        print("backend is listening but / is not responding yet - opening anyway")
 
     if args.server_only:
         print(f"backend running on http://127.0.0.1:{args.port}")

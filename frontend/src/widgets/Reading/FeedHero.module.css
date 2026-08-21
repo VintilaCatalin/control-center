@@ -1,64 +1,37 @@
 .hero {
   display: grid;
-  grid-template-columns: 1.6fr 1fr;
-  gap: var(--space-4);
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-5);
   align-items: stretch;
+  margin-bottom: 0;
 }
 
-@media (max-width: 860px) {
+@media (max-width: 900px) {
   .hero {
     grid-template-columns: 1fr;
   }
 }
 
-/* ---- the one photo tile - sized as an accent, not a page dominator.
-   2.4/1 (vs. the previous 16/9) is what actually shrinks it: at a fixed
-   width, height scales inversely with the aspect ratio. ---- */
-
-/* Un-clipped on purpose - .tile itself clips to give the photo its shape,
-   but the glow behind it needs room to bleed past that box, so it lives
-   in this wrapper instead (see MetricChart's own note on this exact
-   class of bug in Homelab: a glow inside an overflow:hidden box never
-   escapes it, however large the blur). */
-.tileWrap {
+.feature {
   position: relative;
-}
-
-.tile {
-  position: relative;
-  border-radius: var(--r-card);
+  border-radius: calc(var(--r-card) + 2px);
   overflow: hidden;
-  box-shadow: var(--lift);
-  transition: transform var(--dur-base) var(--ease);
+  isolation: isolate;
+  background: var(--graphite-raised);
+  aspect-ratio: 16 / 9;
+  width: 100%;
 }
 
-.tile:hover,
-.tile:focus-within {
-  transform: translateY(-3px);
-}
-
-/* An ambient wash of the story's own topic colour sitting just behind the
-   tile - the one cue that this is "the featured story", not just the
-   first item in a list, before a reader even reads the badge. */
-.glow {
-  position: absolute;
-  inset: -14% -5%;
-  z-index: -1;
-  background: radial-gradient(ellipse at 30% 15%, color-mix(in oklab, var(--tile-color) 50%, transparent), transparent 65%);
-  filter: blur(36px);
-  opacity: 0.6;
-  pointer-events: none;
-}
-
-.tileMedia {
+.featureMedia {
   position: relative;
   display: block;
   width: 100%;
-  aspect-ratio: 2.4 / 1;
+  height: 100%;
   border: none;
   padding: 0;
   background: none;
   cursor: pointer;
+  text-align: left;
 }
 
 .art {
@@ -66,6 +39,7 @@
   height: 100% !important;
   aspect-ratio: auto !important;
   border-radius: 0 !important;
+  object-fit: cover;
 }
 
 .playBadge {
@@ -75,30 +49,76 @@
   display: grid;
   place-items: center;
   color: #fff;
-  background: rgba(2, 3, 5, 0.1);
+  background: rgba(2, 3, 5, 0.12);
   pointer-events: none;
 }
 
 .playBadge svg {
   width: 32px;
   height: 32px;
-  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.5));
+  filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.45));
 }
 
 .scrim {
   position: absolute;
-  inset: auto 0 0;
-  height: 80%;
-  background: linear-gradient(to top, rgba(2, 3, 5, 0.9) 10%, rgba(2, 3, 5, 0.4) 55%, transparent);
+  inset: 0;
+  background:
+    linear-gradient(to top, rgba(2, 3, 5, 0.92) 0%, rgba(2, 3, 5, 0.45) 42%, transparent 72%),
+    linear-gradient(to right, rgba(2, 3, 5, 0.35), transparent 55%);
   pointer-events: none;
 }
 
-/* Reload/Pin/Save as one row of matching glass chips, top-right - not
-   just SaveButton alone any more. A bad or off-topic source image
-   shouldn't be stuck there until it ages out of the recency window on
-   its own: Reload skips to the next eligible story, Pin locks today's
-   pick in place so a good one survives the next poll. */
-.tileActions {
+.featureCopy {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 28px 28px 32px 28px;
+  max-width: 38rem;
+  box-sizing: border-box;
+}
+
+.kicker {
+  composes: eyebrow from '../../tokens/typography.module.css';
+  color: var(--tile-color);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.featureTitle {
+  composes: title1 from '../../tokens/typography.module.css';
+  color: #fff;
+  font-weight: 680;
+  letter-spacing: -0.02em;
+  line-height: 1.12;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: clamp(1.2rem, 2vw, 1.65rem);
+}
+
+.featureMeta {
+  composes: caption from '../../tokens/typography.module.css';
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.featureBlurb {
+  composes: footnote from '../../tokens/typography.module.css';
+  color: rgba(255, 255, 255, 0.78);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  max-width: 32rem;
+}
+
+.featureActions {
   position: absolute;
   top: var(--space-3);
   right: var(--space-3);
@@ -107,161 +127,154 @@
   gap: 8px;
 }
 
-.tileActionBtn {
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  flex-shrink: 0;
-  border-radius: 999px;
-  border: none;
-  background: rgba(2, 3, 5, 0.5);
-  backdrop-filter: blur(6px);
-  color: rgba(255, 255, 255, 0.85);
-  cursor: pointer;
-  transition:
-    color var(--dur-fast) var(--ease),
-    background var(--dur-fast) var(--ease),
-    transform var(--dur-fast) var(--ease);
+.actionBtn {
+  width: 30px !important;
+  height: 30px !important;
+  border: none !important;
+  background: rgba(2, 3, 5, 0.48) !important;
+  backdrop-filter: blur(8px);
+  color: rgba(255, 255, 255, 0.88) !important;
 }
 
-.tileActionBtn:hover {
-  color: #fff;
-  transform: scale(1.08);
+.actionBtn:hover:not(:disabled) {
+  color: #fff !important;
+  background: rgba(2, 3, 5, 0.65) !important;
+  border-color: transparent !important;
+  transform: scale(1.06);
 }
 
-.tileActionActive {
-  color: var(--accent);
-  background: rgba(2, 3, 5, 0.65);
+.actionActive {
+  color: var(--accent) !important;
 }
 
-.badge {
-  composes: eyebrow from '../../tokens/typography.module.css';
-  position: absolute;
-  top: var(--space-3);
-  left: var(--space-3);
-  z-index: 2;
-  padding: 3px 9px;
-  border-radius: 999px;
-  background: var(--tile-color);
-  color: #0a0c10;
-  font-weight: 750;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
-}
-
-.tileText {
-  position: absolute;
-  inset: auto 0 0;
-  z-index: 2;
+/* Dense single-column list in a panel that matches the hero height.
+   Six compact rows fill the band — no stretched gaps between items. */
+.side {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: var(--space-4) var(--space-4) var(--space-3);
+  gap: 10px;
+  min-height: 0;
+  height: 100%;
+  padding: 14px 14px 12px;
+  border-radius: calc(var(--r-card) + 2px);
+  border: 1px solid var(--rim);
+  background: rgba(var(--overlay-tint), 0.035);
+  box-sizing: border-box;
 }
 
-.tileTitle {
-  composes: title1 from '../../tokens/typography.module.css';
-  color: #fff;
-  font-weight: 680;
-  letter-spacing: -0.015em;
-  line-height: 1.15;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+.sideLabel {
+  composes: eyebrow from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  padding: 0 4px;
+  flex-shrink: 0;
 }
-
-.tileMeta {
-  composes: caption from '../../tokens/typography.module.css';
-  color: rgba(255, 255, 255, 0.8);
-}
-
-/* ---- side column: three companion stories, each with real weight (an
-   excerpt, not just a headline) - deliberately few and substantial
-   rather than a longer list of bare title rows. Equal height via
-   flex:1 so the column collectively matches the photo tile's height. ---- */
 
 .sideList {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
 }
 
 .sideRow {
-  position: relative;
-  flex: 1;
   display: flex;
   align-items: center;
+  gap: 2px;
+  flex: 1 1 0;
   min-height: 0;
-  border-top: 1px solid var(--rim);
-}
-
-.sideRow:first-child {
-  border-top: none;
-}
-
-.sideRowBody {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 5px;
-  flex: 1;
-  min-width: 0;
-  height: 100%;
-  padding: 0 var(--space-2);
-  border: none;
-  background: none;
-  cursor: pointer;
-  text-align: left;
+  padding: 0 4px;
   border-radius: 10px;
   transition: background var(--dur-fast) var(--ease);
 }
 
-.sideRowBody:hover {
-  background: rgba(var(--overlay-tint), 0.05);
+.sideRow + .sideRow {
+  border-top: 1px solid rgba(var(--overlay-tint), 0.07);
 }
 
-.sideTopRow {
-  composes: caption from '../../tokens/typography.module.css';
+.sideRow:hover {
+  background: rgba(var(--overlay-tint), 0.06);
+  border-radius: 10px;
+}
+
+.sideRow:hover .sideSave {
+  opacity: 1;
+}
+
+.sideBtn {
   display: flex;
   align-items: center;
-  gap: 5px;
-  color: var(--text-tertiary);
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+}
+
+.sideThumb,
+.sideThumbEmpty {
+  flex-shrink: 0;
+  width: 72px;
+  height: 48px;
+  border-radius: 7px;
   overflow: hidden;
-  white-space: nowrap;
+  background: rgba(var(--overlay-tint), 0.06);
+}
+
+.sideThumbEmpty {
+  opacity: 0.4;
+}
+
+.sideArt {
+  width: 100% !important;
+  height: 100% !important;
+  aspect-ratio: auto !important;
+  border-radius: 0 !important;
+  object-fit: cover;
+}
+
+.sideCopy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
 }
 
 .sideTopic {
+  composes: caption from '../../tokens/typography.module.css';
   font-weight: 650;
-  flex-shrink: 0;
+  letter-spacing: 0.02em;
 }
 
-.sideSource {
+.sideTitle {
+  composes: callout from '../../tokens/typography.module.css';
+  color: var(--text-primary);
+  font-weight: 600;
+  line-height: 1.28;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.sideMeta {
+  composes: caption from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.sideDot {
+.sideSave {
   flex-shrink: 0;
+  opacity: 0.55;
+  transition: opacity var(--dur-fast) var(--ease);
 }
 
-.sideTitle {
-  composes: subhead from '../../tokens/typography.module.css';
-  color: var(--text-primary);
-  font-weight: 640;
-  line-height: 1.32;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.sideExcerpt {
-  composes: footnote from '../../tokens/typography.module.css';
-  color: var(--text-secondary);
-  line-height: 1.5;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+.sideRow:hover .sideSave,
+.sideRow:focus-within .sideSave {
+  opacity: 1;
 }

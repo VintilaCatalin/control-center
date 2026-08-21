@@ -1,5 +1,19 @@
-.glance { height: 100%; container-type: size; }
-.briefing { position: relative; display: flex; flex-direction: column; justify-content: center; gap: 18px; height: 100%; padding: 7px 4px 3px; }
+.glance {
+  height: 100%;
+  overflow: hidden;
+  container-type: size;
+}
+.briefing {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 14px;
+  height: 100%;
+  min-height: 0;
+  padding: 4px 4px 2px;
+  overflow: hidden;
+}
 .masthead { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; min-width: 0; }
 .intro { min-width: 0; }
 .date { display: block; margin-bottom: 8px; color: color-mix(in oklab, var(--accent) 78%, var(--text-secondary)); font: 680 var(--fs-caption)/1.2 var(--font-text); letter-spacing: .075em; text-transform: uppercase; }

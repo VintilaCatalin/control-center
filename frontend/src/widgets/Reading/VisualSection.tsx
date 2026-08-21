@@ -4,7 +4,7 @@ import { ArtTile } from '../../primitives/ArtTile/ArtTile';
 import { PlayGlyphIcon } from './icons';
 import { readingThumbUrl } from './media';
 import { SaveButton } from './SaveButton';
-import { TOPIC_COLORS, TOPIC_LABELS } from './topics';
+import { topicColor as sharedTopicColor, topicLabel as sharedTopicLabel } from './topics';
 import styles from './VisualSection.module.css';
 
 interface VisualSectionProps {
@@ -27,8 +27,8 @@ export function VisualSection({ heading, items, onOpen, onToggleSave, onDismiss 
       {heading && <h2 className={styles.heading}>{heading}</h2>}
       <div className={styles.grid}>
         {items.map((item) => {
-          const color = item.topic in TOPIC_COLORS ? TOPIC_COLORS[item.topic as keyof typeof TOPIC_COLORS] : TOPIC_COLORS.interesting;
-          const label = item.topic in TOPIC_LABELS ? TOPIC_LABELS[item.topic as keyof typeof TOPIC_LABELS] : item.topic;
+          const color = sharedTopicColor(item.topic);
+          const label = sharedTopicLabel(item.topic);
           return (
             <article key={item.id} className={styles.tile}>
               <button type="button" className={styles.media} onClick={() => onOpen(item)}>
@@ -48,7 +48,13 @@ export function VisualSection({ heading, items, onOpen, onToggleSave, onDismiss 
               <div className={styles.actions}>
                 <SaveButton saved={item.saved} onToggle={() => onToggleSave(item)} small inline />
                 {onDismiss && (
-                  <button type="button" className={styles.dismissBtn} onClick={() => onDismiss(item)} title="Not interested">
+                  <button
+                    type="button"
+                    className={styles.dismissBtn}
+                    onClick={() => onDismiss(item)}
+                    aria-label="Not interested"
+                    title="Not interested"
+                  >
                     ×
                   </button>
                 )}

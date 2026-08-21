@@ -17,12 +17,13 @@ export type ReadingSection =
   | 'interesting'
   | 'youtube'
   | 'sport'
-  | 'saved'
-  | 'bookmarks'
   | 'books'
+  | 'saves'
+  | 'saves-unsorted'
+  | 'saves-favorites'
   | (string & {});
 
-export const TOPIC_LABELS: Record<Exclude<ReadingSection, 'foryou' | 'saved' | 'bookmarks' | 'books'>, string> = {
+export const TOPIC_LABELS: Record<Exclude<ReadingSection, 'foryou' | 'books' | 'saves' | 'saves-unsorted' | 'saves-favorites'>, string> = {
   tech: 'Tech',
   ai: 'AI',
   design: 'Design',
@@ -88,4 +89,32 @@ function hashHue(id: string): number {
 export function topicColor(id: string): string {
   if (id in TOPIC_COLORS) return TOPIC_COLORS[id as keyof typeof TOPIC_COLORS];
   return `hsl(${hashHue(id)} 70% 60%)`;
+}
+
+/** Raindrop Saves sections live under Reading as `saves` / `saves-*` keys. */
+export function isSavesSection(key: string): boolean {
+  return key === 'saves' || key === 'saves-unsorted' || key === 'saves-favorites' || key.startsWith('saves-c-');
+}
+
+export type ReadingMode = 'feed' | 'saves' | 'books';
+
+export function readingMode(key: ReadingSection): ReadingMode {
+  if (key === 'books') return 'books';
+  if (isSavesSection(key)) return 'saves';
+  return 'feed';
+}
+
+export function savesCollectionId(key: string): string {
+  if (key === 'saves') return 'recent';
+  if (key === 'saves-unsorted') return 'unsorted';
+  if (key === 'saves-favorites') return 'favorites';
+  if (key.startsWith('saves-c-')) return key.slice('saves-c-'.length);
+  return 'recent';
+}
+
+export function savesSectionKey(collectionId: string): ReadingSection {
+  if (collectionId === 'recent') return 'saves';
+  if (collectionId === 'unsorted') return 'saves-unsorted';
+  if (collectionId === 'favorites') return 'saves-favorites';
+  return `saves-c-${collectionId}`;
 }

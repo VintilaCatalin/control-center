@@ -29,10 +29,148 @@
   letter-spacing: 0.01em;
 }
 
+/* Primary destinations — only one mode's list is visible at a time. */
+.modes {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3px;
+  padding: 2px;
+  margin: 0 0 var(--space-3);
+  border-radius: 12px;
+  background: rgba(var(--overlay-tint), 0.06);
+}
+
+.modeBtn {
+  composes: caption from '../../tokens/typography.module.css';
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 6px;
+  border: none;
+  border-radius: 10px;
+  background: none;
+  color: var(--text-tertiary);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease);
+}
+
+.modeBtn:hover {
+  color: var(--text-secondary);
+}
+
+.modeBtnActive {
+  color: var(--text-primary);
+  background: rgba(var(--overlay-tint), 0.12);
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--accent) 28%, transparent);
+}
+
+.modeBtnActive .modeIcon {
+  color: var(--accent);
+}
+
+.modeIcon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 15px;
+  color: inherit;
+}
+
+.modeLabel {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.modeBody {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-height: 0;
+}
+
 .groupLabel {
   composes: eyebrow from '../../tokens/typography.module.css';
   color: var(--text-tertiary);
-  padding: var(--space-4) var(--space-2) 6px;
+  padding: var(--space-3) var(--space-2) 6px;
+}
+
+.booksNote {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--space-3) var(--space-3) var(--space-2);
+}
+
+.booksNoteTitle {
+  composes: callout from '../../tokens/typography.module.css';
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.booksNoteMeta {
+  composes: caption from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  line-height: 1.4;
+}
+
+.booksGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 var(--space-2) var(--space-3);
+}
+
+.booksGroupLabel {
+  composes: caption from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: var(--space-2) var(--space-2) 4px;
+}
+
+.booksItem {
+  composes: callout from '../../tokens/typography.module.css';
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  width: 100%;
+  min-height: 36px;
+  padding: 6px var(--space-2);
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: var(--text-secondary);
+  font-weight: 560;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+
+.booksItem:hover {
+  background: rgba(var(--overlay-tint), 0.08);
+  color: var(--text-primary);
+}
+
+.booksItemTitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.booksItemMeta {
+  composes: caption from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  flex-shrink: 0;
 }
 
 /* Filled-chip active state, matching Plex's media-app switcher treatment
@@ -93,6 +231,9 @@
   composes: caption from '../../tokens/typography.module.css';
   color: var(--text-tertiary);
   flex-shrink: 0;
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
 }
 
 .topicRow {
@@ -103,36 +244,67 @@
   transition: opacity var(--dur-fast) var(--ease);
 }
 
-.topicRow .item {
-  min-width: 0;
-  padding-right: 34px;
-}
-
-.topicDragHandle {
-  position: absolute;
-  z-index: 2;
-  right: 5px;
-  top: 50%;
-  display: grid;
-  place-items: center;
-  width: 24px;
-  height: 28px;
-  border-radius: 7px;
-  color: var(--text-tertiary);
+.topicRowDraggable {
   cursor: grab;
-  opacity: 0;
-  transform: translateY(-50%);
-  transition: opacity var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
 }
 
-.topicRow:hover .topicDragHandle, .topicRow:focus-within .topicDragHandle { opacity: .72; }
-.topicDragHandle:hover { color: var(--text-primary); background: rgba(var(--overlay-tint), .075); }
-.topicDragHandle:active { cursor: grabbing; }
-.topicRow:hover .count { opacity: 0; }
-.dragging { opacity: .38; }
-.dropBefore::before, .dropAfter::after { content: ''; position: absolute; z-index: 3; left: 8px; right: 8px; height: 2px; border-radius: 2px; background: var(--accent); box-shadow: 0 0 9px color-mix(in oklab, var(--accent) 45%, transparent); pointer-events: none; }
-.dropBefore::before { top: -1px; }
-.dropAfter::after { bottom: -1px; }
+.topicRowDraggable:active {
+  cursor: grabbing;
+}
+
+.collectionRow {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  border-radius: 10px;
+}
+
+.collectionGroup {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border-radius: 10px;
+}
+
+.collectionGroupDraggable {
+  cursor: grab;
+}
+
+.collectionGroupDraggable:active {
+  cursor: grabbing;
+}
+
+.topicRow .item,
+.collectionRow .item {
+  min-width: 0;
+}
+
+.dragging {
+  opacity: 0.38;
+}
+
+.dropBefore::before,
+.dropAfter::after {
+  content: '';
+  position: absolute;
+  z-index: 3;
+  left: 8px;
+  right: 8px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--accent);
+  box-shadow: 0 0 9px color-mix(in oklab, var(--accent) 45%, transparent);
+  pointer-events: none;
+}
+
+.dropBefore::before {
+  top: -1px;
+}
+
+.dropAfter::after {
+  bottom: -1px;
+}
 
 /* Bookmarks gets an inline "+" next to it (paste-a-link is a frequent
    enough action to deserve a one-click entry point right where the
@@ -187,6 +359,30 @@
 .addTopicConfirm:disabled {
   opacity: 0.4;
   cursor: default;
+}
+
+.renameRow {
+  display: flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 var(--space-3);
+  width: 100%;
+}
+
+.renameInput {
+  composes: callout from '../../tokens/typography.module.css';
+  flex: 1;
+  min-width: 0;
+  color: var(--text-primary);
+  background: rgba(var(--overlay-tint), 0.05);
+  border: 1px solid var(--rim);
+  border-radius: 8px;
+  padding: 5px 8px;
+}
+
+.renameInput:focus {
+  outline: none;
+  border-color: color-mix(in oklab, var(--accent) 55%, var(--rim));
 }
 
 .rowAddBtn {
@@ -250,16 +446,94 @@
   display: none;
 }
 
+.nav[data-collapsed] .modes {
+  grid-template-columns: 1fr;
+  gap: 2px;
+  margin-bottom: var(--space-2);
+}
+
+.nav[data-collapsed] .modeLabel,
+.nav[data-collapsed] .booksNote {
+  display: none;
+}
+
+.nav[data-collapsed] .modeBtn {
+  height: 40px;
+}
+
 .nav[data-collapsed] .item {
   justify-content: center;
   padding: 0;
 }
 
-.nav[data-collapsed] .topicRow .item { padding-right: 0; }
-.nav[data-collapsed] .topicDragHandle { display: none; }
+.nav[data-collapsed] .topicRow .item,
+.nav[data-collapsed] .collectionRow .item {
+  padding-right: 0;
+}
 
 .nav[data-collapsed] .label,
 .nav[data-collapsed] .count,
 .nav[data-collapsed] .groupLabel {
+  display: none;
+}
+
+.search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 34px;
+  padding: 0 var(--space-3);
+  margin: 0 0 6px;
+  border-radius: 999px;
+  border: 1px solid var(--rim);
+  background: rgba(var(--overlay-tint), 0.04);
+  color: var(--text-tertiary);
+}
+
+.search:focus-within {
+  border-color: color-mix(in oklab, var(--accent) 55%, var(--rim));
+  color: var(--text-secondary);
+}
+
+.searchInput {
+  composes: callout from '../../tokens/typography.module.css';
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: none;
+  color: var(--text-primary);
+  font-size: 0.9em;
+}
+
+.searchInput::placeholder {
+  color: var(--text-tertiary);
+}
+
+.searchInput:focus {
+  outline: none;
+}
+
+.swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  flex-shrink: 0;
+  margin-left: 4px;
+}
+
+.itemChild {
+  padding-left: calc(var(--space-3) + 12px);
+}
+
+.savesHint {
+  composes: caption from '../../tokens/typography.module.css';
+  margin: 4px var(--space-3) 8px;
+  color: var(--text-tertiary);
+  line-height: 1.4;
+}
+
+.nav[data-collapsed] .search,
+.nav[data-collapsed] .savesHint,
+.nav[data-collapsed] .swatch {
   display: none;
 }

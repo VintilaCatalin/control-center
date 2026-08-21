@@ -1,13 +1,6 @@
 import { fetchJSON, postAction } from '../client';
 import type { ArticleExtraction, ReadingSource } from '../types';
 
-// See server.py's _reading_set_membership()/reading_set_saved() - toggles
-// membership in the store-side reading_saved list, keyed by the item's
-// stable id (not a field on the ephemeral feed item itself).
-export function saveItem(id: string, saved: boolean): Promise<{ ok: boolean }> {
-  return postAction('/api/reading/save', { id, saved });
-}
-
 export function markRead(id: string, read: boolean): Promise<{ ok: boolean }> {
   return postAction('/api/reading/read', { id, read });
 }
@@ -66,19 +59,14 @@ export function setTopicIcon(id: string, icon: string): Promise<{ ok: boolean; e
   return postAction('/api/reading/topics/icon', { id, icon });
 }
 
+export function renameTopic(id: string, label: string): Promise<{ ok: boolean; error?: string }> {
+  return postAction('/api/reading/topics/rename', { id, label });
+}
+
 export function reorderTopics(ids: string[]): Promise<{ ok: boolean; error?: string }> {
   return postAction('/api/reading/topics/reorder', { ids });
 }
 
 export function removeTopic(id: string): Promise<{ ok: boolean; error?: string }> {
   return postAction('/api/reading/topics/remove', { id });
-}
-
-// Raindrop-style bookmarks - see server.py's add_bookmark()/delete_bookmark().
-export function addBookmark(url: string, topic?: ReadingSource['topic']): Promise<{ ok: boolean; id?: string; error?: string }> {
-  return postAction('/api/reading/bookmark/add', { url, topic });
-}
-
-export function deleteBookmark(id: string): Promise<{ ok: boolean }> {
-  return postAction('/api/reading/bookmark/delete', { id });
 }

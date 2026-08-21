@@ -98,6 +98,7 @@ DEFAULTS = {
     "panel_lights": "",
     "plex_url": "", "plex_token": "", "plex_open": "app", "plex_limit": "40",
     "raindrop_token": "",
+    "raindrop_from_reading_id": "",
     "steam_path": r"C:\Program Files (x86)\Steam", "games_limit": "18", "extra_games": "",
     "games_ignore": "",
     "xbox_enabled": "true", "xbox_paths": r"C:\XboxGames",
@@ -107,6 +108,9 @@ DEFAULTS = {
     "riot_products": "League of Legends|league_of_legends, VALORANT|valorant",
     "griddb_key": "",
     "feeds": "Hacker News | https://hnrss.org/frontpage", "feed_items": "12", "art_overrides": "",
+    # Own ebook library (mapped NAS or local). Empty until set in Settings —
+    # Books → Search my library walks this folder only.
+    "books_dir": "",
     "wallpaper_dir": "", "wallpaper_limit": "300",
     "wallhaven_atleast": "3440x2880", "wallhaven_key": "",
     "lhm_url": "http://localhost:8085/data.json",
@@ -170,7 +174,7 @@ SETTINGS_SCHEMA = [
         {"key": "reduced_motion", "label": "Reduce motion", "type": "bool",
          "hint": "Turns off decorative animation across the app (charts, transitions, hover motion)"},
         {"key": "default_app", "label": "Open on launch", "type": "select",
-         "options": ["overview", "games", "scene", "notes", "tasks", "plex", "reading", "library", "homelab"],
+         "options": ["overview", "games", "scene", "notes", "tasks", "plex", "reading", "homelab"],
          "hint": "Which application is showing the moment Control Center starts"},
         {"key": "background_mode", "label": "App background", "type": "select",
          "options": ["wallpaper", "color", "image"],
@@ -226,6 +230,8 @@ SETTINGS_SCHEMA = [
         {"key": "feeds", "label": "Feeds", "type": "lines",
          "hint": "Label | feed url. YouTube channels work as https://www.youtube.com/feeds/videos.xml?channel_id=…"},
         {"key": "feed_items", "label": "Items per feed", "type": "number"},
+        {"key": "books_dir", "label": "Books folder", "type": "folder",
+         "hint": "Local or mapped NAS folder of your own ebooks (EPUB/PDF). Used by Books → Search my library."},
     ]},
     {"group": "Homelab", "keys": [
         {"key": "homelab_server_ip", "label": "Server address", "type": "text",
@@ -448,10 +454,9 @@ DEFAULT_LAYOUTS = {
         "sizes": {},
         "hidden": [],
     },
-    # Same shape as "plex-home" above: Reading's For You page turns each
-    # topic that actually has content into a resizable/reorderable panel
-    # (ReadingFeed.tsx's ForYouBody) - which topics exist depends on the
-    # user's own sources, so there's no fixed default set here either.
+    # Dynamic panel ids (topics appear/disappear with content) — empty
+    # sizes so order/resize/hide persist for every id, same as plex-home.
+    # Per-panel defaults live on PanelDef.defaultSize in ReadingFeed.
     "reading-foryou": {
         "order": [],
         "sizes": {},

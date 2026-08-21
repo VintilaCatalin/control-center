@@ -1,5 +1,4 @@
 .card {
-  position: relative;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -11,6 +10,13 @@
   text-align: left;
 }
 
+.coverWrap {
+  position: relative;
+  display: block;
+  width: 100%;
+  border-radius: inherit;
+}
+
 .art {
   transition: transform var(--dur-base) var(--ease);
 }
@@ -20,15 +26,18 @@
   transform: translateY(-3px);
 }
 
+/* Progress sits on the cover only — never over title/author. */
 .progress {
   position: absolute;
   left: 6px;
   right: 6px;
   bottom: 6px;
+  z-index: 1;
   height: 3px;
   border-radius: 999px;
-  background: rgba(2, 3, 5, 0.5);
+  background: rgba(2, 3, 5, 0.55);
   overflow: hidden;
+  pointer-events: none;
 }
 
 .progressFill {

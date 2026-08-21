@@ -19,6 +19,13 @@ interface IntegrationsPageProps {
 // and each card's fields are the exact same SETTINGS_SCHEMA entries the
 // old settings screen used, just grouped per-service instead of
 // per-schema-group. No second integration/config system invented here.
+const RAINDROP_FIELD: SettingsFieldSchema = {
+  key: 'raindrop_token',
+  label: 'Raindrop token',
+  type: 'secret',
+  hint: 'app.raindrop.io → Settings → Integrations → Create app → Test token',
+};
+
 export function IntegrationsPage({ data, getValue, isSecret, origin, onChange }: IntegrationsPageProps) {
   const { snapshot } = useSnapshotData();
 
@@ -33,7 +40,8 @@ export function IntegrationsPage({ data, getValue, isSecret, origin, onChange }:
   const localIntegrations = INTEGRATIONS.filter((def) => def.local);
 
   function renderCard(def: (typeof INTEGRATIONS)[number]) {
-    const fields = def.keys.map((k) => fieldMap.get(k)).filter((f): f is SettingsFieldSchema => !!f);
+    let fields = def.keys.map((k) => fieldMap.get(k)).filter((f): f is SettingsFieldSchema => !!f);
+    if (fields.length === 0 && def.id === 'raindrop') fields = [RAINDROP_FIELD];
     const testUrl = def.testUrlKey ? getValue(def.testUrlKey) : undefined;
     return (
       <IntegrationCard
@@ -44,7 +52,7 @@ export function IntegrationsPage({ data, getValue, isSecret, origin, onChange }:
         errorText={def.errorText?.(snapshot)}
         fields={fields}
         getValue={getValue}
-        isSecret={isSecret}
+        isSecret={(key) => isSecret(key) || key === 'raindrop_token'}
         origin={origin}
         onChange={onChange}
         testUrl={testUrl || undefined}

@@ -13,14 +13,19 @@ interface BookCardProps {
 // for a specific title), not a browsing rail, so title/author stay
 // visible under the cover rather than being stripped for pure imagery.
 export function BookCard({ book, onSelect }: BookCardProps) {
+  const showProgress = book.status === 'reading';
+  const pct = Math.max(0, Math.min(100, book.progress_pct || 0));
+
   return (
     <button type="button" className={styles.card} onClick={() => onSelect(book)}>
-      <ArtTile aspect="portrait" src={book.cover_url} alt={book.title} fallback={<BookIcon />} className={styles.art} />
-      {book.status === 'reading' && book.progress_pct > 0 && (
-        <span className={styles.progress}>
-          <span className={styles.progressFill} style={{ width: `${book.progress_pct}%` }} />
-        </span>
-      )}
+      <span className={styles.coverWrap}>
+        <ArtTile aspect="portrait" src={book.cover_url} alt={book.title} fallback={<BookIcon />} className={styles.art} />
+        {showProgress && (
+          <span className={styles.progress} aria-hidden="true">
+            <span className={styles.progressFill} style={{ width: `${pct}%` }} />
+          </span>
+        )}
+      </span>
       <span className={styles.title}>{book.title}</span>
       <span className={styles.author}>{book.author}</span>
     </button>

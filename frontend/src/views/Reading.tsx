@@ -1,33 +1,25 @@
 import { AnimatePresence } from 'framer-motion';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { deleteBookmark, setTopicIcon } from '../api/actions/reading';
+import { setTopicIcon } from '../api/actions/reading';
 import { useSnapshotData } from '../api/SnapshotProvider';
 import type { Book, ReadingItem } from '../api/types';
-import { AddBookmarkSheet } from '../widgets/Reading/AddBookmarkSheet';
+import { Skeleton } from '../primitives/Skeleton/Skeleton';
 import { ArticleDetail } from '../widgets/Reading/ArticleDetail';
 import { AddBookSheet } from '../widgets/Reading/Books/AddBookSheet';
 import { BookDetail } from '../widgets/Reading/Books/BookDetail';
 import { BooksHome } from '../widgets/Reading/Books/BooksHome';
 import { ReadingFeed } from '../widgets/Reading/ReadingFeed';
 import { ReadingSidebarNav, type ReadingSection } from '../widgets/Reading/ReadingSidebarNav';
+import { SavesPanel } from '../widgets/Reading/SavesPanel';
 import { SourceManagerSheet } from '../widgets/Reading/SourceManagerSheet';
 import { VideoDetail } from '../widgets/Reading/VideoDetail';
+import { isSavesSection, savesCollectionId } from '../widgets/Reading/topics';
 import { usePublishAppSidebar } from '../shell/AppChromeContext';
 import { useSidebarCollapsed } from '../shell/SidebarCollapseContext';
 import { useToast } from '../primitives/Toast/ToastProvider';
 import styles from './Reading.module.css';
 
-// A curated visual feed, not an RSS table - see the Reading redesign plan.
-// Detail overlays are full-bleed, same pattern as Plex's own detail
-// screen, independent of the feed's own scroll position underneath them -
-// which one renders depends on the clicked item's kind (ArticleDetail for
-// articles, VideoDetail's embedded player for videos - bookmarks are
-// always articles). Books is its own section with its own visual system
-// (BooksHome), not another feed view.
 interface ReadingProps {
-  // Global Search's deep-link target - applied once (see App.tsx's
-  // navigateToApp/pendingReadingSection), then cleared via the callback so
-  // a later manual sidebar click isn't overridden on the next render.
   initialSection?: ReadingSection | null;
   onInitialSectionApplied?: () => void;
 }
@@ -35,9 +27,11 @@ interface ReadingProps {
 export function Reading({ initialSection, onInitialSectionApplied }: ReadingProps = {}) {
   const { snapshot } = useSnapshotData();
   const data = snapshot?.reading;
+  const library = snapshot?.library;
   const { collapsed } = useSidebarCollapsed();
   const { push } = useToast();
   const [activeKey, setActiveKey] = useState<ReadingSection>('foryou');
+  const [savesSearch, setSavesSearch] = useState('');
   const appliedInitial = useRef(false);
 
   useEffect(() => {
@@ -47,13 +41,22 @@ export function Reading({ initialSection, onInitialSectionApplied }: ReadingProp
     onInitialSectionApplied?.();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialSection]);
+
   const [detailItem, setDetailItem] = useState<ReadingItem | null>(null);
   const [detailBook, setDetailBook] = useState<Book | null>(null);
   const [addBookOpen, setAddBookOpen] = useState(false);
-  const [addBookmarkOpen, setAddBookmarkOpen] = useState(false);
   const [sourceManagerOpen, setSourceManagerOpen] = useState(false);
   const [topicIconOverrides, setTopicIconOverrides] = useState<Record<string, string>>({});
-  const topics = useMemo(() => (data?.topics ?? []).map((topic) => ({ ...topic, icon: topicIconOverrides[topic.id] ?? topic.icon })), [data?.topics, topicIconOverrides]);
+  const topics = useMemo(
+    () => (data?.topics ?? []).map((topic) => ({ ...topic, icon: topicIconOverrides[topic.id] ?? topic.icon })),
+    [data?.topics, topicIconOverrides],
+  );
+
+  const savedUrls = useMemo(() => new Set(library?.saved_urls ?? []), [library?.saved_urls]);
+  const feedItems = useMemo(
+    () => (data?.items ?? []).map((item) => ({ ...item, saved: savedUrls.has(item.url) || item.saved })),
+    [data?.items, savedUrls],
+  );
 
   useEffect(() => {
     if (!data?.topics) return;
@@ -61,7 +64,10 @@ export function Reading({ initialSection, onInitialSectionApplied }: ReadingProp
       const next = { ...current };
       let changed = false;
       data.topics.forEach((topic) => {
-        if (next[topic.id] !== undefined && next[topic.id] === topic.icon) { delete next[topic.id]; changed = true; }
+        if (next[topic.id] !== undefined && next[topic.id] === topic.icon) {
+          delete next[topic.id];
+          changed = true;
+        }
       });
       return changed ? next : current;
     });
@@ -74,7 +80,12 @@ export function Reading({ initialSection, onInitialSectionApplied }: ReadingProp
       const result = await setTopicIcon(id, icon);
       if (!result.ok) throw new Error(result.error || 'Could not change topic icon');
     } catch (error) {
-      setTopicIconOverrides((current) => { const next = { ...current }; if (previous) next[id] = previous; else delete next[id]; return next; });
+      setTopicIconOverrides((current) => {
+        const next = { ...current };
+        if (previous) next[id] = previous;
+        else delete next[id];
+        return next;
+      });
       push(error instanceof Error ? error.message : 'Could not change topic icon', 'error');
       throw error;
     }
@@ -85,33 +96,57 @@ export function Reading({ initialSection, onInitialSectionApplied }: ReadingProp
       () =>
         data ? (
           <ReadingSidebarNav
-            items={data.items}
+            items={feedItems}
             books={data.books}
-            bookmarks={data.bookmarks}
+            collections={library?.collections ?? []}
+            libraryConfigured={!!library?.configured}
+            savesSearch={savesSearch}
+            onSavesSearchChange={setSavesSearch}
             topics={topics}
             active={activeKey}
             onSelect={setActiveKey}
+            onSelectBook={setDetailBook}
             onManageSources={() => setSourceManagerOpen(true)}
-            onAddBookmark={() => setAddBookmarkOpen(true)}
             onTopicIconChange={handleTopicIconChange}
             collapsed={collapsed}
           />
         ) : null,
       // eslint-disable-next-line react-hooks/exhaustive-deps
-      [data?.items, data?.books, data?.bookmarks, topics, activeKey, collapsed],
+      [feedItems, data?.books, library?.collections, library?.configured, topics, activeKey, savesSearch, collapsed],
     ),
   );
+
+  useEffect(() => {
+    if (!detailBook || !data?.books) return;
+    const fresh = data.books.find((b) => b.id === detailBook.id);
+    if (!fresh) return;
+    // Snapshot is source of truth after light books refresh. Don't invent
+    // anti-regression rules that fight an intentional Want demote.
+    if (
+      fresh.reading_cfi !== detailBook.reading_cfi ||
+      fresh.progress_pct !== detailBook.progress_pct ||
+      fresh.file_url !== detailBook.file_url ||
+      fresh.status !== detailBook.status ||
+      fresh.notes !== detailBook.notes ||
+      fresh.cover_url !== detailBook.cover_url
+    ) {
+      setDetailBook(fresh);
+    }
+  }, [data?.books, detailBook]);
 
   if (!data) {
     return (
       <div className={styles.page}>
-        <div className={styles.state}>Loading Reading…</div>
+        <div className={styles.loadingGrid} aria-busy="true" aria-label="Loading Reading">
+          <Skeleton height={280} radius={24} className={styles.loadingHero} />
+          <div className={styles.loadingPanels}>
+            <Skeleton height={200} radius={24} />
+            <Skeleton height={200} radius={24} />
+            <Skeleton height={200} radius={24} />
+          </div>
+        </div>
       </div>
     );
-  }
-
-  function handleRemoveBookmark(item: ReadingItem) {
-    deleteBookmark(item.id).catch(() => {});
   }
 
   return (
@@ -119,15 +154,16 @@ export function Reading({ initialSection, onInitialSectionApplied }: ReadingProp
       <div className={styles.content}>
         {activeKey === 'books' ? (
           <BooksHome books={data.books} onSelectBook={setDetailBook} onAddBook={() => setAddBookOpen(true)} />
+        ) : isSavesSection(activeKey) ? (
+          <SavesPanel section={savesCollectionId(activeKey)} search={savesSearch} />
         ) : (
           <ReadingFeed
-            items={data.items}
-            bookmarks={data.bookmarks}
+            items={feedItems}
             books={data.books}
             topics={topics}
+            errors={data.errors}
             section={activeKey}
             onOpenItem={setDetailItem}
-            onRemoveBookmark={handleRemoveBookmark}
             onSelectBook={setDetailBook}
             onSelectSection={setActiveKey}
             onTopicIconChange={handleTopicIconChange}
@@ -142,11 +178,18 @@ export function Reading({ initialSection, onInitialSectionApplied }: ReadingProp
           ) : (
             <ArticleDetail item={detailItem} onClose={() => setDetailItem(null)} />
           ))}
-        {detailBook && <BookDetail book={detailBook} onClose={() => setDetailBook(null)} />}
+        {detailBook && (
+          <BookDetail
+            book={detailBook}
+            onClose={() => setDetailBook(null)}
+            onBookChange={(patch) =>
+              setDetailBook((current) => (current ? { ...current, ...patch } : current))
+            }
+          />
+        )}
       </AnimatePresence>
 
       <AddBookSheet open={addBookOpen} onClose={() => setAddBookOpen(false)} />
-      <AddBookmarkSheet open={addBookmarkOpen} onClose={() => setAddBookmarkOpen(false)} topics={data.topics} />
       <SourceManagerSheet open={sourceManagerOpen} onClose={() => setSourceManagerOpen(false)} sources={data.sources} topics={data.topics} />
     </div>
   );

@@ -489,6 +489,8 @@ export interface Book {
   // share link, personal server path. Optional; makes the shelf usable
   // for reading, not just tracking. See BookDetail's reader overlay.
   file_url?: string | null;
+  // Reading progress blob (JSON spine+scroll, or legacy epubcfi string).
+  reading_cfi?: string | null;
 }
 
 // GET /api/books/search?q= - matches server.py:search_open_library().
@@ -498,6 +500,20 @@ export interface BookSearchResult {
   openlibrary_key: string | null;
   cover_url: string | null;
   first_publish_year: number | null;
+}
+
+// GET /api/books/copies - Project Gutenberg + Internet Archive / Open Library
+// public (and borrowable) reading copies. Never pirate sources.
+export interface BookCopyResult {
+  source: string;
+  title: string;
+  author: string;
+  format: string;
+  url: string;
+  /** read = good for in-app reader; borrow = needs OL/library account */
+  kind: 'read' | 'borrow' | string;
+  /** Relative path under books_dir when source is My library */
+  rel?: string;
 }
 
 // Matches server.py:collect_reading() (server.py, near collect_wallpapers).
@@ -511,10 +527,8 @@ export interface ReadingData {
   // the backend just stores whatever string it's given.
   topics: { id: string; label: string; icon?: string }[];
   books: Book[];
-  // Raindrop-style "paste a link" bookmarks - normalized to the exact
-  // same shape as a feed item (server.py:_normalize_bookmark()), always
-  // `saved: true`. A separate list from `items`, not mixed into the
-  // auto-curated feed: these are hand-picked, not polled from a source.
+  // Legacy local bookmarks were removed — Saves live in Raindrop only.
+  // Kept empty for older clients that still read the field.
   bookmarks: ReadingItem[];
   errors: Record<string, string>;
   fetched_at: number;
@@ -528,6 +542,7 @@ export interface LibraryCollection {
   color?: string | null;
   cover?: string | null;
   parentId?: string | null;
+  icon?: string | null;
 }
 
 export interface LibraryItem {
@@ -548,6 +563,10 @@ export interface LibraryData {
   configured: boolean;
   collections: LibraryCollection[];
   recent: LibraryItem[];
+  favorites?: LibraryItem[];
+  /** URLs known to exist in Raindrop (recent + From Reading) — drives feed Save state. */
+  saved_urls?: string[];
+  from_reading_id?: string | null;
   error?: string | null;
 }
 

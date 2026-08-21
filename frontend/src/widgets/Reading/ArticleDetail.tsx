@@ -1,7 +1,8 @@
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { fetchArticleText, saveItem } from '../../api/actions/reading';
+import { fetchArticleText } from '../../api/actions/reading';
+import { toggleRaindropSave } from '../../api/actions/library';
 import type { ReadingItem } from '../../api/types';
 import { Skeleton } from '../../primitives/Skeleton/Skeleton';
 import { duration, ease } from '../../tokens/motion';
@@ -72,7 +73,11 @@ export function ArticleDetail({ item, onClose, backLabel = 'Back to Reading', sa
   function handleToggleSave() {
     const next = !saved;
     setSaved(next);
-    saveItem(item.id, next).catch(() => {});
+    toggleRaindropSave(
+      { url: item.url, title: item.title, excerpt: item.blurb, cover: item.thumb },
+      next,
+      'feed',
+    ).catch(() => setSaved(!next));
   }
 
   const topic = item.topic in TOPIC_LABELS ? TOPIC_LABELS[item.topic as keyof typeof TOPIC_LABELS] : item.topic;

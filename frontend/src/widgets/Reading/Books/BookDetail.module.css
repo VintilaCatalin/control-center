@@ -141,6 +141,18 @@
   text-decoration: underline;
 }
 
+.saveRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+}
+
+.saveHint {
+  composes: caption from '../../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+}
+
 .fileBlock {
   display: flex;
   flex-direction: column;
@@ -151,6 +163,106 @@
 .fileLabel {
   composes: eyebrow from '../../../tokens/typography.module.css';
   color: var(--text-tertiary);
+}
+
+.fileActions {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.findBtn {
+  composes: caption from '../../../tokens/typography.module.css';
+  height: 34px;
+  padding: 0 var(--space-3);
+  border-radius: 999px;
+  border: 1px solid var(--rim);
+  background: rgba(var(--overlay-tint), 0.05);
+  color: var(--text-secondary);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease);
+}
+
+.findBtn:hover:not(:disabled) {
+  color: var(--text-primary);
+  border-color: var(--rim-lit);
+  background: rgba(var(--overlay-tint), 0.1);
+}
+
+.findBtn:disabled {
+  opacity: 0.65;
+  cursor: default;
+}
+
+.copyHint {
+  composes: caption from '../../../tokens/typography.module.css';
+  margin: 0;
+  color: var(--text-tertiary);
+}
+
+.copyList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.copyItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--rim);
+  background: rgba(var(--overlay-tint), 0.04);
+}
+
+.copyMeta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.copySource {
+  composes: caption from '../../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  font-size: 12px;
+}
+
+.copyTitle {
+  composes: callout from '../../../tokens/typography.module.css';
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.copyUseBtn {
+  composes: caption from '../../../tokens/typography.module.css';
+  flex-shrink: 0;
+  height: 30px;
+  padding: 0 var(--space-3);
+  border-radius: 8px;
+  border: none;
+  background: var(--accent);
+  color: #0a0c10;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.copyUseBtn:hover {
+  filter: brightness(1.12);
 }
 
 .fileRow {
@@ -222,10 +334,11 @@
 .fileDoneBtn {
   composes: caption from '../../../tokens/typography.module.css';
   flex-shrink: 0;
+  height: 34px;
   color: var(--text-secondary);
   background: rgba(var(--overlay-tint), 0.05);
   border: 1px solid var(--rim);
-  border-radius: 10px;
+  border-radius: 999px;
   padding: 0 var(--space-3);
   font-weight: 600;
   cursor: pointer;

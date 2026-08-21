@@ -1,15 +1,17 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { hideItem, markRead, saveItem } from '../../api/actions/reading';
+import { toggleRaindropSave } from '../../api/actions/library';
+import { hideItem, markRead } from '../../api/actions/reading';
 import type { Book, ReadingItem } from '../../api/types';
 import { type PanelDef, PanelGrid } from '../../primitives/PanelGrid/PanelGrid';
-import { BookmarksPanel } from './BookmarksPanel';
 import { BooksPanel } from './BooksPanel';
 import { DesignSection } from './DesignSection';
 import { FeedHero } from './FeedHero';
 import { FeedSection } from './FeedSection';
 import { LinkListSection } from './LinkListSection';
 import { ReadingList } from './ReadingList';
+import { SavesGlance } from './SavesGlance';
 import { SportSection } from './SportSection';
+import { TechSection } from './TechSection';
 import type { ReadingSection, TopicDef } from './topics';
 import { REGULAR_TOPICS, topicLabel } from './topics';
 import { VideoCard } from './VideoCard';
@@ -21,11 +23,10 @@ import styles from './ReadingFeed.module.css';
 interface ReadingFeedProps {
   items: ReadingItem[];
   section: ReadingSection;
-  bookmarks: ReadingItem[];
   books: Book[];
   topics: TopicDef[];
+  errors?: Record<string, string>;
   onOpenItem: (item: ReadingItem) => void;
-  onRemoveBookmark: (item: ReadingItem) => void;
   onSelectBook: (book: Book) => void;
   onSelectSection: (section: ReadingSection) => void;
   onTopicIconChange: (id: string, icon: string) => Promise<void>;
@@ -84,15 +85,14 @@ function forYouOrder(items: ReadingItem[]): ReadingItem[] {
 // variant; only downgrade below can still occasionally repeat one.
 const FREE_VARIANTS = ['grid', 'visual', 'list'] as const;
 
-function pickVariant(topic: string, items: ReadingItem[], index: number): 'grid' | 'list' | 'visual' | 'video' | 'design' | 'sport' {
+function pickVariant(topic: string, items: ReadingItem[], index: number): 'grid' | 'list' | 'visual' | 'video' | 'design' | 'sport' | 'tech' {
   const videoHeavy = items.length > 0 && items.filter((i) => i.kind === 'video').length / items.length >= 0.5;
   if (videoHeavy) return 'video';
 
-  // Design and Sport each have their own dedicated composition (see
-  // DesignSection/SportSection) - forced, not cycled into, the same way
-  // "interesting" always forces 'list' below.
+  // Design, Sport, and Tech each have their own dedicated composition.
   if (topic === 'design') return 'design';
   if (topic === 'sport') return 'sport';
+  if (topic === 'tech') return 'tech';
 
   // "Interesting" is the catch-all bucket by nature (unrelated stuff
   // that doesn't fit a real topic) - a plain link list suits it better
@@ -183,13 +183,12 @@ function useFeaturedPick(candidates: ReadingItem[]) {
 interface ForYouBodyProps extends ActionHandlers {
   items: ReadingItem[];
   books: Book[];
-  bookmarks: ReadingItem[];
   topics: TopicDef[];
   onSelectBook: (book: Book) => void;
   onSelectSection: (section: ReadingSection) => void;
 }
 
-function ForYouBody({ items, books, bookmarks, topics, onOpen, onToggleSave, onDismiss, onSelectBook, onSelectSection }: ForYouBodyProps) {
+function ForYouBody({ items, books, topics, onOpen, onToggleSave, onDismiss, onSelectBook, onSelectSection }: ForYouBodyProps) {
   const videos = items.filter((i) => i.kind === 'video');
   const candidates = useMemo(() => items.filter((i) => i.kind !== 'video' && i.thumb), [items]);
   const { featured, pinned, reload, togglePin } = useFeaturedPick(candidates);
@@ -202,7 +201,8 @@ function ForYouBody({ items, books, bookmarks, topics, onOpen, onToggleSave, onD
   // Video is still excluded here (the hero band is article territory);
   // anything not chosen flows into the topic panels below instead of
   // vanishing.
-  const heroSide = featured ? ordered.filter((i) => i.kind !== 'video').slice(0, 3) : [];
+  // Three → six companions for a 2-column “Also today” beside a 50% hero.
+  const heroSide = featured ? ordered.filter((i) => i.kind !== 'video').slice(0, 6) : [];
   const heroSideIds = new Set(heroSide.map((i) => i.id));
   const remaining = featured ? ordered.filter((i) => !heroSideIds.has(i.id)) : ordered;
 
@@ -220,19 +220,27 @@ function ForYouBody({ items, books, bookmarks, topics, onOpen, onToggleSave, onD
     const heading = topicLabel(topic, topics);
     const content =
       variant === 'video' ? (
-        <VideoGridSection heading={heading} items={topicItems} onOpen={onOpen} onToggleSave={onToggleSave} onDismiss={onDismiss} />
+        <VideoGridSection items={topicItems} onOpen={onOpen} onToggleSave={onToggleSave} onDismiss={onDismiss} />
       ) : variant === 'list' ? (
-        <LinkListSection heading={heading} items={topicItems} onOpen={onOpen} onToggleSave={onToggleSave} onDismiss={onDismiss} />
+        <LinkListSection items={topicItems} onOpen={onOpen} onToggleSave={onToggleSave} onDismiss={onDismiss} />
       ) : variant === 'visual' ? (
-        <VisualSection heading={heading} items={topicItems.filter((i) => i.thumb)} onOpen={onOpen} onToggleSave={onToggleSave} onDismiss={onDismiss} />
+        <VisualSection items={topicItems.filter((i) => i.thumb)} onOpen={onOpen} onToggleSave={onToggleSave} onDismiss={onDismiss} />
       ) : variant === 'design' ? (
-        <DesignSection heading={heading} items={topicItems} onOpen={onOpen} onToggleSave={onToggleSave} onDismiss={onDismiss} />
+        <DesignSection items={topicItems} onOpen={onOpen} onToggleSave={onToggleSave} onDismiss={onDismiss} />
       ) : variant === 'sport' ? (
-        <SportSection heading={heading} items={topicItems} onOpen={onOpen} onToggleSave={onToggleSave} onDismiss={onDismiss} />
+        <SportSection items={topicItems} onOpen={onOpen} onToggleSave={onToggleSave} onDismiss={onDismiss} />
+      ) : variant === 'tech' ? (
+        <TechSection items={topicItems} onOpen={onOpen} onToggleSave={onToggleSave} onDismiss={onDismiss} />
       ) : (
-        <FeedSection heading={heading} items={topicItems} onOpen={onOpen} onToggleSave={onToggleSave} onDismiss={onDismiss} />
+        <FeedSection items={topicItems} onOpen={onOpen} onToggleSave={onToggleSave} onDismiss={onDismiss} />
       );
-    return { id: topic, label: heading, content, minSize: { w: 1, h: 1 } };
+    return {
+      id: topic,
+      label: heading,
+      content,
+      minSize: { w: 1, h: 1 },
+      defaultSize: topic === 'sport' ? { w: 2, h: 8 } : { w: 4, h: 8 },
+    };
   });
 
   const seeAllAction = (section: ReadingSection) => (
@@ -242,32 +250,22 @@ function ForYouBody({ items, books, bookmarks, topics, onOpen, onToggleSave, onD
   );
 
   const extraPanels: PanelDef[] = [];
+  extraPanels.push({
+    id: 'saves-glance',
+    label: 'Saves',
+    minSize: { w: 1, h: 1 },
+    defaultSize: { w: 4, h: 11 },
+    headerAction: seeAllAction('saves'),
+    content: <SavesGlance onOpenSaves={onSelectSection} />,
+  });
   if (books.length > 0) {
     extraPanels.push({
       id: 'books',
       label: 'Books',
       minSize: { w: 1, h: 1 },
+      defaultSize: { w: 4, h: 8 },
       headerAction: seeAllAction('books'),
-      content: (
-        <div className={styles.compactPanel}>
-          <h2 className={styles.compactHeading}>Books</h2>
-          <BooksPanel books={books} onSelectBook={onSelectBook} />
-        </div>
-      ),
-    });
-  }
-  if (bookmarks.length > 0) {
-    extraPanels.push({
-      id: 'bookmarks',
-      label: 'Bookmarks',
-      minSize: { w: 1, h: 1 },
-      headerAction: seeAllAction('bookmarks'),
-      content: (
-        <div className={styles.compactPanel}>
-          <h2 className={styles.compactHeading}>Bookmarks</h2>
-          <BookmarksPanel items={bookmarks} onOpen={onOpen} />
-        </div>
-      ),
+      content: <BooksPanel books={books} onSelectBook={onSelectBook} />,
     });
   }
 
@@ -284,7 +282,8 @@ function ForYouBody({ items, books, bookmarks, topics, onOpen, onToggleSave, onD
             id: 'youtube-rail',
             label: 'From YouTube',
             minSize: { w: 1, h: 1 },
-            content: <YouTubeRail heading="From YouTube" items={videos.slice(0, 12)} onOpen={onOpen} onToggleSave={onToggleSave} />,
+            defaultSize: { w: 8, h: 6 },
+            content: <YouTubeRail items={videos.slice(0, 12)} onOpen={onOpen} onToggleSave={onToggleSave} />,
           },
           ...topicPanels,
           ...extraPanels,
@@ -292,12 +291,12 @@ function ForYouBody({ items, books, bookmarks, topics, onOpen, onToggleSave, onD
       : [...topicPanels, ...extraPanels];
 
   return (
-    <>
+    <div className={styles.forYou}>
       {featured && (
         <FeedHero featured={featured} side={heroSide} pinned={pinned} onOpen={onOpen} onToggleSave={onToggleSave} onReload={reload} onTogglePin={togglePin} />
       )}
-      {panels.length > 0 && <PanelGrid view="reading-foryou" panels={panels} fallbackSize={{ w: 8, h: 10 }} />}
-    </>
+      {panels.length > 0 && <PanelGrid view="reading-foryou" panels={panels} fallbackSize={{ w: 4, h: 8 }} />}
+    </div>
   );
 }
 
@@ -313,7 +312,7 @@ function YouTubeBody({ items, onOpen, onToggleSave, onDismiss }: { items: Readin
   );
 }
 
-export function ReadingFeed({ items, section, bookmarks, books, topics, onOpenItem, onRemoveBookmark, onSelectBook, onSelectSection, onTopicIconChange }: ReadingFeedProps) {
+export function ReadingFeed({ items, section, books, topics, errors, onOpenItem, onSelectBook, onSelectSection, onTopicIconChange }: ReadingFeedProps) {
   // Optimistic save-state overrides, cleared once the polled snapshot
   // itself agrees (or after a safety timeout) - same shape as PanelGrid's
   // own local-state-until-the-server-catches-up pattern. Dismissed ids
@@ -364,7 +363,13 @@ export function ReadingFeed({ items, section, bookmarks, books, topics, onOpenIt
         return rest;
       });
     }, 8000);
-    saveItem(item.id, next).catch(() => {});
+    toggleRaindropSave(
+      { url: item.url, title: item.title, excerpt: item.blurb, cover: item.thumb },
+      next,
+      item.kind === 'video' ? 'youtube' : 'feed',
+    ).catch(() => {
+      setPendingSaved((prev) => ({ ...prev, [item.id]: item.saved }));
+    });
   }
 
   // "Not interested" - instant, permanent (the backend's reading_hidden
@@ -389,16 +394,10 @@ export function ReadingFeed({ items, section, bookmarks, books, topics, onOpenIt
 
   if (section === 'foryou') {
     sectioned = resolved;
-    body = <ForYouBody items={resolved} books={books} bookmarks={bookmarks} topics={topics} onSelectBook={onSelectBook} onSelectSection={onSelectSection} {...handlers} />;
+    body = <ForYouBody items={resolved} books={books} topics={topics} onSelectBook={onSelectBook} onSelectSection={onSelectSection} {...handlers} />;
   } else if (section === 'youtube') {
     sectioned = resolved.filter((i) => i.kind === 'video');
     body = <YouTubeBody items={sectioned} {...handlers} />;
-  } else if (section === 'saved') {
-    sectioned = resolved.filter((i) => i.saved);
-    body = <ReadingList key={section} heading="Saved" items={sectioned} onOpen={handleOpen} onToggleSave={handleToggleSave} />;
-  } else if (section === 'bookmarks') {
-    sectioned = bookmarks;
-    body = <ReadingList key={section} heading="Bookmarks" items={bookmarks} onOpen={handleOpen} onToggleSave={handleToggleSave} onRemove={onRemoveBookmark} />;
   } else {
     sectioned = resolved.filter((i) => i.topic === section);
     activeTopic = topics.find((topic) => topic.id === section);
@@ -414,16 +413,32 @@ export function ReadingFeed({ items, section, bookmarks, books, topics, onOpenIt
     return (
       <div className={styles.empty}>
         <span className={styles.emptyTitle}>Nothing here yet</span>
-        <span>
-          {section === 'saved'
-            ? 'Save an article or video and it will show up here.'
-            : section === 'bookmarks'
-              ? 'Paste a link from the sidebar to add your first bookmark.'
-              : 'Nothing from your sources in this section right now.'}
-        </span>
+        <span>Nothing from your sources in this section right now.</span>
       </div>
     );
   }
 
-  return <div className={styles.page}>{body}</div>;
+  const errorEntries = Object.entries(errors ?? {});
+  return (
+    <div className={styles.page}>
+      {errorEntries.length > 0 && (
+        <div className={styles.errorBanner} role="status">
+          <span className={styles.errorTitle}>
+            {errorEntries.length === 1 ? '1 source failed to refresh' : `${errorEntries.length} sources failed to refresh`}
+          </span>
+          <span className={styles.errorDetail}>
+            {errorEntries
+              .slice(0, 3)
+              .map(([id, msg]) => {
+                const label = items.find((i) => i.source_id === id)?.source_label ?? id;
+                return `${label}: ${msg}`;
+              })
+              .join(' · ')}
+            {errorEntries.length > 3 ? ` · +${errorEntries.length - 3} more` : ''}
+          </span>
+        </div>
+      )}
+      {body}
+    </div>
+  );
 }

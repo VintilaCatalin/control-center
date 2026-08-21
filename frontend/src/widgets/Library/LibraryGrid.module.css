@@ -2,7 +2,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
-  padding: clamp(22px, 3vw, 34px) clamp(18px, 3vw, 40px) 48px;
+  padding: var(--space-5) var(--space-6) var(--space-6);
   container-type: inline-size;
 }
 
@@ -11,6 +11,13 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: var(--space-4);
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
 }
 
 .heading {
@@ -32,86 +39,61 @@
   font-weight: 600;
 }
 
-.hero {
+.grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
-  gap: var(--space-4);
-  min-height: 220px;
-  padding: var(--space-4);
-  border-radius: calc(var(--r-tile) + 4px);
-  border: 1px solid var(--rim);
-  background:
-    linear-gradient(135deg, color-mix(in oklab, var(--accent) 14%, transparent), transparent 55%),
-    color-mix(in oklab, var(--graphite) 50%, transparent);
-  cursor: pointer;
-  text-align: left;
+  gap: var(--space-3);
+}
+
+.grid.compact {
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+}
+
+.grid.comfortable {
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+}
+
+.grid.large {
+  grid-template-columns: repeat(auto-fill, minmax(236px, 1fr));
+}
+
+/* column-width (not column-count) keeps L from exploding into 3 giant
+   tiles - each column targets a visual size closer to Cards L. */
+.moodboard {
+  column-width: 200px;
+  column-gap: var(--space-3);
+  column-fill: balance;
+}
+
+.moodboard > * {
+  break-inside: avoid;
+  -webkit-column-break-inside: avoid;
+  page-break-inside: avoid;
+  margin-bottom: var(--space-3);
+  width: 100%;
+  max-width: 100%;
+  display: inline-block;
+  vertical-align: top;
+  /* Keep hover lift from painting into the neighboring column. */
   overflow: hidden;
-  transition:
-    border-color var(--dur-fast) var(--ease),
-    transform var(--dur-base) var(--ease);
+  transform: translateZ(0);
 }
 
-.hero:hover {
-  border-color: var(--rim-lit);
-  transform: translateY(-2px);
+.moodboard.compact {
+  column-width: 160px;
 }
 
-.heroCopy {
+.moodboard.comfortable {
+  column-width: 200px;
+}
+
+.moodboard.large {
+  column-width: 236px;
+}
+
+.list {
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
-  gap: var(--space-3);
-  min-width: 0;
-}
-
-.heroEyebrow {
-  composes: eyebrow from '../../tokens/typography.module.css';
-  color: var(--accent);
-}
-
-.heroTitle {
-  composes: title2 from '../../tokens/typography.module.css';
-  color: var(--text-primary);
-  font-weight: 700;
-  line-height: 1.15;
-  display: -webkit-box;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-}
-
-.heroExcerpt {
-  composes: callout from '../../tokens/typography.module.css';
-  color: var(--text-secondary);
-  line-height: 1.5;
-  display: -webkit-box;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-}
-
-.heroArt {
-  position: relative;
-  border-radius: var(--r-tile);
-  overflow: hidden;
-  min-height: 160px;
-  background: var(--graphite-raised);
-}
-
-.heroArt img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.grid {
-  columns: 3;
-  column-gap: var(--space-4);
-}
-
-.grid > * {
-  break-inside: avoid;
-  margin-bottom: var(--space-4);
+  border-top: 1px solid var(--rim);
 }
 
 .empty {
@@ -130,12 +112,42 @@
   padding: var(--space-4) 0;
 }
 
+.skelGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  gap: var(--space-3);
+}
+
 @container (max-width: 980px) {
-  .grid { columns: 2; }
-  .hero { grid-template-columns: 1fr; }
-  .heroArt { min-height: 140px; }
+  .moodboard.comfortable {
+    column-width: 180px;
+  }
+
+  .moodboard.large {
+    column-width: 210px;
+  }
+
+  .moodboard.compact {
+    column-width: 150px;
+  }
 }
 
 @container (max-width: 620px) {
-  .grid { columns: 1; }
+  .grid.compact,
+  .grid.comfortable,
+  .grid.large {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  }
+
+  .moodboard,
+  .moodboard.compact,
+  .moodboard.comfortable,
+  .moodboard.large {
+    column-width: 140px;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }

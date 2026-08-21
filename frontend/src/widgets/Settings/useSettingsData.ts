@@ -48,7 +48,28 @@ export function useSettingsData(active: boolean) {
     const commit = () => {
       setStatus('saving');
       saveSettings({ [key]: value }).then(
-        () => {
+        (res) => {
+          if (!res.ok || res.skipped?.includes(key)) {
+            setStatus('error');
+            return;
+          }
+          setPending((prev) => {
+            const next = { ...prev };
+            delete next[key];
+            return next;
+          });
+          setData((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  values: { ...prev.values, [key]: value },
+                  origins: {
+                    ...prev.origins,
+                    [key]: value.trim() ? 'panel' : (prev.origins[key] ?? 'default'),
+                  },
+                }
+              : prev,
+          );
           setStatus('saved');
           if (savedTimer.current) clearTimeout(savedTimer.current);
           savedTimer.current = setTimeout(() => setStatus('idle'), 1800);

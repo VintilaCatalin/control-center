@@ -9,6 +9,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: var(--space-3);
 }
 
 .heading {
@@ -17,7 +18,15 @@
   margin: 0;
 }
 
-.addBtn {
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.addBtn,
+.scanBtn {
   composes: callout from '../../../tokens/typography.module.css';
   display: flex;
   align-items: center;
@@ -32,12 +41,23 @@
   cursor: pointer;
   transition:
     background var(--dur-fast) var(--ease),
-    border-color var(--dur-fast) var(--ease);
+    border-color var(--dur-fast) var(--ease),
+    opacity var(--dur-fast) var(--ease);
 }
 
-.addBtn:hover {
+.scanBtn {
+  background: transparent;
+}
+
+.addBtn:hover,
+.scanBtn:hover:not(:disabled) {
   background: rgba(var(--overlay-tint), 0.1);
   border-color: var(--accent);
+}
+
+.scanBtn:disabled {
+  opacity: 0.55;
+  cursor: default;
 }
 
 .shelf {
@@ -75,7 +95,17 @@
   color: var(--text-secondary);
 }
 
-.emptyBtn {
+.emptyActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.emptyBtn,
+.emptyBtnSecondary {
   composes: callout from '../../../tokens/typography.module.css';
   display: flex;
   align-items: center;
@@ -88,10 +118,21 @@
   color: var(--text-primary);
   font-weight: 600;
   cursor: pointer;
-  margin-top: var(--space-2);
-  transition: background var(--dur-fast) var(--ease);
+  transition:
+    background var(--dur-fast) var(--ease),
+    opacity var(--dur-fast) var(--ease);
 }
 
-.emptyBtn:hover {
+.emptyBtnSecondary {
+  background: transparent;
+}
+
+.emptyBtn:hover:not(:disabled),
+.emptyBtnSecondary:hover {
   background: rgba(var(--overlay-tint), 0.1);
+}
+
+.emptyBtn:disabled {
+  opacity: 0.55;
+  cursor: default;
 }

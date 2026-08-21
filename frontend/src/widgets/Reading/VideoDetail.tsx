@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
-import { saveItem } from '../../api/actions/reading';
+import { toggleRaindropSave } from '../../api/actions/library';
 import type { ReadingItem } from '../../api/types';
 import { duration, ease } from '../../tokens/motion';
 import { BackIcon, ExternalLinkIcon } from './icons';
@@ -40,7 +40,11 @@ export function VideoDetail({ item, onClose }: VideoDetailProps) {
   function handleToggleSave() {
     const next = !saved;
     setSaved(next);
-    saveItem(item.id, next).catch(() => {});
+    toggleRaindropSave(
+      { url: item.url, title: item.title, excerpt: item.blurb, cover: item.thumb },
+      next,
+      'youtube',
+    ).catch(() => setSaved(!next));
   }
 
   const initial = item.source_label.trim().charAt(0).toUpperCase() || '?';

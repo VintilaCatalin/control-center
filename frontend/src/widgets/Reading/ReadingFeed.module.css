@@ -9,6 +9,35 @@
   padding: var(--space-5) var(--space-6) var(--space-6);
 }
 
+/* Same gutter as PanelGrid (space-5) so hero → panels matches panel → panel. */
+.forYou {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.errorBanner {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--space-3) var(--space-4);
+  border-radius: 12px;
+  border: 1px solid color-mix(in oklab, var(--warn) 35%, var(--rim));
+  background: color-mix(in oklab, var(--warn) 10%, transparent);
+}
+
+.errorTitle {
+  composes: callout from '../../tokens/typography.module.css';
+  color: var(--text-primary);
+  font-weight: 650;
+}
+
+.errorDetail {
+  composes: caption from '../../tokens/typography.module.css';
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
 .videoGrid {
   display: flex;
   flex-wrap: wrap;

@@ -93,17 +93,21 @@ def dispatch_post(path, body, snapshot):
     if path == "/api/settings/save":
         values = body.get("values") or {}
         if not isinstance(values, dict): return {"ok": False, "error": "bad payload"}
-        known = {e["key"] for g in SETTINGS_SCHEMA for e in g["keys"]}
+        known = {e["key"] for g in SETTINGS_SCHEMA for e in g["keys"]} | set(DEFAULTS)
+        saved, skipped = [], []
         def mutate(store):
             store.setdefault("settings", {})
             store.setdefault("profile", {})
             for key, value in values.items():
-                if key not in known: continue
+                if key not in known:
+                    skipped.append(key)
+                    continue
+                saved.append(key)
                 if key.startswith("_profile_"):
                     field = key[9:]
                     if field == "photo" and value and not str(value).startswith(("http", "/api/")):
-                        saved = save_cover(value, "profile-photo")
-                        if saved: store["profile"]["photo"] = saved
+                        photo_url = save_cover(value, "profile-photo")
+                        if photo_url: store["profile"]["photo"] = photo_url
                     else:
                         store["profile"][field] = str(value)
                     continue
@@ -116,7 +120,10 @@ def dispatch_post(path, body, snapshot):
             return True
         edit_store(mutate)
         snapshot.reload()
-        return {"ok": True}
+        if skipped and not saved:
+            return {"ok": False, "error": "Unknown setting keys - restart Control Center to pick up new settings.",
+                    "saved": saved, "skipped": skipped}
+        return {"ok": True, "saved": saved, "skipped": skipped}
 
     if path == "/api/settings/profile-photo":
         # The upload counterpart to save_cover() (which only ever

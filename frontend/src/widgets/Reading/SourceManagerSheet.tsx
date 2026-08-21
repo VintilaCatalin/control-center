@@ -284,7 +284,7 @@ function AddSourceForm({ topics }: { topics: TopicDef[] }) {
 // instead of needing this sheet first. "interesting" is the one entry
 // with no Remove control - it's the fallback every invalid/removed topic
 // reassigns to (see reading_remove_topic()), so it must always exist.
-// Removing a topic in use reassigns its sources/bookmarks to
+// Removing a topic in use reassigns its sources to
 // "interesting" automatically - shown here so it isn't a silent surprise.
 function TopicManager({ topics, sources }: { topics: TopicDef[]; sources: ReadingSource[] }) {
   const [status, setStatus] = useState<string | null>(null);

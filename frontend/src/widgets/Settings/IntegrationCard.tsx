@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { testConnection } from '../../api/actions/settings';
 import type { SettingsFieldSchema } from '../../api/types';
 import { SettingsField } from './SettingsField';
@@ -35,9 +35,14 @@ function monogram(name: string): string {
 }
 
 export function IntegrationCard({ name, blurb, status, errorText, fields, getValue, isSecret, origin, onChange, probeMs, testUrl }: IntegrationCardProps) {
-  const [open, setOpen] = useState(false);
-  const [test, setTest] = useState<TestState>({ phase: 'idle' });
   const configurable = !!fields && fields.length > 0;
+  const expandable = configurable || status === 'not_connected';
+  const [open, setOpen] = useState(status === 'not_connected' && expandable);
+  const [test, setTest] = useState<TestState>({ phase: 'idle' });
+
+  useEffect(() => {
+    if (status === 'not_connected' && expandable) setOpen(true);
+  }, [status, expandable]);
 
   async function runTest() {
     if (!testUrl) return;
@@ -49,13 +54,15 @@ export function IntegrationCard({ name, blurb, status, errorText, fields, getVal
 
   return (
     <div className={styles.card}>
-      <button type="button" className={styles.head} onClick={() => configurable && setOpen((o) => !o)} disabled={!configurable}>
+      <button type="button" className={styles.head} onClick={() => expandable && setOpen((o) => !o)} aria-expanded={open}>
         <span className={styles.avatar} data-status={status}>
           {monogram(name)}
         </span>
         <span className={styles.info}>
           <span className={styles.name}>{name}</span>
-          <span className={styles.blurb}>{blurb}</span>
+          <span className={styles.blurb}>
+            {status === 'not_connected' && !open ? 'Click to connect' : blurb}
+          </span>
         </span>
         <span className={styles.statusWrap}>
           <span className={styles.statusPill} data-status={status}>
@@ -63,7 +70,7 @@ export function IntegrationCard({ name, blurb, status, errorText, fields, getVal
             {STATUS_LABEL[status]}
           </span>
           {probeMs != null && <span className={styles.probeMs}>{Math.round(probeMs)} ms</span>}
-          {configurable && (
+          {expandable && (
             <span className={[styles.chevron, open ? styles.chevronOpen : ''].join(' ')} aria-hidden="true">
               <svg width={11} height={11} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
                 <path d="M6 9l6 6 6-6" />
@@ -75,11 +82,17 @@ export function IntegrationCard({ name, blurb, status, errorText, fields, getVal
 
       {status === 'error' && errorText && <div className={styles.errorNote}>{errorText}</div>}
 
-      {open && configurable && getValue && onChange && isSecret && origin && (
+      {open && expandable && getValue && onChange && isSecret && origin && (
         <div className={styles.body}>
-          {fields!.map((f) => (
-            <SettingsField key={f.key} field={f} value={getValue(f.key)} isSecret={isSecret(f.key)} origin={origin(f.key)} onChange={(v, opts) => onChange(f.key, v, opts)} />
-          ))}
+          {configurable ? (
+            fields!.map((f) => (
+              <SettingsField key={f.key} field={f} value={getValue(f.key)} isSecret={isSecret(f.key)} origin={origin(f.key)} onChange={(v, opts) => onChange(f.key, v, opts)} />
+            ))
+          ) : (
+            <p className={styles.setupNote}>
+              Restart Control Center so the backend picks up the Raindrop integration, then return here to paste your test token.
+            </p>
+          )}
           {testUrl && (
             <div className={styles.testRow}>
               <button type="button" className={styles.testBtn} onClick={runTest} disabled={test.phase === 'testing'}>

@@ -27,6 +27,7 @@
   display: block;
   width: 100%;
   aspect-ratio: 16 / 10;
+  max-height: 148px;
   border: none;
   padding: 0;
   background: none;
@@ -37,13 +38,60 @@
 .art {
   width: 100% !important;
   height: 100% !important;
+  max-height: 148px;
   aspect-ratio: auto !important;
   border-radius: 0 !important;
+  object-fit: cover;
   transition: transform var(--dur-slow) var(--ease);
 }
 
 .card:hover .art {
   transform: scale(1.05);
+}
+
+.compact .media {
+  aspect-ratio: 16 / 10;
+  max-height: 120px;
+}
+
+.compact .art {
+  max-height: 120px;
+}
+
+.compact .body {
+  padding: 8px 10px 10px;
+  gap: 4px;
+}
+
+.compact .title {
+  font-size: 0.88em;
+  -webkit-line-clamp: 2;
+}
+
+.compact .badge {
+  top: 8px;
+  left: 8px;
+  padding: 2px 7px;
+  font-size: 0.75rem;
+}
+
+.compact .playBadge svg {
+  width: 22px;
+  height: 22px;
+}
+
+.compactText .textBody {
+  padding: 10px 12px;
+  gap: 6px;
+}
+
+.compactText .textTitle {
+  font-size: 0.95em;
+  line-height: 1.3;
+}
+
+.compactText .textExcerpt {
+  display: none;
 }
 
 .mediaShade {
@@ -265,4 +313,97 @@
 .dismissBtnPanel:hover {
   color: var(--warn);
   background: color-mix(in oklab, var(--warn) 14%, transparent);
+}
+
+/* Dense row for 2-wide Tech panels — thumb + title, not a tall photo card. */
+.dense {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 10px;
+  border: 1px solid var(--rim);
+  background: rgba(var(--overlay-tint), 0.03);
+  padding: 5px 6px 5px 5px;
+  break-inside: avoid;
+  transition: background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
+}
+
+.dense:hover,
+.dense:focus-within {
+  background: rgba(var(--overlay-tint), 0.06);
+  border-color: var(--rim-lit);
+}
+
+.denseHit {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+}
+
+.denseThumb,
+.denseThumbEmpty {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.denseThumbEmpty {
+  opacity: 0.4;
+}
+
+.denseArt {
+  width: 100% !important;
+  height: 100% !important;
+  aspect-ratio: auto !important;
+  border-radius: 0 !important;
+}
+
+.denseCopy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.denseTitle {
+  composes: callout from '../../tokens/typography.module.css';
+  color: var(--text-primary);
+  font-weight: 600;
+  line-height: 1.25;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.denseMeta {
+  composes: caption from '../../tokens/typography.module.css';
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.denseActions {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex-shrink: 0;
+  opacity: 0.55;
+  transition: opacity var(--dur-fast) var(--ease);
+}
+
+.dense:hover .denseActions,
+.dense:focus-within .denseActions {
+  opacity: 1;
 }

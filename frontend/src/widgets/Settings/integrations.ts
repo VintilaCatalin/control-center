@@ -53,7 +53,7 @@ export const INTEGRATIONS: IntegrationDef[] = [
   {
     id: 'raindrop',
     name: 'Raindrop.io',
-    blurb: 'Saved links from your phone — collections and bookmarks in Library.',
+    blurb: 'Phone saves + feed saves land in Reading → Saves.',
     keys: ['raindrop_token'],
     status: (s) => (!s?.library?.configured ? 'not_connected' : s.library.error ? 'error' : 'connected'),
     errorText: (s) => s?.library?.error ?? undefined,

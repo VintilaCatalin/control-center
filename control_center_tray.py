@@ -69,6 +69,8 @@ def build_menu():
         item("Open (windowed)", lambda: run("--windowed")),
         sep,
         item("Stop Control Center", lambda: run("--stop")),
+        item("Restart Control Center", lambda: run("--restart")),
+        sep,
         item("Quit tray", lambda icon, _item: icon.stop()),
     )
 

@@ -97,7 +97,10 @@ export function SettingsField({ field, value, isSecret, origin, onChange }: Sett
           autoFocus={editingSecret}
           onChange={(e) => onChange(e.target.value)}
           onBlur={() => {
-            if (editingSecret) setEditingSecret(false);
+            if (editingSecret) {
+              onChange(value, { immediate: true });
+              setEditingSecret(false);
+            }
           }}
         />
       )}

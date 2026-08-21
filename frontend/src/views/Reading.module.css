@@ -31,3 +31,20 @@
   color: var(--text-tertiary);
   min-height: 320px;
 }
+
+.loadingGrid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: var(--space-5) var(--space-6) var(--space-6);
+}
+
+.loadingHero {
+  width: 100%;
+}
+
+.loadingPanels {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-5);
+}
